@@ -147,6 +147,37 @@ L2 정규화       = TF-IDF(d) / ||TF-IDF(d)||₂
 | `artifacts/reports/misclassifications.json` | 안전한 오분류 스니펫 최대 20건 |
 | `artifacts/reports/confusion_matrix.png` | 세 클래스 혼동 행렬 |
 
+## 과거 20-Category 기준선
+
+privacy-conscious redesign 이전에는 전체 20 Newsgroups 말뭉치(20개 카테고리, 문서 18,846개)로도 실험을 수행했다. 아래 값은 공개 benchmark에 대한 **historical pre-privacy-redesign baseline**으로 보존하는 aggregate metrics이며, 현재 privacy-conscious pipeline의 공식 성능이 아니다.
+
+### 분류 품질
+
+| 실험 | 카테고리 | 문서 | Accuracy | Macro-F1 | 목적 |
+|---|---:|---:|---:|---:|---|
+| 과거 전체 말뭉치 기준선 | 20 | 18,846 | 75.94% | 74.80% | privacy redesign 이전 engineering baseline |
+| 현재 privacy-conscious 실험 | 3 | 2,863 retained | 90.40% | 90.31% | 현재 지원하는 실험 |
+
+이 점수들은 직접 비교할 수 없다. historical 결과는 structured-PII redaction 및 artifact 최소화 정책보다 앞선 전체 말뭉치 실험이고, 현재 결과는 서로 다른 데이터 범위와 전처리·privacy 정책을 적용한 3-category 실험이다.
+
+historical 분류 결과는 Accuracy 75.94%, Macro-F1 74.80%, 오분류 907 / 3,770 test documents이며, 혼동 행렬은 20 × 20이다. 이 수치는 과거 engineering baseline을 참고하기 위한 것이며, 현재 privacy-conscious system의 성능으로 해석해서는 안 된다.
+
+### 표현 방식 및 자원 효율
+
+다음 historical TF-IDF 수치는 분류 품질이 아니라 표현 방식과 자원 효율을 설명한다. Accuracy나 Macro-F1의 향상으로 해석하지 않는다.
+
+| 항목 | Historical full-corpus 값 |
+|---|---:|
+| 전체 행렬 shape | 18,846 × 89,304 |
+| `nnz` | 1,253,490 |
+| 희소율 | 약 99.925522% |
+| 예상 dense `float64` 크기 | 13,464,185,472 bytes |
+| 자체 sparse 표현 크기 | 15,117,268 bytes |
+| dense 대비 크기 | 약 890.65배 작음 |
+| scikit-learn TF-IDF validation 최대 절대 오차 | 약 7.55e-15 |
+
+과거 실험의 전체 세부사항은 commit `dd9e42d261ae8d4a3a876906f77e539aba09e630`에서 확인할 수 있다.
+
 ## 한계
 
 - structured identifier regex는 자유 형식의 사람 이름·주소·건강정보를 탐지하지 않는다. 이 pipeline은 PII-free 보증이 아니며, 실제 배포에는 별도의 데이터 거버넌스 검토가 필요하다.

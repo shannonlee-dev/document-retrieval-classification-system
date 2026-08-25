@@ -66,7 +66,7 @@ fixed vocabulary와 동일한 analyzer 사용
 
 ### 2.3 분류 모델
 
-Scikit-learn의 `SGDClassifier(loss="hinge")`를 사용한다. 이는 결정 함수 `w·x+b`와 hinge loss를 사용하는 선형 SVM이며, `partial_fit`을 지원하므로 사용자 정의 희소 행렬을 작은 밀집 배치로 변환해 전체 데이터로 학습할 수 있다.
+Scikit-learn의 `SGDClassifier(loss="hinge")`를 사용한다. 이는 결정 함수 `w·x+b`와 hinge loss를 사용하는 선형 SVM이다. 사용자 정의 `data`, `indices`, `indptr` NumPy 배열은 TF-IDF를 다시 계산하지 않고 Scikit-learn이 받는 SciPy CSR 컨테이너의 버퍼로 연결한다. SciPy는 이 분류 입력 경계에서만 사용하며 TF, IDF, 정규화와 검색 계산은 계속 NumPy 직접 구현을 사용한다.
 
 - 분할: stratified 8:2
 - 난수: `random_state=42`
@@ -75,7 +75,7 @@ Scikit-learn의 `SGDClassifier(loss="hinge")`를 사용한다. 이는 결정 함
 - 배치 순서와 epoch 수를 고정해 재현성 확보
 - Accuracy, macro F1, confusion matrix 산출
 
-배치 변환은 해당 배치만 메모리에 올리므로 전체 밀집 행렬을 생성하지 않는다. 평가 로그에는 모델 클래스뿐 아니라 선형 SVM으로 보는 수학적 근거와 실제 파라미터를 명시한다.
+학습과 예측은 희소 행을 배치로 전달하므로 전체 또는 배치 밀집 행렬을 생성하지 않는다. 평가 로그에는 모델 클래스뿐 아니라 선형 SVM으로 보는 수학적 근거, CSR 입력 경계와 실제 파라미터를 명시한다.
 
 ## 3. 구성 요소
 

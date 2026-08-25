@@ -4,7 +4,7 @@
 
 **Goal:** Build a reproducible CLI that uses all 18,846 20 Newsgroups documents for NumPy-only sparse TF-IDF, cosine retrieval, and linear-SVM classification, with written evaluation evidence.
 
-**Architecture:** A small `src/document_system` package owns preprocessing, a CSR-like NumPy container, TF-IDF fitting/transformation, validation, retrieval, classification, and artifact I/O. The full corpus remains sparse; only bounded classifier batches become dense. `main.py` exposes build and search workflows, and generated report artifacts supply every numeric claim in README.
+**Architecture:** A small `src/document_system` package owns preprocessing, a CSR-like NumPy container, TF-IDF fitting/transformation, validation, retrieval, classification, and artifact I/O. The full corpus remains sparse; classification connects the same NumPy buffers to Scikit-learn through a CSR container. `main.py` exposes build and search workflows, and generated report artifacts supply every numeric claim in README.
 
 **Tech Stack:** Python 3.10+, NumPy, Scikit-learn, Matplotlib, pytest
 
@@ -310,7 +310,7 @@ git commit -m "feat: add NumPy cosine document search"
 
 **Interfaces:**
 - Consumes: train/test `SparseMatrix`, NumPy labels, and target names
-- Produces: `train_linear_svm(...) -> SGDClassifier`
+- Produces: `to_sklearn_csr(matrix) -> scipy.sparse.csr_matrix` and `train_linear_svm(...) -> SGDClassifier`
 - Produces: `evaluate_classifier(...) -> ClassificationReport`
 - Produces: `save_confusion_matrix(report, target_names, path) -> None`
 
@@ -338,9 +338,9 @@ Run: `python -m pytest tests/test_classification.py -q`
 
 Expected: FAIL because the classification module does not exist.
 
-- [ ] **Step 3: Implement bounded dense batches and hinge-loss SGD**
+- [ ] **Step 3: Implement CSR batches and hinge-loss SGD**
 
-For each epoch, shuffle row IDs with `np.random.default_rng(random_state)`, densify at most `batch_size` rows, and call `partial_fit`; pass all classes on the first call. Configure `SGDClassifier(loss="hinge", random_state=42, max_iter=1, tol=None, shuffle=False)`. Prediction also proceeds in bounded batches.
+For each epoch, shuffle row IDs with `np.random.default_rng(random_state)` and call `partial_fit` with CSR row batches; pass all classes on the first call. Construct the CSR container directly over the custom NumPy `data`, `indices`, and `indptr` arrays without recomputing TF-IDF. Configure `SGDClassifier(loss="hinge", random_state=42, max_iter=1, tol=None, shuffle=False)`. Prediction also proceeds in sparse batches.
 
 - [ ] **Step 4: Implement metrics, misclassification capture, and confusion image**
 

@@ -1,11 +1,13 @@
 from pathlib import Path
 
 import numpy as np
+from scipy.sparse import isspmatrix_csr
 
 from document_system.classification import (
     evaluate_classifier,
     predict_sparse,
     save_confusion_matrix,
+    to_sklearn_csr,
     train_linear_svm,
 )
 from document_system.preprocessing import EnglishPreprocessor
@@ -44,6 +46,17 @@ def test_linear_svm_trains_from_sparse_batches_reproducibly() -> None:
     )
 
 
+def test_sklearn_adapter_preserves_sparse_values_without_dense_conversion() -> None:
+    _, _, matrix = make_training_data()
+
+    adapted = to_sklearn_csr(matrix)
+
+    assert isspmatrix_csr(adapted)
+    assert adapted.shape == matrix.shape
+    assert np.shares_memory(adapted.data, matrix.data)
+    np.testing.assert_array_equal(adapted.toarray(), matrix.to_dense_rows(range(6)))
+
+
 def test_evaluation_contains_metrics_confusion_and_error_records() -> None:
     texts, labels, matrix = make_training_data()
     model = train_linear_svm(matrix, labels, batch_size=2, epochs=6)
@@ -61,6 +74,7 @@ def test_evaluation_contains_metrics_confusion_and_error_records() -> None:
     assert 0.0 <= report.macro_f1 <= 1.0
     assert report.confusion_matrix.shape == (2, 2)
     assert report.predictions.shape == labels.shape
+    assert report.model_settings["input_representation"] == "CSR view over NumPy arrays"
     assert all(
         {"doc_id", "actual", "predicted", "text_snippet"} <= item.keys()
         for item in report.misclassifications

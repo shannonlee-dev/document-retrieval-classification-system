@@ -1,0 +1,30 @@
+{
+  "documents_input": 2954,
+  "documents_retained": 2863,
+  "documents_dropped_after_sanitization": 91,
+  "retention_rate": 0.9691943127962085,
+  "redactions": {
+    "email": 1237,
+    "phone": 566,
+    "url": 1,
+    "ipv4": 485,
+    "ipv6": 8
+  },
+  "category_counts": {
+    "comp.graphics": {
+      "raw": 973,
+      "retained": 953,
+      "excluded": 20
+    },
+    "rec.sport.baseball": {
+      "raw": 994,
+      "retained": 956,
+      "excluded": 38
+    },
+    "sci.space": {
+      "raw": 987,
+      "retained": 954,
+      "excluded": 33
+    }
+  }
+}

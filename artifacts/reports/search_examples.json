@@ -3,34 +3,34 @@
     "query": "space shuttle orbit",
     "results": [
       {
-        "score": 0.9218943906641169,
-        "doc_id": 1727,
+        "score": 0.34053863439131843,
+        "doc_id": 2150,
         "label": "sci.space",
-        "text_snippet": "mission space orbit orbit shuttle orbit shuttle space shuttle shuttle orbital solar orbit orbit"
+        "text_snippet": "archive name space schedule last modified date space shuttle answers launch schedules tv coverage shuttle launchings and landings schedules and how to see them shuttle operations are discussed in the usenet group sci space shuttle and ken"
       },
       {
-        "score": 0.8953241684256494,
-        "doc_id": 421,
+        "score": 0.3249984342883673,
+        "doc_id": 42,
         "label": "sci.space",
-        "text_snippet": "shuttle orbit space shuttle program"
+        "text_snippet": "archive name space controversy last modified date controversial questions these issues periodically come up with much argument and few facts being offered the summaries below attempt to represent the position on which much of the net"
       },
       {
-        "score": 0.889946133319476,
-        "doc_id": 2108,
+        "score": 0.30173716514260984,
+        "doc_id": 566,
         "label": "sci.space",
-        "text_snippet": "shuttle orbit"
+        "text_snippet": "archive name space net last modified date network resources overview you may be reading this document on any one of an amazing variety of computers so much of the material below may not apply to you in general however systems connected to"
       },
       {
-        "score": 0.8643562945879565,
-        "doc_id": 379,
+        "score": 0.2960000152053752,
+        "doc_id": 897,
         "label": "sci.space",
-        "text_snippet": "space file space shuttle space gravity shuttle flight launch orbit orbit orbit orbit space launch orbit orbit lunar gravity solar data space shuttle file space space space shuttle program"
+        "text_snippet": "this notice will be posted weekly in sci space sci astro and sci space shuttle the frequently asked questions faq list for sci space and sci astro is posted approximately monthly it also covers many questions that come up on sci space"
       },
       {
-        "score": 0.8009953421255966,
-        "doc_id": 2581,
+        "score": 0.29037146162935806,
+        "doc_id": 2710,
         "label": "sci.space",
-        "text_snippet": "space space shuttle team team data shuttle solar shuttle shuttle space team orbit solar orbit orbit data"
+        "text_snippet": "ha watch me it flies it lands it gets rebuilt that s not what they told us back in the s it isn t a logical follow on a logical follow on would have been either a russian snowfox type thingey for the lifting bodies or something like mmi s"
       }
     ]
   },
@@ -38,34 +38,34 @@
     "query": "baseball pitcher season",
     "results": [
       {
-        "score": 0.8213134555315265,
-        "doc_id": 862,
+        "score": 0.3469088804516101,
+        "doc_id": 618,
         "label": "rec.sport.baseball",
-        "text_snippet": "baseball pitcher"
+        "text_snippet": "baseball always how he"
       },
       {
-        "score": 0.7704213758053482,
-        "doc_id": 1409,
+        "score": 0.3276821448309296,
+        "doc_id": 2723,
         "label": "rec.sport.baseball",
-        "text_snippet": "baseball season"
+        "text_snippet": "ah but the illusion in football is that there is always lots of action and a sense of urgency because of the game clock not all the time but it happens when there s less than minutes to go quite often this sense creates drama even when"
       },
       {
-        "score": 0.7704213758053482,
-        "doc_id": 1487,
+        "score": 0.2757791240586543,
+        "doc_id": 464,
         "label": "rec.sport.baseball",
-        "text_snippet": "season baseball"
+        "text_snippet": "after reading my local paper today i found out that the phillies started the season at i am not as old as but i ve heard many talk about the serious choke job the phillies did that season they were ahead of the cardinals by games that"
       },
       {
-        "score": 0.7003058830688736,
-        "doc_id": 638,
+        "score": 0.2407689400095975,
+        "doc_id": 21,
         "label": "rec.sport.baseball",
-        "text_snippet": "pitcher win season"
+        "text_snippet": "imho this is the most untrustworthy silly stat by today s rules in all of baseball my understanding is to qualify as a save a pitcher cannot pitch more than three innings and the potential tying run must at least appear in the on deck"
       },
       {
-        "score": 0.6820820306351784,
-        "doc_id": 805,
+        "score": 0.22265611069747634,
+        "doc_id": 2073,
         "label": "rec.sport.baseball",
-        "text_snippet": "season season league league league league player pitcher pitcher pitcher pitcher pitcher pitcher pitcher pitcher pitcher pitcher pitcher pitcher pitcher pitcher"
+        "text_snippet": "i have wondered why a pitcher is given pitches when he enters the game let s be serious the relief pitcher has normally been throwing out in the bullpen for a few minutes does he really need more pitches if the relief pitcher didn t get"
       }
     ]
   },
@@ -73,34 +73,34 @@
     "query": "computer graphics image",
     "results": [
       {
-        "score": 0.9412623088476502,
-        "doc_id": 92,
-        "label": "comp.graphics",
-        "text_snippet": "image computer graphics image computer image image computer graphics image"
-      },
-      {
-        "score": 0.9010371588783834,
-        "doc_id": 1071,
-        "label": "comp.graphics",
-        "text_snippet": "image computer graphics computer graphics computer graphics computer graphics"
-      },
-      {
-        "score": 0.8613291856612166,
-        "doc_id": 2799,
-        "label": "comp.graphics",
-        "text_snippet": "run algorithm computer graphics computer graphics image computer graphics"
-      },
-      {
-        "score": 0.857230718095601,
+        "score": 0.4129384601796218,
         "doc_id": 1918,
         "label": "comp.graphics",
-        "text_snippet": "computer computer graphics computer graphics image computer animation graphics graphics video"
+        "text_snippet": "technion israel institute of technology department of computer science graduate studies in computer graphics applications are invited for graduate students wishing to specialize in computer graphics and related fields active research is"
       },
       {
-        "score": 0.8475787304369888,
-        "doc_id": 2041,
+        "score": 0.3503904039577065,
+        "doc_id": 1383,
         "label": "comp.graphics",
-        "text_snippet": "computer image"
+        "text_snippet": "european computer research centre research positions in d graphics ecrc is currently expanding its research staff in three dimensional graphics we are looking for highly qualified researchers with a phd in computer science and a proven"
+      },
+      {
+        "score": 0.33626926409082003,
+        "doc_id": 1071,
+        "label": "comp.graphics",
+        "text_snippet": "my package is based on several articles about non standard radiosity and some unpublished methods the main articles are cohen chen wallace greenberg a progressive refinement approach to fast radiosity image generation computer graphics"
+      },
+      {
+        "score": 0.3265322752054005,
+        "doc_id": 751,
+        "label": "comp.graphics",
+        "text_snippet": "archive name graphics resources list part last modified computer graphics resource listing weekly posting part last change april plotting packages gnuplot it is one of the best and d plotting packages with online help it s a command line"
+      },
+      {
+        "score": 0.32649018551940434,
+        "doc_id": 720,
+        "label": "comp.graphics",
+        "text_snippet": "archive name graphics resources list part last modified computer graphics resource listing weekly posting part last change april plotting packages gnuplot it is one of the best and d plotting packages with online help it s a command line"
       }
     ]
   }

@@ -8,12 +8,44 @@
   },
   "terms": [
     {
-      "term": "baseball",
-      "column": 4,
-      "tf": 2.0,
-      "idf": 3.446014521142569,
-      "tfidf_before_norm": 6.892029042285138,
-      "tfidf_after_norm": 1.0
+      "term": "advantage",
+      "column": 283,
+      "tf": 1.0,
+      "idf": 5.153224743997385,
+      "tfidf_before_norm": 5.153224743997385,
+      "tfidf_after_norm": 0.11504025527489274
+    },
+    {
+      "term": "ask",
+      "column": 1130,
+      "tf": 1.0,
+      "idf": 4.625869818280185,
+      "tfidf_before_norm": 4.625869818280185,
+      "tfidf_after_norm": 0.10326761808385126
+    },
+    {
+      "term": "assume",
+      "column": 1187,
+      "tf": 1.0,
+      "idf": 5.023171615749187,
+      "tfidf_before_norm": 5.023171615749187,
+      "tfidf_after_norm": 0.11213695766684674
+    },
+    {
+      "term": "better",
+      "column": 1839,
+      "tf": 1.0,
+      "idf": 3.268683541318364,
+      "tfidf_before_norm": 3.268683541318364,
+      "tfidf_after_norm": 0.07296987957765962
+    },
+    {
+      "term": "big",
+      "column": 1881,
+      "tf": 1.0,
+      "idf": 3.9745697476557393,
+      "tfidf_before_norm": 3.9745697476557393,
+      "tfidf_after_norm": 0.08872803750909225
     }
   ]
 }

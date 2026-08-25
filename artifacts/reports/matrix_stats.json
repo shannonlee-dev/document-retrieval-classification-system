@@ -1,15 +1,15 @@
 {
   "shape": [
-    2048,
-    68
+    2863,
+    21662
   ],
-  "nnz": 6260,
-  "density": 0.04495059742647059,
-  "sparsity": 0.9550494025735294,
-  "dense_bytes": 1114112,
-  "sparse_bytes": 83316,
-  "compression_ratio": 13.372125402083633,
-  "document_count": 2048,
-  "vocabulary_size": 68,
+  "nnz": 178950,
+  "density": 0.002885438373631166,
+  "sparsity": 0.9971145616263688,
+  "dense_bytes": 496146448,
+  "sparse_bytes": 2158856,
+  "compression_ratio": 229.81914866021634,
+  "document_count": 2863,
+  "vocabulary_size": 21662,
   "representation": "NumPy CSR-like data/indices/indptr"
 }

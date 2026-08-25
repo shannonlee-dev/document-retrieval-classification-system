@@ -1,6 +1,6 @@
 # 원하는 문서를 똑똑하게 찾아주는 검색기
 
-20 Newsgroups의 세 주제에서 개인정보 위험이 낮은 고정 주제어만 남긴 뒤, NumPy로 구현한 TF-IDF와 코사인 검색 및 선형 SVM 분류를 재현하는 프로젝트다.
+20 Newsgroups의 세 주제에 deterministic structured-PII redaction과 artifact 최소화를 적용한 뒤 NumPy TF-IDF와 코사인 검색 및 선형 SVM 분류를 재현하는 privacy-conscious 프로젝트다.
 
 ## 실행 방법
 
@@ -36,9 +36,42 @@ scikit-learn의 `fetch_20newsgroups(subset="all")`에서 다음 세 카테고리
 - `rec.sport.baseball`
 - `sci.space`
 
-loader는 headers, footers, quotes를 제거한 뒤 원문을 즉시 고정된 안전 어휘로 정제한다. graphics, baseball, space 분야의 일반 주제어만 남기고 이름, 연락처, 위치, 의료 정보가 될 수 있는 자유 텍스트는 모두 폐기한다. 정제 결과가 빈 문서도 제거한다. 원문은 `DatasetBundle`, 모델, 검색 객체, runtime metadata 및 보고서로 전달하거나 저장하지 않는다.
+### 왜 세 카테고리만 선택했는가
 
-공개 검색 문서 ID에는 정제 전 loader 결과의 행 번호를 별도로 유지한다. 데이터 출처, 귀속, 라이선스 및 파생 정책은 [DATASET_LICENSE.md](DATASET_LICENSE.md)에 기록했다.
+이 세 카테고리는 미션 예시와 같고 서로 구분되는 기술·스포츠·과학 주제라 다중 분류 결과를 설명하기 쉽다. 다른 카테고리가 모두 위험하다는 뜻은 아니며, 카테고리 선택 자체를 개인정보 보호 수단으로 간주하지 않는다. 세 카테고리 안의 모든 문서에도 같은 privacy pipeline을 적용한다.
+
+### Privacy pipeline과 데이터 경계
+
+loader는 headers, footers, quotes를 제거한 뒤 이메일, 명확한 전화번호, URL과 유효한 IPv4·IPv6를 deterministic하게 redaction한다. redaction과 영문 정규화 뒤 빈 문서만 제외한다. 사람 이름·주소 같은 자유형 엔터티를 추측하는 detector나 의심 문서 전체 삭제는 적용하지 않는다.
+
+정제된 전체 문서는 실행 중 TF-IDF fit/transform, 분류와 검색 행렬 생성에만 사용하고 저장하지 않는다. runtime metadata, 검색 결과와 오분류 보고서에는 structured-PII sanitization을 다시 적용하고 검증한 최대 240자의 snippet만 기록한다. 공개 검색 문서 ID는 filtering 전 loader 행 번호를 유지한다.
+
+이 설계는 “PII-free”를 보증하지 않는다. 대신 상대적으로 저위험인 세 카테고리 선택, metadata 제거, 확실한 structured identifier redaction, full-text 비저장과 bounded snippet으로 잔여 노출 범위를 줄인다.
+
+### 실제 privacy 처리 결과
+
+| 범위 | raw | retained | excluded | 유지율 |
+|---|---:|---:|---:|---:|
+| 전체 | 2,954 | 2,863 | 91 | 96.92% |
+| `comp.graphics` | 973 | 953 | 20 | 97.94% |
+| `rec.sport.baseball` | 994 | 956 | 38 | 96.18% |
+| `sci.space` | 987 | 954 | 33 | 96.66% |
+
+카테고리 유지율의 최대 차이는 약 1.76%p다. 현재 측정에서는 sanitization 후 빈 문서 제외 때문에 한 클래스만 크게 무너지는 현상이 없다.
+
+| 제외 사유 | 문서 수 |
+|---|---:|
+| sanitization 후 빈 문서 | 91 |
+
+| redaction 종류 | 횟수 |
+|---|---:|
+| email | 1,237 |
+| phone | 566 |
+| URL | 1 |
+| IPv4 | 485 |
+| IPv6 | 8 |
+
+데이터 출처, 귀속, 라이선스 및 파생 정책은 [DATASET_LICENSE.md](DATASET_LICENSE.md)에 기록했다.
 
 ## 전처리와 TF-IDF
 
@@ -70,32 +103,34 @@ L2 정규화       = TF-IDF(d) / ||TF-IDF(d)||₂
 
 ## 재현 결과
 
-고정 설정은 stratified 8:2 분할, `random_state=42`, 세 카테고리다. 현재 저장된 보고서는 안전 어휘 정제 후 다음 결과를 기록한다.
+고정 설정은 stratified 8:2 분할, `random_state=42`, 세 카테고리다. 현재 저장된 보고서는 다음 결과를 기록한다.
 
 | 항목 | 재빌드 결과 |
 |---|---:|
-| 정제 후 문서 | 2,048 |
-| 학습 / 테스트 문서 | 1,638 / 410 |
-| vocabulary | 68 |
-| 전체 행렬 shape | 2,048 × 68 |
-| `nnz` | 6,260 |
-| 밀도 / 희소율 | 4.495060% / 95.504940% |
-| 밀집 / 자체 희소 저장 크기 | 1,114,112 / 83,316 bytes |
-| 밀집 대비 저장 효율 | 13.3721배 |
-| TF-IDF 최대 절대 오차 | 1.1102230246251565e-16 |
-| Accuracy | 0.9414634146341463 |
-| macro F1 | 0.9420735146950299 |
-| 전체 오분류 | 24 |
+| 정제 후 문서 | 2,863 |
+| 학습 / 테스트 문서 | 2,290 / 573 |
+| vocabulary | 21,662 |
+| 전체 행렬 shape | 2,863 × 21,662 |
+| `nnz` | 178,950 |
+| 밀도 / 희소율 | 0.288544% / 99.711456% |
+| 밀집 / 자체 희소 저장 크기 | 496,146,448 / 2,158,856 bytes |
+| 밀집 대비 저장 효율 | 229.8191배 |
+| TF-IDF 최대 절대 오차 | 1.6653345369377348e-15 |
+| Accuracy | 0.9040139616055847 |
+| macro F1 | 0.9030980112997345 |
+| 전체 오분류 | 55 |
+
+기존 68-term allowlist 결과와 비교하면 retained 문서는 2,048개에서 2,863개로, vocabulary는 68개에서 21,662개로, `nnz`는 6,260에서 178,950으로 증가했다. 정확도는 약 94.15%에서 90.40%로 낮아졌지만, 주제 정답을 암시하도록 수동 선택한 68개 단어가 아니라 실제 문장 어휘를 사용하는 더 현실적인 실험이다.
 
 `space shuttle orbit`의 Top-5도 모두 `sci.space`였다.
 
 | 순위 | 점수 | source document ID | 카테고리 |
 |---:|---:|---:|---|
-| 1 | 0.921894 | 1,727 | `sci.space` |
-| 2 | 0.895324 | 421 | `sci.space` |
-| 3 | 0.889946 | 2,108 | `sci.space` |
-| 4 | 0.864356 | 379 | `sci.space` |
-| 5 | 0.800995 | 2,581 | `sci.space` |
+| 1 | 0.340539 | 2,150 | `sci.space` |
+| 2 | 0.324998 | 42 | `sci.space` |
+| 3 | 0.301737 | 566 | `sci.space` |
+| 4 | 0.296000 | 897 | `sci.space` |
+| 5 | 0.290371 | 2,710 | `sci.space` |
 
 ![세 카테고리 혼동 행렬](artifacts/reports/confusion_matrix.png)
 
@@ -106,6 +141,7 @@ L2 정규화       = TF-IDF(d) / ||TF-IDF(d)||₂
 | `artifacts/reports/metrics.json` | 문서·분할 수, 모델 설정, Accuracy, macro F1 |
 | `artifacts/reports/tfidf_validation.json` | scikit-learn 대조 설정과 오차 |
 | `artifacts/reports/matrix_stats.json` | shape, `nnz`, 밀도, 저장 byte |
+| `artifacts/reports/privacy_report.json` | redaction·제외·카테고리별 유지 통계 |
 | `artifacts/reports/stage_example.json` | TF → IDF → TF-IDF 중간값 |
 | `artifacts/reports/search_examples.json` | 세 쿼리의 안전한 Top-5 스니펫 |
 | `artifacts/reports/misclassifications.json` | 안전한 오분류 스니펫 최대 20건 |
@@ -113,7 +149,7 @@ L2 정규화       = TF-IDF(d) / ||TF-IDF(d)||₂
 
 ## 한계
 
-- 안전 어휘 밖의 모든 표현을 버리므로 개인정보 노출 위험은 줄지만 검색·분류에 유용한 문맥도 손실된다.
+- structured identifier regex는 자유 형식의 사람 이름·주소·건강정보를 탐지하지 않는다. 이 pipeline은 PII-free 보증이 아니며, 실제 배포에는 별도의 데이터 거버넌스 검토가 필요하다.
 - BoW는 어순, 부정, 관점 및 다의어를 직접 표현하지 못한다.
 - 현재 검색은 모든 문서를 순회하는 정확 검색이므로 문서 수에 따라 지연 시간이 선형 증가한다.
 - 카테고리 일치는 정성적 검색 예시일 뿐 사람의 relevance judgment나 mAP 평가를 대신하지 않는다.

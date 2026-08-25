@@ -6,6 +6,25 @@
 
 Python 3.10 이상이 필요하다. 첫 build에서는 Scikit-learn이 20 Newsgroups 원본을 내려받으므로 네트워크 연결이 필요하다.
 
+### uv 사용(권장)
+
+`uv sync`는 `uv.lock`에 고정된 의존성을 설치하고 현재 프로젝트를 editable 패키지로 연결한다.
+
+```bash
+uv sync --extra dev
+
+# 전체 18,846개 문서로 검증·분류·검색 인덱스 생성
+uv run python main.py build
+
+# 코사인 유사도 Top-5 검색
+uv run python main.py --query "space shuttle orbit" --topk 5
+
+# 단위·통합 테스트
+uv run pytest -q
+```
+
+### pip 사용
+
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate

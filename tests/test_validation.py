@@ -1,4 +1,3 @@
-import numpy as np
 
 from document_system.preprocessing import EnglishPreprocessor
 from document_system.tfidf import NumpyTfidfVectorizer

@@ -2,15 +2,14 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import asdict, dataclass
-from typing import Sequence
 
 import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 
 from .sparse_matrix import SparseMatrix
 from .tfidf import NumpyTfidfVectorizer, TfidfStages
-
 
 VALIDATION_SETTINGS: dict[str, bool | str] = {
     "smooth_idf": True,

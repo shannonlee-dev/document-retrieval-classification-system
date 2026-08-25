@@ -9,7 +9,6 @@ from typing import Sequence
 
 import matplotlib
 import numpy as np
-from scipy.sparse import csr_matrix
 from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import accuracy_score, confusion_matrix, f1_score
 
@@ -39,16 +38,6 @@ class ClassificationReport:
         }
 
 
-def to_sklearn_csr(matrix: SparseMatrix) -> csr_matrix:
-    """Expose NumPy CSR arrays to sklearn without recomputing TF-IDF."""
-
-    return csr_matrix(
-        (matrix.data, matrix.indices, matrix.indptr),
-        shape=matrix.shape,
-        copy=False,
-    )
-
-
 def train_linear_svm(
     matrix: SparseMatrix,
     labels: np.ndarray,
@@ -76,14 +65,13 @@ def train_linear_svm(
         shuffle=False,
     )
     generator = np.random.default_rng(random_state)
-    sparse_features = to_sklearn_csr(matrix)
     first_batch = True
     row_ids = np.arange(matrix.shape[0])
     for _ in range(epochs):
         shuffled = generator.permutation(row_ids)
         for start in range(0, shuffled.size, batch_size):
             batch_ids = shuffled[start : start + batch_size]
-            features = sparse_features[batch_ids]
+            features = matrix.to_dense_rows(batch_ids)
             batch_labels = labels[batch_ids]
             if first_batch:
                 model.partial_fit(features, batch_labels, classes=classes)
@@ -101,11 +89,10 @@ def predict_sparse(
 ) -> np.ndarray:
     if batch_size < 1:
         raise ValueError("batch_size must be positive")
-    sparse_features = to_sklearn_csr(matrix)
     predictions: list[np.ndarray] = []
     for start in range(0, matrix.shape[0], batch_size):
         end = min(start + batch_size, matrix.shape[0])
-        predictions.append(model.predict(sparse_features[start:end]))
+        predictions.append(model.predict(matrix.to_dense_rows(range(start, end))))
     if not predictions:
         return np.array([], dtype=np.int32)
     return np.concatenate(predictions)
@@ -152,7 +139,7 @@ def evaluate_classifier(
             "loss": "hinge",
             "batch_size": batch_size,
             "random_state": int(model.random_state or 0),
-            "input_representation": "CSR view over NumPy arrays",
+            "input_representation": "NumPy dense batches",
         },
     )
 

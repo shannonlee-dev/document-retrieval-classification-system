@@ -1,13 +1,12 @@
 from pathlib import Path
 
 import numpy as np
-from scipy.sparse import isspmatrix_csr
 
+import document_system.classification as classification_module
 from document_system.classification import (
     evaluate_classifier,
     predict_sparse,
     save_confusion_matrix,
-    to_sklearn_csr,
     train_linear_svm,
 )
 from document_system.preprocessing import EnglishPreprocessor
@@ -46,15 +45,38 @@ def test_linear_svm_trains_from_sparse_batches_reproducibly() -> None:
     )
 
 
-def test_sklearn_adapter_preserves_sparse_values_without_dense_conversion() -> None:
-    _, _, matrix = make_training_data()
+def test_training_and_prediction_use_bounded_numpy_batches(monkeypatch) -> None:
+    class RecordingClassifier:
+        def __init__(self, **settings) -> None:
+            self.random_state = settings["random_state"]
+            self.training_batches: list[np.ndarray] = []
+            self.prediction_batches: list[np.ndarray] = []
 
-    adapted = to_sklearn_csr(matrix)
+        def partial_fit(self, features, labels, classes=None):
+            self.training_batches.append(features)
+            return self
 
-    assert isspmatrix_csr(adapted)
-    assert adapted.shape == matrix.shape
-    assert np.shares_memory(adapted.data, matrix.data)
-    np.testing.assert_array_equal(adapted.toarray(), matrix.to_dense_rows(range(6)))
+        def predict(self, features):
+            self.prediction_batches.append(features)
+            return np.zeros(features.shape[0], dtype=np.int32)
+
+    monkeypatch.setattr(classification_module, "SGDClassifier", RecordingClassifier)
+    _, labels, matrix = make_training_data()
+
+    model = train_linear_svm(matrix, labels, batch_size=2, epochs=1)
+    predict_sparse(model, matrix, batch_size=2)
+
+    batches = model.training_batches + model.prediction_batches
+    assert batches
+    assert all(isinstance(batch, np.ndarray) for batch in batches)
+    assert all(batch.shape[0] <= 2 for batch in batches)
+
+
+def test_classification_has_no_direct_scipy_dependency() -> None:
+    source = Path("src/document_system/classification.py").read_text()
+
+    assert "scipy" not in source
+    assert "csr_matrix" not in source
 
 
 def test_evaluation_contains_metrics_confusion_and_error_records() -> None:
@@ -74,7 +96,7 @@ def test_evaluation_contains_metrics_confusion_and_error_records() -> None:
     assert 0.0 <= report.macro_f1 <= 1.0
     assert report.confusion_matrix.shape == (2, 2)
     assert report.predictions.shape == labels.shape
-    assert report.model_settings["input_representation"] == "CSR view over NumPy arrays"
+    assert report.model_settings["input_representation"] == "NumPy dense batches"
     assert all(
         {"doc_id", "actual", "predicted", "text_snippet"} <= item.keys()
         for item in report.misclassifications

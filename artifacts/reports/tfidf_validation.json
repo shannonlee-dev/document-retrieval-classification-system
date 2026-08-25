@@ -1,0 +1,17 @@
+{
+  "shape": [
+    15076,
+    89304
+  ],
+  "max_absolute_error": 7.549516567451064e-15,
+  "mean_absolute_error": 8.379477537989127e-21,
+  "tolerance": 1e-06,
+  "passed": true,
+  "settings": {
+    "smooth_idf": true,
+    "sublinear_tf": false,
+    "norm": "l2",
+    "use_idf": true,
+    "dtype": "float64"
+  }
+}

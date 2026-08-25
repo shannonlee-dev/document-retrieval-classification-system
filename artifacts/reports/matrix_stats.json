@@ -1,0 +1,15 @@
+{
+  "shape": [
+    18846,
+    89304
+  ],
+  "nnz": 1253490,
+  "density": 0.0007447847492040253,
+  "sparsity": 0.999255215250796,
+  "dense_bytes": 13464185472,
+  "sparse_bytes": 15117268,
+  "compression_ratio": 890.6493866484341,
+  "document_count": 18846,
+  "vocabulary_size": 89304,
+  "representation": "NumPy CSR-like data/indices/indptr"
+}

@@ -1,0 +1,24 @@
+{
+  "model": "linear SVM trained with SGDClassifier hinge loss",
+  "accuracy": 0.7594164456233422,
+  "macro_f1": 0.747979662268744,
+  "model_settings": {
+    "loss": "hinge",
+    "batch_size": 128,
+    "random_state": 42,
+    "input_representation": "CSR view over NumPy arrays"
+  },
+  "confusion_matrix_shape": [
+    20,
+    20
+  ],
+  "misclassification_count": 907,
+  "document_count": 18846,
+  "category_count": 20,
+  "train_count": 15076,
+  "test_count": 3770,
+  "test_size": 0.2,
+  "stratified": true,
+  "epochs": 6,
+  "random_state": 42
+}

@@ -1,0 +1,122 @@
+[
+  {
+    "doc_id": 204,
+    "actual": "comp.graphics",
+    "predicted": "talk.politics.misc",
+    "text_snippet": "Can You report CRT and other register state in this mode ? Thank's."
+  },
+  {
+    "doc_id": 11075,
+    "actual": "talk.religion.misc",
+    "predicted": "rec.autos",
+    "text_snippet": "Just to remark that I have heard that David Koresh has risen from the dead. I dont know if it is true or not, but this is what I have been told. What do you guys think?"
+  },
+  {
+    "doc_id": 4941,
+    "actual": "talk.politics.guns",
+    "predicted": "rec.sport.hockey",
+    "text_snippet": "Excuse me, but if you really new what the show was about, you'd know that he doesn't just say vagina and penis and that is how he get's his ratings. He also addresss real issues as well as being outrageous. I don't hear any of these other i"
+  },
+  {
+    "doc_id": 8510,
+    "actual": "talk.politics.mideast",
+    "predicted": "rec.motorcycles",
+    "text_snippet": ""
+  },
+  {
+    "doc_id": 14014,
+    "actual": "comp.graphics",
+    "predicted": "sci.med",
+    "text_snippet": "Yeah, of course... The term 'mach banding' was not the correct one, it should've been 'color quantization effect'. Although a bad color quantization effect could result in some visible mach-bands on a picture that was smooth before it was q"
+  },
+  {
+    "doc_id": 14558,
+    "actual": "alt.atheism",
+    "predicted": "soc.religion.christian",
+    "text_snippet": "Is there room for nudists? After all, if you believe most upstanding moral churches, nudity IS a sin... --------------------------------------------------------------------------------"
+  },
+  {
+    "doc_id": 15922,
+    "actual": "sci.space",
+    "predicted": "talk.politics.mideast",
+    "text_snippet": "This is, shall we say, an overly-broad statement. In particular, are you referring to the native American culture that existed in 1400, or the one that existed in 1800? (Simplify things by assuming we're talking about the eastern US rather "
+  },
+  {
+    "doc_id": 5608,
+    "actual": "talk.politics.mideast",
+    "predicted": "rec.sport.hockey",
+    "text_snippet": "What's this? Another idiot from McRCIM.McGill.EDU? Or are these all the same dope using different accounts?"
+  },
+  {
+    "doc_id": 9654,
+    "actual": "alt.atheism",
+    "predicted": "comp.sys.mac.hardware",
+    "text_snippet": "(excess stuff deleted...) I know of a similar incident about 3 years ago. A climatologist( Ithink that was his profession) named Iben Browning predicted that an earthquake would hit the New Madrid fault on Dec.3. Some schools in Missouri th"
+  },
+  {
+    "doc_id": 16640,
+    "actual": "soc.religion.christian",
+    "predicted": "alt.atheism",
+    "text_snippet": "... Thanks for posting the exact wording which I had not seen previously. The part I quote above seems to me to indicate disapproval of capital punishment - it is to be used only when other means are not sufficient; I would say this is a st"
+  },
+  {
+    "doc_id": 15556,
+    "actual": "rec.motorcycles",
+    "predicted": "sci.med",
+    "text_snippet": "This makes 5! It IS SPRING! Neither were we. Read for a few days, then try again."
+  },
+  {
+    "doc_id": 15945,
+    "actual": "talk.politics.misc",
+    "predicted": "talk.politics.guns",
+    "text_snippet": "As far as a member of the Armed Forces is concerned, the President is whatever the h*ll he wants to be. All of them recently have rather insisted on being treated as something other than a *mere* civilian. So if Hilary were asleep at the ti"
+  },
+  {
+    "doc_id": 9412,
+    "actual": "alt.atheism",
+    "predicted": "talk.politics.misc",
+    "text_snippet": "Just what do gay people do that straight people don't? Absolutely nothing. I'm a VERY straight(as an arrow), 17-year old male that is involved in the BSA. I don't care what gay people do among each other, as long as they don't make passes a"
+  },
+  {
+    "doc_id": 4857,
+    "actual": "talk.religion.misc",
+    "predicted": "talk.politics.guns",
+    "text_snippet": "Yeah. Innocents. People who hoard $250K worth of high-caliber automatic weapons and kill law-enforcement agents really fit the bill here. The only innocents were the 20+ children who were prevented from leaving a burning building by their s"
+  },
+  {
+    "doc_id": 9946,
+    "actual": "rec.motorcycles",
+    "predicted": "sci.med",
+    "text_snippet": "vvvvvvvvvvvvvvvvvvvvv VVVVVVVVVV Getting close there!"
+  },
+  {
+    "doc_id": 3110,
+    "actual": "rec.sport.baseball",
+    "predicted": "comp.windows.x",
+    "text_snippet": "Could somebody please tell me if there is a Dodgers newsletter on the Net, and if so how to subscribe? Thanks, Joel"
+  },
+  {
+    "doc_id": 6840,
+    "actual": "sci.electronics",
+    "predicted": "comp.sys.mac.hardware",
+    "text_snippet": "Or, if you've got some entreprenuerial (sp?) spirit, get a cheapy clear plastic box, mount the simm inside, and sell it as a 'Pet SIMM'! I'm sure there are *plenty* of suckers out there who would go for it!"
+  },
+  {
+    "doc_id": 12024,
+    "actual": "comp.sys.mac.hardware",
+    "predicted": "comp.sys.ibm.pc.hardware",
+    "text_snippet": "I've recently ordered a Centris 650 and need to decide on which modem to buy. I'm pretty sure I want to get a fax/data modem that can run at 14.4k, but is it worth it? I'll primarily only be 'conversing' over CompuServe or some other link t"
+  },
+  {
+    "doc_id": 12573,
+    "actual": "sci.crypt",
+    "predicted": "talk.politics.guns",
+    "text_snippet": "I never advocated \"hiding in the sand.\" I'm advocating a peaceful solution while a peaceful solution is possible. Unless you want blood on your hands. Read the above. I type corrected. (:-) English revolution-> what revolution? They never h"
+  },
+  {
+    "doc_id": 2521,
+    "actual": "talk.politics.misc",
+    "predicted": "talk.politics.guns",
+    "text_snippet": "A search for illegally held weapons (IF there were any, no evidence yet produced to this effect) does not justify firing into a house with women and children, either. It also does not justify shooting first without identifying oneself (the "
+  }
+]

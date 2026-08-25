@@ -1,0 +1,107 @@
+[
+  {
+    "query": "space shuttle orbit",
+    "results": [
+      {
+        "score": 0.41165062644401074,
+        "doc_id": 4672,
+        "label": "sci.space",
+        "text_snippet": "Archive-name: space/schedule Last-modified: $Date: 93/04/01 14:39:23 $ SPACE SHUTTLE ANSWERS, LAUNCH SCHEDULES, TV COVERAGE SHUTTLE LAUNCHINGS AND LANDINGS; SCHEDULES AND HOW TO SEE THEM Shuttle operations are discussed in the Usenet group "
+      },
+      {
+        "score": 0.3704173035062848,
+        "doc_id": 5788,
+        "label": "sci.space",
+        "text_snippet": "Ha! Watch me. It flies. It lands. It gets rebuilt. That's not what they told us back in the '70's. 1. It isn't a logical follow-on. A logical follow-on would have been either a Russian \"snowfox\" type thingey (for the lifting bodies) or some"
+      },
+      {
+        "score": 0.3685318709374068,
+        "doc_id": 4389,
+        "label": "sci.space",
+        "text_snippet": "Archive-name: space/controversy Last-modified: $Date: 93/04/01 14:39:06 $ CONTROVERSIAL QUESTIONS These issues periodically come up with much argument and few facts being offered. The summaries below attempt to represent the position on whi"
+      },
+      {
+        "score": 0.3559275238994887,
+        "doc_id": 12888,
+        "label": "sci.space",
+        "text_snippet": "This notice will be posted weekly in sci.space, sci.astro, and sci.space.shuttle. The Frequently Asked Questions (FAQ) list for sci.space and sci.astro is posted approximately monthly. It also covers many questions that come up on sci.space"
+      },
+      {
+        "score": 0.35353004671027644,
+        "doc_id": 10571,
+        "label": "sci.space",
+        "text_snippet": "Archive-name: space/net Last-modified: $Date: 93/04/01 14:39:15 $ NETWORK RESOURCES OVERVIEW You may be reading this document on any one of an amazing variety of computers, so much of the material below may not apply to you. In general, how"
+      }
+    ]
+  },
+  {
+    "query": "baseball pitcher season",
+    "results": [
+      {
+        "score": 0.4334309268491823,
+        "doc_id": 6874,
+        "label": "rec.sport.baseball",
+        "text_snippet": "BASEBALL.....ALWAYS how he"
+      },
+      {
+        "score": 0.42318219949334124,
+        "doc_id": 5366,
+        "label": "rec.sport.baseball",
+        "text_snippet": "Ah, but the illusion in football is that there is always lots of action and a sense of urgency because of the game clock (not all the time, but it happens when there's less than 5 minutes to go quite often). This sense creates drama, even w"
+      },
+      {
+        "score": 0.3234487163924626,
+        "doc_id": 14800,
+        "label": "rec.sport.baseball",
+        "text_snippet": "IMHO this is the most untrustworthy, silly stat, by today's rules, in all of baseball. My understanding is to qualify as a save a pitcher cannot pitch more than three innings and the potential tying run must at least appear in the on-deck c"
+      },
+      {
+        "score": 0.28762090687751696,
+        "doc_id": 9707,
+        "label": "rec.sport.baseball",
+        "text_snippet": ": I have wondered why a pitcher is given 8 pitches when he enters the : game. Let's be serious. The relief pitcher has normally been : throwing out in the bullpen for a few minutes. Does he really need 8 : more pitches? If the relief pitche"
+      },
+      {
+        "score": 0.2873975623691354,
+        "doc_id": 4283,
+        "label": "rec.sport.baseball",
+        "text_snippet": "I agree with Nick. What's the big deal about long games? If you want to watch baseball, there's that much more baseball to watch. And yes, baseball includes the space between plays as well as the plays themselves. I suspect that a lot of th"
+      }
+    ]
+  },
+  {
+    "query": "computer graphics image",
+    "results": [
+      {
+        "score": 0.44133018690558956,
+        "doc_id": 8050,
+        "label": "comp.graphics",
+        "text_snippet": "Technion - Israel Institute of Technology Department of Computer Science GRADUATE STUDIES IN COMPUTER GRAPHICS Applications are invited for graduate students wishing to specialize in computer graphics and related fields. Active research is "
+      },
+      {
+        "score": 0.37867333508494816,
+        "doc_id": 18102,
+        "label": "comp.graphics",
+        "text_snippet": "Archive-name: graphics/resources-list/part2 Last-modified: 1993/04/27 Computer Graphics Resource Listing : WEEKLY POSTING [ PART 2/3 ] =================================================== Last Change : 27 April 1993 14. Plotting packages ==="
+      },
+      {
+        "score": 0.3782959570441816,
+        "doc_id": 11244,
+        "label": "comp.graphics",
+        "text_snippet": "Archive-name: graphics/resources-list/part2 Last-modified: 1993/04/17 Computer Graphics Resource Listing : WEEKLY POSTING [ PART 2/3 ] =================================================== Last Change : 17 April 1993 14. Plotting packages ==="
+      },
+      {
+        "score": 0.35664673709706707,
+        "doc_id": 12488,
+        "label": "comp.graphics",
+        "text_snippet": "EUROPEAN COMPUTER RESEARCH CENTRE Research Positions in 3D Graphics ECRC is currently expanding its research staff in three-dimensional graphics. We are looking for highly qualified researchers with a PhD in computer science and a proven ab"
+      },
+      {
+        "score": 0.3506019609983758,
+        "doc_id": 10085,
+        "label": "comp.graphics",
+        "text_snippet": "Archive-name: graphics/faq This message is automatically posted once a week or so in an effort to cut down on the repetitive junk in comp.graphics. It was last changed on 26Apr93. If you have answers to other frequently asked questions that"
+      }
+    ]
+  }
+]

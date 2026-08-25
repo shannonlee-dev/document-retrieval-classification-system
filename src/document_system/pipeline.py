@@ -94,7 +94,7 @@ def build_from_dataset(bundle: DatasetBundle, config: BuildConfig) -> BuildRepor
         test_texts,
         bundle.target_names,
         batch_size=config.batch_size,
-        document_ids=test_ids,
+        document_ids=bundle.source_doc_ids[test_ids],
     )
 
     full_matrix = vectorizer.transform(bundle.texts)

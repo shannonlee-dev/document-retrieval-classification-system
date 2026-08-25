@@ -1,0 +1,154 @@
+"""Deterministic English preprocessing used by every pipeline stage."""
+
+from __future__ import annotations
+
+import re
+from dataclasses import dataclass
+
+
+TOKEN_PATTERN = re.compile(r"[a-z]+(?:'[a-z]+)?")
+
+DEFAULT_STOP_WORDS = frozenset(
+    {
+        "a",
+        "about",
+        "after",
+        "again",
+        "all",
+        "also",
+        "am",
+        "an",
+        "and",
+        "any",
+        "are",
+        "as",
+        "at",
+        "be",
+        "because",
+        "been",
+        "before",
+        "being",
+        "between",
+        "both",
+        "but",
+        "by",
+        "can",
+        "could",
+        "did",
+        "do",
+        "does",
+        "doing",
+        "down",
+        "during",
+        "each",
+        "few",
+        "for",
+        "from",
+        "further",
+        "had",
+        "has",
+        "have",
+        "having",
+        "he",
+        "her",
+        "here",
+        "hers",
+        "herself",
+        "him",
+        "himself",
+        "his",
+        "how",
+        "i",
+        "if",
+        "in",
+        "into",
+        "is",
+        "it",
+        "its",
+        "itself",
+        "just",
+        "me",
+        "more",
+        "most",
+        "my",
+        "myself",
+        "no",
+        "nor",
+        "not",
+        "now",
+        "of",
+        "off",
+        "on",
+        "once",
+        "only",
+        "or",
+        "other",
+        "our",
+        "ours",
+        "ourselves",
+        "out",
+        "over",
+        "own",
+        "same",
+        "she",
+        "should",
+        "so",
+        "some",
+        "such",
+        "than",
+        "that",
+        "the",
+        "their",
+        "theirs",
+        "them",
+        "themselves",
+        "then",
+        "there",
+        "these",
+        "they",
+        "this",
+        "those",
+        "through",
+        "to",
+        "too",
+        "under",
+        "until",
+        "up",
+        "very",
+        "was",
+        "we",
+        "were",
+        "what",
+        "when",
+        "where",
+        "which",
+        "while",
+        "who",
+        "whom",
+        "why",
+        "will",
+        "with",
+        "would",
+        "you",
+        "your",
+        "yours",
+        "yourself",
+        "yourselves",
+    }
+)
+
+
+@dataclass(frozen=True)
+class EnglishPreprocessor:
+    """Lowercase and tokenize English while applying a fixed stop-word set."""
+
+    stop_words: frozenset[str] = DEFAULT_STOP_WORDS
+
+    def tokenize(self, text: str) -> list[str]:
+        if not isinstance(text, str):
+            raise TypeError("text must be a string")
+        return [
+            token
+            for token in TOKEN_PATTERN.findall(text.lower())
+            if len(token) > 1 and token not in self.stop_words
+        ]

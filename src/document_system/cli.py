@@ -8,7 +8,6 @@ from pathlib import Path
 from typing import Sequence
 
 from .artifacts import load_search_artifacts
-from .pipeline import BuildConfig, build_project
 from .search import DocumentSearch
 
 
@@ -20,6 +19,8 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 
 def _run_build(arguments: Sequence[str]) -> int:
+    from .pipeline import BuildConfig, build_project
+
     parser = argparse.ArgumentParser(description="Build TF-IDF reports and search index")
     parser.add_argument("--artifacts", type=Path, default=Path("artifacts/runtime"))
     parser.add_argument("--reports", type=Path, default=Path("artifacts/reports"))

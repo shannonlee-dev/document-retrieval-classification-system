@@ -1,4 +1,7 @@
+import os
 from pathlib import Path
+import subprocess
+import sys
 
 import numpy as np
 
@@ -46,3 +49,33 @@ def test_cli_missing_artifacts_explains_build_command(
 
     assert exit_code == 2
     assert "python main.py build" in capsys.readouterr().err
+
+
+def test_search_process_does_not_import_build_only_matplotlib(
+    tmp_path: Path,
+) -> None:
+    write_small_artifacts(tmp_path)
+    invalid_config_dir = tmp_path / "matplotlib-config-file"
+    invalid_config_dir.write_text("not a directory", encoding="utf-8")
+    environment = os.environ.copy()
+    environment["MPLCONFIGDIR"] = str(invalid_config_dir)
+
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "main.py",
+            "--artifacts",
+            str(tmp_path),
+            "--query",
+            "space orbit",
+            "--topk",
+            "1",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        env=environment,
+    )
+
+    assert completed.returncode == 0
+    assert completed.stderr == ""

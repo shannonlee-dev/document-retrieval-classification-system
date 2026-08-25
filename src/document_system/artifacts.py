@@ -10,6 +10,7 @@ from typing import Sequence
 import numpy as np
 
 from .preprocessing import EnglishPreprocessor
+from .privacy import is_safe_text
 from .sparse_matrix import SparseMatrix
 from .tfidf import NumpyTfidfVectorizer
 
@@ -38,6 +39,11 @@ def save_search_artifacts(
 ) -> None:
     if vectorizer.idf_ is None:
         raise RuntimeError("cannot save an unfitted vectorizer")
+    if any(
+        not isinstance(snippet, str) or not is_safe_text(snippet)
+        for snippet in snippets
+    ):
+        raise ValueError("snippets must contain only nonblank safe terms")
     path = Path(directory)
     path.mkdir(parents=True, exist_ok=True)
     np.savez_compressed(

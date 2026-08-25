@@ -81,6 +81,21 @@ def test_search_rejects_invalid_topk() -> None:
         searcher.search("space", topk=3)
 
 
+def test_search_rejects_unsafe_or_blank_snippets() -> None:
+    searcher = make_small_searcher()
+
+    for snippets in (["space shuttle orbit", "Alice"], ["space shuttle orbit", " "]):
+        with pytest.raises(ValueError, match="safe"):
+            DocumentSearch(
+                vectorizer=searcher.vectorizer,
+                matrix=searcher.matrix,
+                snippets=snippets,
+                labels=searcher.labels,
+                target_names=searcher.target_names,
+                document_ids=searcher.document_ids,
+            )
+
+
 def test_equal_scores_are_ordered_by_document_id() -> None:
     searcher = make_small_searcher()
 

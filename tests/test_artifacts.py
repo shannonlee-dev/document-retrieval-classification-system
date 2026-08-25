@@ -66,6 +66,22 @@ def test_search_artifacts_store_sanitized_search_fields(tmp_path: Path) -> None:
     assert metadata["privacy_policy"] == "safe-topic-terms-v1"
 
 
+def test_search_artifacts_reject_unsafe_or_blank_snippets(tmp_path: Path) -> None:
+    vectorizer, matrix, _, labels, target_names, document_ids = make_search_data()
+
+    for snippets in (["space shuttle orbit", "Alice"], ["space shuttle orbit", " "]):
+        with pytest.raises(ValueError, match="safe"):
+            save_search_artifacts(
+                tmp_path,
+                vectorizer,
+                matrix,
+                snippets,
+                labels,
+                target_names,
+                document_ids,
+            )
+
+
 def test_search_artifacts_reject_legacy_metadata(tmp_path: Path) -> None:
     vectorizer, matrix, snippets, labels, target_names, document_ids = make_search_data()
     save_search_artifacts(

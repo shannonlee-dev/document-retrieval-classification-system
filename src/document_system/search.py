@@ -8,6 +8,7 @@ from typing import Sequence
 
 import numpy as np
 
+from .privacy import is_safe_text
 from .sparse_matrix import SparseMatrix
 from .tfidf import NumpyTfidfVectorizer
 
@@ -63,6 +64,11 @@ class DocumentSearch:
             )
         if self.matrix.shape[1] != len(self.vectorizer.vocabulary_):
             raise ValueError("matrix columns must match vectorizer vocabulary")
+        if any(
+            not isinstance(snippet, str) or not is_safe_text(snippet)
+            for snippet in self.snippets
+        ):
+            raise ValueError("snippets must contain only nonblank safe terms")
 
     def search(self, query: str, topk: int = 5) -> list[SearchResult]:
         document_count = self.matrix.shape[0]

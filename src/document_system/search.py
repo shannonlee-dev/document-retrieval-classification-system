@@ -33,34 +33,34 @@ def sparse_dot(
 
     if left_indices.size != left_data.size or right_indices.size != right_data.size:
         raise ValueError("indices and data lengths must match")
-    left = right = 0
-    result = 0.0
-    while left < left_indices.size and right < right_indices.size:
-        left_column = int(left_indices[left])
-        right_column = int(right_indices[right])
-        if left_column == right_column:
-            result += float(left_data[left] * right_data[right])
-            left += 1
-            right += 1
-        elif left_column < right_column:
-            left += 1
-        else:
-            right += 1
-    return result
+    _, left_positions, right_positions = np.intersect1d(
+        left_indices,
+        right_indices,
+        assume_unique=True,
+        return_indices=True,
+    )
+    return float(np.dot(left_data[left_positions], right_data[right_positions]))
 
 
 @dataclass(frozen=True)
 class DocumentSearch:
     vectorizer: NumpyTfidfVectorizer
     matrix: SparseMatrix
-    texts: Sequence[str]
+    snippets: Sequence[str]
     labels: np.ndarray
     target_names: tuple[str, ...]
+    document_ids: np.ndarray
 
     def __post_init__(self) -> None:
         document_count = self.matrix.shape[0]
-        if len(self.texts) != document_count or len(self.labels) != document_count:
-            raise ValueError("matrix, texts, and labels must have the same row count")
+        if (
+            len(self.snippets) != document_count
+            or len(self.labels) != document_count
+            or len(self.document_ids) != document_count
+        ):
+            raise ValueError(
+                "matrix, snippets, labels, and document_ids must have the same row count"
+            )
         if self.matrix.shape[1] != len(self.vectorizer.vocabulary_):
             raise ValueError("matrix columns must match vectorizer vocabulary")
 
@@ -82,14 +82,13 @@ class DocumentSearch:
                 document_indices,
                 document_values,
             )
-        doc_ids = np.arange(document_count)
-        ranked_ids = np.lexsort((doc_ids, -scores))[:topk]
+        ranked_ids = np.lexsort((self.document_ids, -scores))[:topk]
         return [
             SearchResult(
                 score=float(scores[doc_id]),
-                doc_id=int(doc_id),
+                doc_id=int(self.document_ids[doc_id]),
                 label=self.target_names[int(self.labels[doc_id])],
-                text_snippet=_snippet(self.texts[doc_id]),
+                text_snippet=_snippet(self.snippets[doc_id]),
             )
             for doc_id in ranked_ids
         ]

@@ -15,15 +15,31 @@ def make_small_searcher() -> DocumentSearch:
     return DocumentSearch(
         vectorizer=vectorizer,
         matrix=matrix,
-        texts=texts,
+        snippets=texts,
         labels=np.array([0, 1], dtype=np.int32),
         target_names=("space", "baseball"),
+        document_ids=np.array([42, 99], dtype=np.int64),
     )
 
 
-def test_sparse_dot_equals_dense_dot() -> None:
+def test_sparse_dot_equals_dense_dot(monkeypatch: pytest.MonkeyPatch) -> None:
     left_indices = np.array([0, 3], dtype=np.int32)
     right_indices = np.array([1, 3], dtype=np.int32)
+
+    intersect1d = np.intersect1d
+    dot = np.dot
+    calls: list[str] = []
+
+    def record_intersect1d(*args: object, **kwargs: object) -> object:
+        calls.append("intersect1d")
+        return intersect1d(*args, **kwargs)
+
+    def record_dot(*args: object, **kwargs: object) -> object:
+        calls.append("dot")
+        return dot(*args, **kwargs)
+
+    monkeypatch.setattr(np, "intersect1d", record_intersect1d)
+    monkeypatch.setattr(np, "dot", record_dot)
 
     result = sparse_dot(
         left_indices,
@@ -33,6 +49,7 @@ def test_sparse_dot_equals_dense_dot() -> None:
     )
 
     assert result == pytest.approx(0.28)
+    assert calls == ["intersect1d", "dot"]
 
 
 def test_search_returns_score_id_label_and_snippet() -> None:
@@ -40,7 +57,7 @@ def test_search_returns_score_id_label_and_snippet() -> None:
 
     result = searcher.search("shuttle orbit", topk=1)[0]
 
-    assert result.doc_id == 0
+    assert result.doc_id == 42
     assert result.label == "space"
     assert result.score > 0
     assert result.text_snippet.startswith("space shuttle")
@@ -69,4 +86,4 @@ def test_equal_scores_are_ordered_by_document_id() -> None:
 
     results = searcher.search("space", topk=2)
 
-    assert [result.doc_id for result in results] == [0, 1]
+    assert [result.doc_id for result in results] == [42, 99]

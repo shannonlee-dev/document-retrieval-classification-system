@@ -12,14 +12,15 @@ from document_system.tfidf import NumpyTfidfVectorizer
 
 
 def write_small_artifacts(path: Path) -> None:
-    texts = ["space shuttle orbit", "baseball pitcher game"]
+    snippets = ["space shuttle orbit", "baseball pitcher game"]
+    document_ids = np.array([42, 99], dtype=np.int64)
     labels = np.array([0, 1], dtype=np.int32)
     vectorizer = NumpyTfidfVectorizer(
         EnglishPreprocessor(stop_words=frozenset())
     )
-    matrix = vectorizer.fit_transform(texts)
+    matrix = vectorizer.fit_transform(snippets)
     save_search_artifacts(
-        path, vectorizer, matrix, texts, labels, ("space", "baseball")
+        path, vectorizer, matrix, snippets, labels, ("space", "baseball"), document_ids
     )
 
 
@@ -59,6 +60,7 @@ def test_search_process_does_not_import_build_only_matplotlib(
     invalid_config_dir.write_text("not a directory", encoding="utf-8")
     environment = os.environ.copy()
     environment["MPLCONFIGDIR"] = str(invalid_config_dir)
+    environment["PYTHONPATH"] = str(Path("src").resolve())
 
     completed = subprocess.run(
         [

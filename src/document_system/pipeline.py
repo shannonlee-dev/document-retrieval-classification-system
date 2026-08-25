@@ -101,9 +101,10 @@ def build_from_dataset(bundle: DatasetBundle, config: BuildConfig) -> BuildRepor
     searcher = DocumentSearch(
         vectorizer=vectorizer,
         matrix=full_matrix,
-        texts=bundle.texts,
+        snippets=bundle.texts,
         labels=bundle.labels,
         target_names=bundle.target_names,
+        document_ids=bundle.source_doc_ids,
     )
     search_examples = [
         {
@@ -162,6 +163,7 @@ def build_from_dataset(bundle: DatasetBundle, config: BuildConfig) -> BuildRepor
         bundle.texts,
         bundle.labels,
         bundle.target_names,
+        bundle.source_doc_ids,
     )
     return BuildReport(
         document_count=len(bundle.texts),

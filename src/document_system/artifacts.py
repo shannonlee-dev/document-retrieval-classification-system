@@ -21,18 +21,20 @@ ARTIFACT_VERSION = 1
 class SearchArtifacts:
     vectorizer: NumpyTfidfVectorizer
     matrix: SparseMatrix
-    texts: tuple[str, ...]
+    snippets: tuple[str, ...]
     labels: np.ndarray
     target_names: tuple[str, ...]
+    document_ids: np.ndarray
 
 
 def save_search_artifacts(
     directory: str | Path,
     vectorizer: NumpyTfidfVectorizer,
     matrix: SparseMatrix,
-    texts: Sequence[str],
+    snippets: Sequence[str],
     labels: np.ndarray,
     target_names: tuple[str, ...],
+    document_ids: np.ndarray,
 ) -> None:
     if vectorizer.idf_ is None:
         raise RuntimeError("cannot save an unfitted vectorizer")
@@ -52,9 +54,11 @@ def save_search_artifacts(
         "index_dtype": str(matrix.indices.dtype),
         "feature_names": list(vectorizer.feature_names_),
         "stop_words": sorted(vectorizer.preprocessor.stop_words),
-        "texts": list(texts),
+        "snippets": list(snippets),
         "labels": np.asarray(labels).astype(int).tolist(),
         "target_names": list(target_names),
+        "document_ids": np.asarray(document_ids).astype(int).tolist(),
+        "privacy_policy": "safe-topic-terms-v1",
     }
     (path / "metadata.json").write_text(
         json.dumps(metadata, ensure_ascii=False),
@@ -73,6 +77,9 @@ def load_search_artifacts(directory: str | Path) -> SearchArtifacts:
     metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
     if metadata.get("artifact_version") != ARTIFACT_VERSION:
         raise ValueError("artifact version mismatch; rebuild with `python main.py build`")
+    required_fields = {"snippets", "document_ids", "privacy_policy"}
+    if not required_fields.issubset(metadata):
+        raise ValueError("artifact metadata is outdated; rebuild with `python main.py build`")
     with np.load(matrix_path, allow_pickle=False) as arrays:
         data = arrays["data"].copy()
         indices = arrays["indices"].copy()
@@ -92,15 +99,21 @@ def load_search_artifacts(directory: str | Path) -> SearchArtifacts:
     vectorizer.vocabulary_ = {term: index for index, term in enumerate(feature_names)}
     vectorizer.idf_ = idf
     matrix = SparseMatrix(data=data, indices=indices, indptr=indptr, shape=shape)
-    texts = tuple(str(text) for text in metadata["texts"])
+    snippets = tuple(str(snippet) for snippet in metadata["snippets"])
     labels = np.asarray(metadata["labels"], dtype=np.int32)
     target_names = tuple(str(name) for name in metadata["target_names"])
-    if len(texts) != shape[0] or labels.size != shape[0]:
+    document_ids = np.asarray(metadata["document_ids"], dtype=np.int64)
+    if (
+        len(snippets) != shape[0]
+        or labels.size != shape[0]
+        or document_ids.size != shape[0]
+    ):
         raise ValueError("artifact document count mismatch; rebuild with `python main.py build`")
     return SearchArtifacts(
         vectorizer=vectorizer,
         matrix=matrix,
-        texts=texts,
+        snippets=snippets,
         labels=labels,
         target_names=target_names,
+        document_ids=document_ids,
     )

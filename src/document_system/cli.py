@@ -55,9 +55,10 @@ def _run_search(arguments: Sequence[str]) -> int:
         searcher = DocumentSearch(
             vectorizer=artifacts.vectorizer,
             matrix=artifacts.matrix,
-            texts=artifacts.texts,
+            snippets=artifacts.snippets,
             labels=artifacts.labels,
             target_names=artifacts.target_names,
+            document_ids=artifacts.document_ids,
         )
         results = searcher.search(options.query, options.topk)
     except (FileNotFoundError, ValueError) as error:

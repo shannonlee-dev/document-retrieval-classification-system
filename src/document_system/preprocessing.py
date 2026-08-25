@@ -6,8 +6,6 @@ import re
 from dataclasses import dataclass
 
 
-TOKEN_PATTERN = re.compile(r"[a-z]+(?:'[a-z]+)?")
-
 DEFAULT_STOP_WORDS = frozenset(
     {
         "a",
@@ -147,8 +145,9 @@ class EnglishPreprocessor:
     def tokenize(self, text: str) -> list[str]:
         if not isinstance(text, str):
             raise TypeError("text must be a string")
+        cleaned_text = re.sub(r"[^a-z\s]+", " ", text.lower())
         return [
             token
-            for token in TOKEN_PATTERN.findall(text.lower())
+            for token in cleaned_text.split()
             if len(token) > 1 and token not in self.stop_words
         ]

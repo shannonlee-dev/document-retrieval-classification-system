@@ -13,6 +13,17 @@ def test_tokenize_normalizes_and_filters() -> None:
     ]
 
 
+def test_whitespace_tokenizer_cleans_then_splits() -> None:
+    processor = EnglishPreprocessor(stop_words=frozenset({"and"}))
+
+    assert processor.tokenize("Image, PIXEL and orbit-rocket!") == [
+        "image",
+        "pixel",
+        "orbit",
+        "rocket",
+    ]
+
+
 def test_tokenize_rejects_non_string_text() -> None:
     processor = EnglishPreprocessor()
 

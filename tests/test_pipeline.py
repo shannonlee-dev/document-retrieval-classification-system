@@ -26,6 +26,7 @@ def test_small_pipeline_writes_consistent_report_and_runtime_artifacts(
         texts=texts,
         labels=np.array([0, 0, 0, 1, 1, 1, 0, 1, 0, 1], dtype=np.int32),
         target_names=("space", "baseball"),
+        source_doc_ids=np.arange(len(texts), dtype=np.int32),
     )
     config = BuildConfig(
         runtime_dir=tmp_path / "runtime",

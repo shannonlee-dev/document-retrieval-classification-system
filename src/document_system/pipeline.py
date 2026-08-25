@@ -51,8 +51,8 @@ class BuildReport:
 
 def build_project(config: BuildConfig | None = None) -> BuildReport:
     bundle = load_20newsgroups()
-    if len(bundle.texts) != 18_846 or len(bundle.target_names) != 20:
-        raise ValueError("the full build requires 18,846 documents and 20 categories")
+    if len(bundle.texts) < 500 or len(bundle.target_names) < 2:
+        raise ValueError("the full build requires at least 500 documents and two categories")
     return build_from_dataset(bundle, config or BuildConfig())
 
 

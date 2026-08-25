@@ -1,0 +1,48 @@
+from pathlib import Path
+
+import numpy as np
+
+from document_system.artifacts import save_search_artifacts
+from document_system.cli import main
+from document_system.preprocessing import EnglishPreprocessor
+from document_system.tfidf import NumpyTfidfVectorizer
+
+
+def write_small_artifacts(path: Path) -> None:
+    texts = ["space shuttle orbit", "baseball pitcher game"]
+    labels = np.array([0, 1], dtype=np.int32)
+    vectorizer = NumpyTfidfVectorizer(
+        EnglishPreprocessor(stop_words=frozenset())
+    )
+    matrix = vectorizer.fit_transform(texts)
+    save_search_artifacts(
+        path, vectorizer, matrix, texts, labels, ("space", "baseball")
+    )
+
+
+def test_cli_search_prints_rank_score_id_and_snippet(
+    tmp_path: Path, capsys
+) -> None:
+    write_small_artifacts(tmp_path)
+
+    exit_code = main(
+        ["--artifacts", str(tmp_path), "--query", "space orbit", "--topk", "1"]
+    )
+
+    output = capsys.readouterr().out
+    assert exit_code == 0
+    assert "1." in output
+    assert "score=" in output
+    assert "doc_id=" in output
+    assert "category=space" in output
+
+
+def test_cli_missing_artifacts_explains_build_command(
+    tmp_path: Path, capsys
+) -> None:
+    exit_code = main(
+        ["--artifacts", str(tmp_path), "--query", "space", "--topk", "1"]
+    )
+
+    assert exit_code == 2
+    assert "python main.py build" in capsys.readouterr().err

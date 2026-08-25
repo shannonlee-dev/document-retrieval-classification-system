@@ -3,34 +3,34 @@
     "query": "space shuttle orbit",
     "results": [
       {
-        "score": 0.41165062644401074,
-        "doc_id": 4672,
+        "score": 0.9218943906641169,
+        "doc_id": 1727,
         "label": "sci.space",
-        "text_snippet": "Archive-name: space/schedule Last-modified: $Date: 93/04/01 14:39:23 $ SPACE SHUTTLE ANSWERS, LAUNCH SCHEDULES, TV COVERAGE SHUTTLE LAUNCHINGS AND LANDINGS; SCHEDULES AND HOW TO SEE THEM Shuttle operations are discussed in the Usenet group "
+        "text_snippet": "mission space orbit orbit shuttle orbit shuttle space shuttle shuttle orbital solar orbit orbit"
       },
       {
-        "score": 0.3704173035062848,
-        "doc_id": 5788,
+        "score": 0.8953241684256494,
+        "doc_id": 421,
         "label": "sci.space",
-        "text_snippet": "Ha! Watch me. It flies. It lands. It gets rebuilt. That's not what they told us back in the '70's. 1. It isn't a logical follow-on. A logical follow-on would have been either a Russian \"snowfox\" type thingey (for the lifting bodies) or some"
+        "text_snippet": "shuttle orbit space shuttle program"
       },
       {
-        "score": 0.3685318709374068,
-        "doc_id": 4389,
+        "score": 0.889946133319476,
+        "doc_id": 2108,
         "label": "sci.space",
-        "text_snippet": "Archive-name: space/controversy Last-modified: $Date: 93/04/01 14:39:06 $ CONTROVERSIAL QUESTIONS These issues periodically come up with much argument and few facts being offered. The summaries below attempt to represent the position on whi"
+        "text_snippet": "shuttle orbit"
       },
       {
-        "score": 0.3559275238994887,
-        "doc_id": 12888,
+        "score": 0.8643562945879565,
+        "doc_id": 379,
         "label": "sci.space",
-        "text_snippet": "This notice will be posted weekly in sci.space, sci.astro, and sci.space.shuttle. The Frequently Asked Questions (FAQ) list for sci.space and sci.astro is posted approximately monthly. It also covers many questions that come up on sci.space"
+        "text_snippet": "space file space shuttle space gravity shuttle flight launch orbit orbit orbit orbit space launch orbit orbit lunar gravity solar data space shuttle file space space space shuttle program"
       },
       {
-        "score": 0.35353004671027644,
-        "doc_id": 10571,
+        "score": 0.8009953421255966,
+        "doc_id": 2581,
         "label": "sci.space",
-        "text_snippet": "Archive-name: space/net Last-modified: $Date: 93/04/01 14:39:15 $ NETWORK RESOURCES OVERVIEW You may be reading this document on any one of an amazing variety of computers, so much of the material below may not apply to you. In general, how"
+        "text_snippet": "space space shuttle team team data shuttle solar shuttle shuttle space team orbit solar orbit orbit data"
       }
     ]
   },
@@ -38,34 +38,34 @@
     "query": "baseball pitcher season",
     "results": [
       {
-        "score": 0.4334309268491823,
-        "doc_id": 6874,
+        "score": 0.8213134555315265,
+        "doc_id": 862,
         "label": "rec.sport.baseball",
-        "text_snippet": "BASEBALL.....ALWAYS how he"
+        "text_snippet": "baseball pitcher"
       },
       {
-        "score": 0.42318219949334124,
-        "doc_id": 5366,
+        "score": 0.7704213758053482,
+        "doc_id": 1409,
         "label": "rec.sport.baseball",
-        "text_snippet": "Ah, but the illusion in football is that there is always lots of action and a sense of urgency because of the game clock (not all the time, but it happens when there's less than 5 minutes to go quite often). This sense creates drama, even w"
+        "text_snippet": "baseball season"
       },
       {
-        "score": 0.3234487163924626,
-        "doc_id": 14800,
+        "score": 0.7704213758053482,
+        "doc_id": 1487,
         "label": "rec.sport.baseball",
-        "text_snippet": "IMHO this is the most untrustworthy, silly stat, by today's rules, in all of baseball. My understanding is to qualify as a save a pitcher cannot pitch more than three innings and the potential tying run must at least appear in the on-deck c"
+        "text_snippet": "season baseball"
       },
       {
-        "score": 0.28762090687751696,
-        "doc_id": 9707,
+        "score": 0.7003058830688736,
+        "doc_id": 638,
         "label": "rec.sport.baseball",
-        "text_snippet": ": I have wondered why a pitcher is given 8 pitches when he enters the : game. Let's be serious. The relief pitcher has normally been : throwing out in the bullpen for a few minutes. Does he really need 8 : more pitches? If the relief pitche"
+        "text_snippet": "pitcher win season"
       },
       {
-        "score": 0.2873975623691354,
-        "doc_id": 4283,
+        "score": 0.6820820306351784,
+        "doc_id": 805,
         "label": "rec.sport.baseball",
-        "text_snippet": "I agree with Nick. What's the big deal about long games? If you want to watch baseball, there's that much more baseball to watch. And yes, baseball includes the space between plays as well as the plays themselves. I suspect that a lot of th"
+        "text_snippet": "season season league league league league player pitcher pitcher pitcher pitcher pitcher pitcher pitcher pitcher pitcher pitcher pitcher pitcher pitcher pitcher"
       }
     ]
   },
@@ -73,34 +73,34 @@
     "query": "computer graphics image",
     "results": [
       {
-        "score": 0.44133018690558956,
-        "doc_id": 8050,
+        "score": 0.9412623088476502,
+        "doc_id": 92,
         "label": "comp.graphics",
-        "text_snippet": "Technion - Israel Institute of Technology Department of Computer Science GRADUATE STUDIES IN COMPUTER GRAPHICS Applications are invited for graduate students wishing to specialize in computer graphics and related fields. Active research is "
+        "text_snippet": "image computer graphics image computer image image computer graphics image"
       },
       {
-        "score": 0.37867333508494816,
-        "doc_id": 18102,
+        "score": 0.9010371588783834,
+        "doc_id": 1071,
         "label": "comp.graphics",
-        "text_snippet": "Archive-name: graphics/resources-list/part2 Last-modified: 1993/04/27 Computer Graphics Resource Listing : WEEKLY POSTING [ PART 2/3 ] =================================================== Last Change : 27 April 1993 14. Plotting packages ==="
+        "text_snippet": "image computer graphics computer graphics computer graphics computer graphics"
       },
       {
-        "score": 0.3782959570441816,
-        "doc_id": 11244,
+        "score": 0.8613291856612166,
+        "doc_id": 2799,
         "label": "comp.graphics",
-        "text_snippet": "Archive-name: graphics/resources-list/part2 Last-modified: 1993/04/17 Computer Graphics Resource Listing : WEEKLY POSTING [ PART 2/3 ] =================================================== Last Change : 17 April 1993 14. Plotting packages ==="
+        "text_snippet": "run algorithm computer graphics computer graphics image computer graphics"
       },
       {
-        "score": 0.35664673709706707,
-        "doc_id": 12488,
+        "score": 0.857230718095601,
+        "doc_id": 1918,
         "label": "comp.graphics",
-        "text_snippet": "EUROPEAN COMPUTER RESEARCH CENTRE Research Positions in 3D Graphics ECRC is currently expanding its research staff in three-dimensional graphics. We are looking for highly qualified researchers with a PhD in computer science and a proven ab"
+        "text_snippet": "computer computer graphics computer graphics image computer animation graphics graphics video"
       },
       {
-        "score": 0.3506019609983758,
-        "doc_id": 10085,
+        "score": 0.8475787304369888,
+        "doc_id": 2041,
         "label": "comp.graphics",
-        "text_snippet": "Archive-name: graphics/faq This message is automatically posted once a week or so in an effort to cut down on the repetitive junk in comp.graphics. It was last changed on 26Apr93. If you have answers to other frequently asked questions that"
+        "text_snippet": "computer image"
       }
     ]
   }

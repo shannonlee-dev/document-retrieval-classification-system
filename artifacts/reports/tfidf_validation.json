@@ -1,10 +1,10 @@
 {
   "shape": [
-    15076,
-    89304
+    1638,
+    68
   ],
-  "max_absolute_error": 7.549516567451064e-15,
-  "mean_absolute_error": 8.379477537989127e-21,
+  "max_absolute_error": 1.1102230246251565e-16,
+  "mean_absolute_error": 4.641129747908932e-20,
   "tolerance": 1e-06,
   "passed": true,
   "settings": {

@@ -8,44 +8,12 @@
   },
   "terms": [
     {
-      "term": "accomplish",
-      "column": 454,
-      "tf": 1.0,
-      "idf": 6.957364036649272,
-      "tfidf_before_norm": 6.957364036649272,
-      "tfidf_after_norm": 0.2256536431227543
-    },
-    {
-      "term": "advantages",
-      "column": 1094,
-      "tf": 1.0,
-      "idf": 6.729105384668292,
-      "tfidf_before_norm": 6.729105384668292,
-      "tfidf_after_norm": 0.21825035128370837
-    },
-    {
-      "term": "ago",
-      "column": 1493,
-      "tf": 1.0,
-      "idf": 4.172036288632061,
-      "tfidf_before_norm": 4.172036288632061,
-      "tfidf_after_norm": 0.1353149242746198
-    },
-    {
-      "term": "answer",
-      "column": 3020,
-      "tf": 1.0,
-      "idf": 4.3594339984578765,
-      "tfidf_before_norm": 4.3594339984578765,
-      "tfidf_after_norm": 0.14139294113737144
-    },
-    {
-      "term": "application",
-      "column": 3456,
-      "tf": 1.0,
-      "idf": 4.9006139061715075,
-      "tfidf_before_norm": 4.9006139061715075,
-      "tfidf_after_norm": 0.15894545342753333
+      "term": "baseball",
+      "column": 4,
+      "tf": 2.0,
+      "idf": 3.446014521142569,
+      "tfidf_before_norm": 6.892029042285138,
+      "tfidf_after_norm": 1.0
     }
   ]
 }

@@ -42,10 +42,11 @@ def test_loader_returns_only_safe_nonblank_documents(monkeypatch) -> None:
     raw_texts = (
         ["Alice alice@example.com image pixel"] * 200
         + ["Bob 010-1234-5678 baseball pitcher"] * 200
-        + ["medical treatment details rocket orbit"] * 200
-        + ["Alice alice@example.com treatment"]
+        + ["Mission control discusses rocket orbit telemetry"] * 200
+        + ["Alice alice@example.com patient treatment"]
+        + ["alice@example.com"]
     )
-    raw_labels = np.array([0] * 200 + [1] * 200 + [2] * 200 + [0])
+    raw_labels = np.array([0] * 200 + [1] * 200 + [2] * 200 + [0, 1])
     fake = SimpleNamespace(
         data=raw_texts,
         target=raw_labels,
@@ -55,9 +56,25 @@ def test_loader_returns_only_safe_nonblank_documents(monkeypatch) -> None:
 
     bundle = dataset_module.load_20newsgroups()
 
-    assert len(bundle.texts) == 600
-    assert len(bundle.source_doc_ids) == 600
+    assert len(bundle.texts) == 601
+    assert len(bundle.source_doc_ids) == 601
     assert all(is_safe_text(text) for text in bundle.texts)
+    assert bundle.privacy_report.raw_document_count == 602
+    assert bundle.privacy_report.retained_document_count == 601
+    assert bundle.privacy_report.dropped_after_sanitization == 1
+    assert bundle.privacy_report.redactions == {
+        "email": 202,
+        "phone": 200,
+        "url": 0,
+        "ipv4": 0,
+        "ipv6": 0,
+    }
+    assert bundle.privacy_report.retention_rate == pytest.approx(601 / 602)
+    assert bundle.privacy_report.category_counts == {
+        "comp.graphics": {"raw": 201, "retained": 201, "excluded": 0},
+        "rec.sport.baseball": {"raw": 201, "retained": 200, "excluded": 1},
+        "sci.space": {"raw": 200, "retained": 200, "excluded": 0},
+    }
 
 
 def test_validate_dataset_accepts_valid_input() -> None:

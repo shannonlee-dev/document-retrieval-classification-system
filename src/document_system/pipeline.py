@@ -17,6 +17,7 @@ from .classification import (
 )
 from .dataset import DatasetBundle, load_20newsgroups
 from .preprocessing import EnglishPreprocessor
+from .privacy import PrivacyReport, make_safe_snippet
 from .search import DocumentSearch
 from .tfidf import NumpyTfidfVectorizer
 from .validation import stage_example, validate_against_sklearn
@@ -87,11 +88,13 @@ def build_from_dataset(bundle: DatasetBundle, config: BuildConfig) -> BuildRepor
         epochs=config.epochs,
         random_state=config.random_state,
     )
+    snippets = tuple(make_safe_snippet(text) for text in bundle.texts)
+    test_snippets = [snippets[int(index)] for index in test_ids]
     classification = evaluate_classifier(
         model,
         test_matrix,
         test_labels,
-        test_texts,
+        test_snippets,
         bundle.target_names,
         batch_size=config.batch_size,
         document_ids=bundle.source_doc_ids[test_ids],
@@ -101,7 +104,7 @@ def build_from_dataset(bundle: DatasetBundle, config: BuildConfig) -> BuildRepor
     searcher = DocumentSearch(
         vectorizer=vectorizer,
         matrix=full_matrix,
-        snippets=bundle.texts,
+        snippets=snippets,
         labels=bundle.labels,
         target_names=bundle.target_names,
         document_ids=bundle.source_doc_ids,
@@ -118,6 +121,14 @@ def build_from_dataset(bundle: DatasetBundle, config: BuildConfig) -> BuildRepor
     ]
 
     config.reports_dir.mkdir(parents=True, exist_ok=True)
+    privacy_report = bundle.privacy_report or PrivacyReport.for_retained_documents(
+        len(bundle.texts),
+        bundle.labels,
+        bundle.target_names,
+    )
+    if privacy_report.retained_document_count != len(bundle.texts):
+        raise ValueError("privacy report retained count must match the dataset")
+    _write_json(config.reports_dir / "privacy_report.json", privacy_report.to_dict())
     _write_json(config.reports_dir / "tfidf_validation.json", validation.to_dict())
     matrix_stats = full_matrix.memory_stats()
     matrix_stats.update(
@@ -160,7 +171,7 @@ def build_from_dataset(bundle: DatasetBundle, config: BuildConfig) -> BuildRepor
         config.runtime_dir,
         vectorizer,
         full_matrix,
-        bundle.texts,
+        snippets,
         bundle.labels,
         bundle.target_names,
         bundle.source_doc_ids,

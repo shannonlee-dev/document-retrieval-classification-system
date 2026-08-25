@@ -6,6 +6,7 @@ import pytest
 
 from document_system.artifacts import load_search_artifacts, save_search_artifacts
 from document_system.preprocessing import EnglishPreprocessor
+from document_system.privacy import SNIPPET_LIMIT
 from document_system.tfidf import NumpyTfidfVectorizer
 
 
@@ -63,7 +64,7 @@ def test_search_artifacts_store_sanitized_search_fields(tmp_path: Path) -> None:
     assert "texts" not in metadata
     assert metadata["snippets"] == list(snippets)
     assert metadata["document_ids"] == [42, 99]
-    assert metadata["privacy_policy"] == "safe-topic-terms-v1"
+    assert metadata["privacy_policy"] == "structured-pii-redaction-v3"
 
 
 def test_search_artifacts_reject_unsafe_or_blank_snippets(tmp_path: Path) -> None:
@@ -82,6 +83,22 @@ def test_search_artifacts_reject_unsafe_or_blank_snippets(tmp_path: Path) -> Non
             )
 
 
+def test_search_artifacts_reject_snippets_over_limit(tmp_path: Path) -> None:
+    vectorizer, matrix, _, labels, target_names, document_ids = make_search_data()
+    long_snippet = "x" * (SNIPPET_LIMIT + 1)
+
+    with pytest.raises(ValueError, match="snippet"):
+        save_search_artifacts(
+            tmp_path,
+            vectorizer,
+            matrix,
+            ["space shuttle orbit", long_snippet],
+            labels,
+            target_names,
+            document_ids,
+        )
+
+
 def test_search_artifacts_reject_legacy_metadata(tmp_path: Path) -> None:
     vectorizer, matrix, snippets, labels, target_names, document_ids = make_search_data()
     save_search_artifacts(
@@ -90,6 +107,27 @@ def test_search_artifacts_reject_legacy_metadata(tmp_path: Path) -> None:
     metadata_path = tmp_path / "metadata.json"
     metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
     del metadata["privacy_policy"]
+    metadata_path.write_text(json.dumps(metadata), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="rebuild"):
+        load_search_artifacts(tmp_path)
+
+
+@pytest.mark.parametrize(
+    "old_policy",
+    ["safe-topic-terms-v1", "redaction-and-risk-screen-v2"],
+)
+def test_search_artifacts_reject_old_privacy_policy(
+    tmp_path: Path,
+    old_policy: str,
+) -> None:
+    vectorizer, matrix, snippets, labels, target_names, document_ids = make_search_data()
+    save_search_artifacts(
+        tmp_path, vectorizer, matrix, snippets, labels, target_names, document_ids
+    )
+    metadata_path = tmp_path / "metadata.json"
+    metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+    metadata["privacy_policy"] = old_policy
     metadata_path.write_text(json.dumps(metadata), encoding="utf-8")
 
     with pytest.raises(ValueError, match="rebuild"):

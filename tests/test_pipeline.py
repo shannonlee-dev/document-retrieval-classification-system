@@ -6,14 +6,14 @@ import numpy as np
 import document_system.pipeline as pipeline_module
 from document_system.dataset import DatasetBundle
 from document_system.pipeline import BuildConfig, build_from_dataset, build_project
-from document_system.privacy import is_safe_text
+from document_system.privacy import SNIPPET_LIMIT, is_safe_text
 
 
 def test_small_pipeline_writes_consistent_report_and_runtime_artifacts(
     monkeypatch,
     tmp_path: Path,
 ) -> None:
-    texts = (
+    base_texts = (
         "space shuttle orbit mission",
         "rocket moon planet space",
         "astronaut orbit spacecraft",
@@ -24,6 +24,9 @@ def test_small_pipeline_writes_consistent_report_and_runtime_artifacts(
         "baseball game score",
         "rocket launch orbit",
         "team pitcher hitter",
+    )
+    texts = tuple(
+        f"{text} {' '.join(['telemetry'] * 40)} farendtoken" for text in base_texts
     )
     source_doc_ids = np.arange(100, 110, dtype=np.int32)
     bundle = DatasetBundle(
@@ -70,6 +73,30 @@ def test_small_pipeline_writes_consistent_report_and_runtime_artifacts(
     assert "texts" not in metadata
     assert metadata["document_ids"] == source_doc_ids.tolist()
     assert all(is_safe_text(text) for text in metadata["snippets"])
+    assert all(len(text) <= SNIPPET_LIMIT for text in metadata["snippets"])
+    assert all(text not in metadata["snippets"] for text in texts)
+    assert "farendtoken" in metadata["feature_names"]
+    assert all("farendtoken" not in snippet for snippet in metadata["snippets"])
+
+    privacy_report = json.loads(
+        (config.reports_dir / "privacy_report.json").read_text(encoding="utf-8")
+    )
+    assert privacy_report["documents_input"] == 10
+    assert privacy_report["documents_retained"] == 10
+    assert privacy_report["documents_dropped_after_sanitization"] == 0
+    assert privacy_report["retention_rate"] == 1.0
+    assert privacy_report["category_counts"] == {
+        "baseball": {"raw": 5, "retained": 5, "excluded": 0},
+        "space": {"raw": 5, "retained": 5, "excluded": 0},
+    }
+    assert privacy_report["redactions"] == {
+        "email": 0,
+        "phone": 0,
+        "url": 0,
+        "ipv4": 0,
+        "ipv6": 0,
+    }
+    assert "residual_privacy_check" not in privacy_report
 
     search_examples = json.loads(
         (config.reports_dir / "search_examples.json").read_text(encoding="utf-8")

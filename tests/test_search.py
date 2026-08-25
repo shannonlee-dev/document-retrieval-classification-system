@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 
 from document_system.preprocessing import EnglishPreprocessor
+from document_system.privacy import SNIPPET_LIMIT
 from document_system.search import DocumentSearch, sparse_dot
 from document_system.tfidf import NumpyTfidfVectorizer
 
@@ -94,6 +95,16 @@ def test_search_rejects_unsafe_or_blank_snippets() -> None:
                 target_names=searcher.target_names,
                 document_ids=searcher.document_ids,
             )
+
+    with pytest.raises(ValueError, match="snippet"):
+        DocumentSearch(
+            vectorizer=searcher.vectorizer,
+            matrix=searcher.matrix,
+            snippets=["space shuttle orbit", "x" * (SNIPPET_LIMIT + 1)],
+            labels=searcher.labels,
+            target_names=searcher.target_names,
+            document_ids=searcher.document_ids,
+        )
 
 
 def test_equal_scores_are_ordered_by_document_id() -> None:

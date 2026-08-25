@@ -2,20 +2,20 @@
 
 from __future__ import annotations
 
-import re
+from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Sequence
 
 import matplotlib
 import numpy as np
 from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import accuracy_score, confusion_matrix, f1_score
 
+from .privacy import make_safe_snippet
 from .sparse_matrix import SparseMatrix
 
 matplotlib.use("Agg")
-from matplotlib import pyplot as plt  # noqa: E402
+from matplotlib import pyplot as plt
 
 
 @dataclass(frozen=True)
@@ -102,15 +102,15 @@ def evaluate_classifier(
     model: SGDClassifier,
     matrix: SparseMatrix,
     labels: np.ndarray,
-    texts: Sequence[str],
+    snippets: Sequence[str],
     target_names: tuple[str, ...],
     *,
     batch_size: int = 128,
     document_ids: Sequence[int] | None = None,
 ) -> ClassificationReport:
     labels = np.asarray(labels)
-    if labels.size != matrix.shape[0] or len(texts) != matrix.shape[0]:
-        raise ValueError("matrix, labels, and texts must have matching row counts")
+    if labels.size != matrix.shape[0] or len(snippets) != matrix.shape[0]:
+        raise ValueError("matrix, labels, and snippets must have matching row counts")
     if document_ids is None:
         document_ids = range(matrix.shape[0])
     if len(document_ids) != matrix.shape[0]:
@@ -126,7 +126,7 @@ def evaluate_classifier(
                 "doc_id": int(document_ids[row_id]),
                 "actual": target_names[int(actual)],
                 "predicted": target_names[int(predicted)],
-                "text_snippet": _snippet(texts[row_id]),
+                "text_snippet": make_safe_snippet(snippets[row_id]),
             }
         )
     return ClassificationReport(
@@ -169,7 +169,3 @@ def save_confusion_matrix(
     figure.tight_layout()
     figure.savefig(output, dpi=160)
     plt.close(figure)
-
-
-def _snippet(text: str, limit: int = 240) -> str:
-    return re.sub(r"\s+", " ", text).strip()[:limit]

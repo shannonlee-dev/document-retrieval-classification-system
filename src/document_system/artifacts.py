@@ -3,19 +3,19 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Sequence
 
 import numpy as np
 
 from .preprocessing import EnglishPreprocessor
-from .privacy import is_safe_text
+from .privacy import SNIPPET_LIMIT, is_safe_text
 from .sparse_matrix import SparseMatrix
 from .tfidf import NumpyTfidfVectorizer
 
-
 ARTIFACT_VERSION = 1
+PRIVACY_POLICY = "structured-pii-redaction-v3"
 
 
 @dataclass(frozen=True)
@@ -40,10 +40,12 @@ def save_search_artifacts(
     if vectorizer.idf_ is None:
         raise RuntimeError("cannot save an unfitted vectorizer")
     if any(
-        not isinstance(snippet, str) or not is_safe_text(snippet)
+        not isinstance(snippet, str)
+        or len(snippet) > SNIPPET_LIMIT
+        or not is_safe_text(snippet)
         for snippet in snippets
     ):
-        raise ValueError("snippets must contain only nonblank safe terms")
+        raise ValueError("snippets must be safe, nonblank, and within the length limit")
     path = Path(directory)
     path.mkdir(parents=True, exist_ok=True)
     np.savez_compressed(
@@ -64,7 +66,7 @@ def save_search_artifacts(
         "labels": np.asarray(labels).astype(int).tolist(),
         "target_names": list(target_names),
         "document_ids": np.asarray(document_ids).astype(int).tolist(),
-        "privacy_policy": "safe-topic-terms-v1",
+        "privacy_policy": PRIVACY_POLICY,
     }
     (path / "metadata.json").write_text(
         json.dumps(metadata, ensure_ascii=False),
@@ -86,6 +88,8 @@ def load_search_artifacts(directory: str | Path) -> SearchArtifacts:
     required_fields = {"snippets", "document_ids", "privacy_policy"}
     if not required_fields.issubset(metadata):
         raise ValueError("artifact metadata is outdated; rebuild with `python main.py build`")
+    if metadata["privacy_policy"] != PRIVACY_POLICY:
+        raise ValueError("artifact privacy policy is outdated; rebuild with `python main.py build`")
     with np.load(matrix_path, allow_pickle=False) as arrays:
         data = arrays["data"].copy()
         indices = arrays["indices"].copy()
@@ -115,6 +119,8 @@ def load_search_artifacts(directory: str | Path) -> SearchArtifacts:
         or document_ids.size != shape[0]
     ):
         raise ValueError("artifact document count mismatch; rebuild with `python main.py build`")
+    if any(len(snippet) > SNIPPET_LIMIT or not is_safe_text(snippet) for snippet in snippets):
+        raise ValueError("artifact snippets failed privacy checks; rebuild with `python main.py build`")
     return SearchArtifacts(
         vectorizer=vectorizer,
         matrix=matrix,

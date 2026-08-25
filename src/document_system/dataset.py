@@ -2,14 +2,17 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Sequence
 
 import numpy as np
 from sklearn.datasets import fetch_20newsgroups
 
-from .privacy import sanitize_text
-
+from .privacy import (
+    PrivacyReport,
+    aggregate_privacy_report,
+    sanitize_document,
+)
 
 SAFE_CATEGORIES = (
     "comp.graphics",
@@ -24,6 +27,7 @@ class DatasetBundle:
     labels: np.ndarray
     target_names: tuple[str, ...]
     source_doc_ids: np.ndarray
+    privacy_report: PrivacyReport | None = None
 
 
 def validate_dataset(
@@ -62,10 +66,12 @@ def load_20newsgroups() -> DatasetBundle:
         random_state=42,
     )
     retained = []
+    privacy_results = []
     for source_doc_id, (text, label) in enumerate(zip(dataset.data, dataset.target)):
-        sanitized_text = sanitize_text(text)
-        if sanitized_text:
-            retained.append((source_doc_id, sanitized_text, label))
+        result = sanitize_document(text)
+        privacy_results.append(result)
+        if result.text:
+            retained.append((source_doc_id, result.text, label))
     source_doc_ids = np.asarray([row[0] for row in retained], dtype=np.int32)
     texts = tuple(row[1] for row in retained)
     labels = np.asarray([row[2] for row in retained], dtype=np.int32)
@@ -76,4 +82,9 @@ def load_20newsgroups() -> DatasetBundle:
         labels=labels,
         target_names=target_names,
         source_doc_ids=source_doc_ids,
+        privacy_report=aggregate_privacy_report(
+            privacy_results,
+            dataset.target,
+            target_names,
+        ),
     )

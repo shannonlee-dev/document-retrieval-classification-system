@@ -93,7 +93,15 @@ TF-IDF(t, d)   = TF(t, d) × IDF(t)
 L2 정규화       = TF-IDF(d) / ||TF-IDF(d)||₂
 ```
 
-학습 문서에서만 vocabulary와 IDF를 fit하고 테스트 및 전체 검색 문서는 같은 공간으로 transform한다. scikit-learn `TfidfVectorizer`와의 최대 절대 오차 허용치는 `1e-6`이다.
+학습 문서에서만 vocabulary와 IDF를 fit하고 테스트 및 전체 검색 문서는 같은 공간으로 transform한다. scikit-learn `TfidfVectorizer`와의 최대 절대 오차 허용치는 `1e-6`이다. 검증 시 직접 구현의 raw-count TF, smoothed IDF, L2 정규화와 맞추기 위해 다음 설정을 고정한다.
+
+```text
+smooth_idf=True
+sublinear_tf=False
+norm="l2"
+use_idf=True
+dtype=float64
+```
 
 ## 검색과 분류
 
@@ -178,7 +186,25 @@ historical 분류 결과는 Accuracy 75.94%, Macro-F1 74.80%, 오분류 907 / 3,
 
 과거 실험의 전체 세부사항은 commit `dd9e42d261ae8d4a3a876906f77e539aba09e630`에서 확인할 수 있다.
 
-## 한계
+## 한계와 개선 방향
+
+### 오분류 5건 분석
+
+아래 분석은 `misclassifications.json`에 저장된 정제 후 스니펫을 기준으로 한다. 스니펫은 최대 240자로 제한되므로 원문의 전체 문맥을 보존하지 않으며, 이 자체가 짧은 텍스트에서 BoW 분류가 약해지는 이유이기도 하다.
+
+| source document ID | 실제 → 예측 | 관찰한 원인 | BoW 한계와의 연결 |
+|---:|---|---|---|
+| 1,404 | `comp.graphics` → `sci.space` | `virtual worlds`, `directory`처럼 일반적이고 짧은 표현만 남아 그래픽스 고유 단어가 거의 없다. | 단어의 출현 빈도만으로는 문서의 주제와 대화 맥락을 복원할 수 없다. |
+| 15 | `comp.graphics` → `sci.space` | 예산, IBM, 소프트웨어 등 일반 기술 용어가 중심이고 그래픽스 관련 단어가 스니펫에 나타나지 않는다. | 문단의 앞뒤 맥락이나 게시물의 원래 질문을 반영하지 못해 일반 단어의 학습 빈도에 좌우된다. |
+| 2,495 | `comp.graphics` → `sci.space` | `ray tracing`은 그래픽스 단서지만 한 번만 등장하고, 나머지는 조언·참고자료 같은 일반 문장이다. | `ray tracing` 같은 복합 개념을 단어 두 개의 독립 빈도로만 처리하므로 구(phrase)의 의미를 충분히 반영하지 못한다. |
+| 58 | `rec.sport.baseball` → `sci.space` | 동의·투표 같은 대화 표현뿐이며 야구를 가리키는 단어가 없다. | 짧고 정보량이 적은 문서는 클래스별 TF-IDF 특징이 거의 없어 분류 근거가 약하다. |
+| 2,846 | `sci.space` → `rec.sport.baseball` | 배우와 연기에 관한 문장으로, 실제 라벨인 우주 주제를 보여 주는 단어가 없다. | 인용문·주제 이탈·라벨 잡음처럼 문서 내용과 클래스가 어긋난 경우에는 단어 빈도 기반 모델이 원래 카테고리를 추론할 수 없다. |
+
+### 개선 방향
+
+- 단어 bi-gram을 추가해 `ray tracing`처럼 함께 나타날 때 의미가 달라지는 표현을 보존한다.
+- 매우 짧거나 어휘가 없는 문서는 낮은 신뢰도로 표시해 재검토 대상으로 분리한다.
+- 다음 학습 단계에서는 문맥을 표현하는 임베딩 기반 모델과 원문 단위 라벨 점검을 비교해 BoW 기준선의 한계를 정량적으로 확인한다.
 
 - structured identifier regex는 자유 형식의 사람 이름·주소·건강정보를 탐지하지 않는다. 이 pipeline은 PII-free 보증이 아니며, 실제 배포에는 별도의 데이터 거버넌스 검토가 필요하다.
 - BoW는 어순, 부정, 관점 및 다의어를 직접 표현하지 못한다.

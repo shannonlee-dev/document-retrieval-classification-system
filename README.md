@@ -1,6 +1,49 @@
 # 원하는 문서를 똑똑하게 찾아주는 검색기
 
-20 Newsgroups의 세 주제에 deterministic structured-PII redaction과 artifact 최소화를 적용한 뒤 NumPy TF-IDF와 코사인 검색 및 선형 SVM 분류를 재현하는 privacy-conscious 프로젝트다.
+## 프로젝트 소개
+
+20 Newsgroups 문서를 대상으로 **TF-IDF 기반 문서 검색과 주제 분류를 직접 구현하고 검증하는 프로젝트**다.
+
+scikit-learn의 완성된 TF-IDF 구현을 그대로 사용하는 대신, 텍스트를 전처리하고 vocabulary와 IDF를 학습한 뒤 NumPy 배열과 자체 희소 행렬 표현으로 TF-IDF를 계산한다. 같은 문서 표현을 코사인 유사도 기반 검색과 선형 SVM 분류에 함께 사용하며, 직접 구현한 TF-IDF 결과는 scikit-learn과 수치적으로 비교해 검증한다.
+
+또한 공개 텍스트 데이터라도 불필요한 식별정보와 원문을 그대로 보관하지 않도록 structured-PII redaction과 artifact 최소화를 적용한다. 이 privacy 처리는 검색·분류 알고리즘과 분리된 데이터 경계에서 수행한다.
+
+## 핵심 특징
+
+- **NumPy 기반 TF-IDF 직접 구현**: vocabulary 생성, document frequency, smoothed IDF, TF-IDF weighting과 L2 정규화를 직접 계산한다.
+- **자체 희소 행렬 표현**: 전체 TF-IDF 행렬을 밀집 배열로 만들지 않고 `data`, `indices`, `indptr` 기반의 희소 표현으로 저장하고 연산한다.
+- **코사인 유사도 기반 문서 검색**: L2 정규화된 문서와 질의 벡터의 희소 내적으로 관련 문서를 검색한다.
+- **선형 SVM 문서 분류**: 같은 TF-IDF 표현을 `SGDClassifier(loss="hinge")` 기반 다중 클래스 분류에 사용한다.
+- **직접 구현에 대한 수치 검증**: 동일한 vocabulary와 설정을 사용하는 scikit-learn `TfidfVectorizer`와 비교해 수치적 일치 여부를 검증한다.
+- **Privacy-conscious 데이터 처리**: headers, footers, quotes를 제거하고 structured identifier를 deterministic하게 redaction하며, 전체 정제 문서는 runtime artifact에 저장하지 않는다.
+- **재현 가능한 실험 파이프라인**: 고정된 데이터 분할과 random seed로 분류 지표, TF-IDF 검증값, 희소 행렬·privacy 처리 통계를 기록한다.
+
+## 아키텍처
+
+프로젝트는 **오프라인 build 단계**와 **온라인 검색 단계**를 분리한다.
+
+```mermaid
+flowchart TD
+    A["20 Newsgroups"] --> B["데이터 로딩<br/>headers / footers / quotes 제거"]
+    B --> C["Privacy boundary<br/>structured-PII redaction"]
+    C --> D["영문 전처리"]
+    D --> E["Train / Test 분할"]
+    E --> F["Train 문서에서<br/>Vocabulary + IDF fit"]
+    F --> G["NumPy TF-IDF"]
+    G --> H["자체 SparseMatrix"]
+    H --> I["scikit-learn TF-IDF와<br/>수치 검증"]
+    H --> J["Linear SVM 학습·평가"]
+    H --> K["전체 문서 검색 행렬 생성"]
+    I --> L["평가 보고서"]
+    J --> L
+    K --> M["Runtime 검색 artifact"]
+    M --> N["사용자 Query"]
+    N --> O["동일한 전처리 + TF-IDF transform"]
+    O --> P["Sparse cosine similarity"]
+    P --> Q["Top-K 문서"]
+```
+
+vocabulary와 IDF는 학습 문서에만 fit한다. 테스트 문서와 전체 검색 문서는 같은 feature space로 transform해 평가 단계의 data leakage를 방지한다. 검색 시에는 원본 데이터셋을 다시 학습하지 않고 build가 저장한 runtime artifact를 사용한다.
 
 ## 실행 방법
 
@@ -42,49 +85,17 @@ scikit-learn의 `fetch_20newsgroups(subset="all")`에서 다음 세 카테고리
 
 ### Privacy pipeline과 데이터 경계
 
-loader는 headers, footers, quotes를 제거한 뒤 이메일, 명확한 전화번호, URL과 유효한 IPv4·IPv6를 deterministic하게 redaction한다. redaction과 영문 정규화 뒤 빈 문서만 제외한다. 사람 이름·주소 같은 자유형 엔터티를 추측하는 detector나 의심 문서 전체 삭제는 적용하지 않는다.
+loader는 headers, footers, quotes를 제거한 뒤 이메일, 명확한 전화번호, URL과 유효한 IPv4·IPv6를 deterministic하게 redaction한다. redaction과 영문 정규화 뒤 빈 문서만 제외한다. structured identifier만 제거하므로 PII-free를 보증하지는 않는다.
 
 정제된 전체 문서는 실행 중 TF-IDF fit/transform, 분류와 검색 행렬 생성에만 사용하고 저장하지 않는다. runtime metadata, 검색 결과와 오분류 보고서에는 structured-PII sanitization을 다시 적용하고 검증한 최대 240자의 snippet만 기록한다. 공개 검색 문서 ID는 filtering 전 loader 행 번호를 유지한다.
 
-이 설계는 “PII-free”를 보증하지 않는다. 대신 상대적으로 저위험인 세 카테고리 선택, metadata 제거, 확실한 structured identifier redaction, full-text 비저장과 bounded snippet으로 잔여 노출 범위를 줄인다.
-
-### 데이터 윤리 요구를 어떻게 해석했는가
-
-이 프로젝트는 “공개 라이브러리가 제공하므로 개인정보 검토가 필요 없다”고 가정하지 않는다. 공개 여부와 개인정보 위험은 별개의 문제다. 다만 미션이 20 Newsgroups를 사용 가능한 영어 데이터셋으로 직접 제시한다는 점을 고려하면, 데이터 윤리 요구의 취지는 추천 데이터셋 안에 어떤 문자열도 개인정보처럼 보이지 않아야 한다는 절대적 보증보다 출처가 불분명하거나 민감한 데이터를 무심코 사용하지 않고, 식별 위험을 확인해 필요한 범위만 처리·보관하라는 것으로 해석했다.
-
-자유 서술형 문서에서 모든 사람 이름·주소·건강 관련 표현의 부재를 자동으로 증명하는 것은 현실적으로 어렵다. 사람 이름처럼 보이는 단어도 작성자, 공인, 제품명 또는 일반 단어일 수 있고, 건강 관련 단어가 있다는 사실만으로 특정인의 건강정보가 되는 것도 아니다. 반대로 공개 데이터라는 이유만으로 실제 연락처나 작성자 metadata를 그대로 유지하는 것도 적절하지 않다. 그래서 이 프로젝트는 불확실한 문자열을 모두 삭제했다고 주장하는 대신, 직접 식별 가능성이 높은 정보부터 결정론적으로 제거하고 저장되는 텍스트의 양을 제한하는 방식을 선택했다.
-
-| 결정 | 이렇게 한 이유 | 남는 한계와 대응 |
-|---|---|---|
-| scikit-learn의 20 Newsgroups 사용 | 미션이 직접 추천하고, 출처와 로딩 과정이 공개되어 재현과 귀속이 가능하다. 공개 데이터라는 사실만을 면책 근거로 사용하지는 않는다. | 원문이 자유 서술형이므로 loader 경계에서 모든 문서에 동일한 sanitization을 적용한다. |
-| 세 카테고리만 선택 | 검색·분류 실험에 필요한 서로 다른 주제를 확보하면서 처리·검토 범위를 줄일 수 있다. | 카테고리 선택 자체는 개인정보 제거 수단이 아니므로 모든 카테고리에 같은 정책을 적용한다. |
-| headers, footers, quotes 제거 | 작성자·서명·연락 경로가 포함되기 쉬운 metadata와 반복 인용문은 주제 분류에 필수적이지 않으면서 노출 범위를 키운다. | 본문에 남은 structured identifier는 다음 redaction 단계에서 다시 처리한다. |
-| 이메일·전화번호·URL·유효한 IP를 deterministic redaction | 직접 식별이나 연락에 사용될 가능성이 높고, 정규식과 IP 파서로 처리 기준을 명확하게 재현·검증·집계할 수 있다. | 자유형 이름과 주소까지 완전히 탐지하는 정책은 아니므로 PII-free라고 표현하지 않는다. |
-| 자유형 엔터티를 추측해 일괄 삭제하지 않음 | 이름 추정은 오탐과 누락이 모두 발생할 수 있고, 주제 단어를 자의적으로 제거해 TF-IDF와 클래스 분포까지 왜곡할 수 있다. | 식별 가능성이 완전히 사라졌다고 가정하지 않고 full text를 저장하지 않으며 출력 snippet을 제한한다. |
-| sanitization 후 빈 문서만 제외 | “의심된다”는 주관적 기준으로 문서를 제거하면 재현성이 떨어지고 특정 클래스가 더 많이 제외되는 선택 편향이 생길 수 있다. | build마다 제외 수와 카테고리별 유지율을 보고해 편향 여부를 확인한다. |
-| full text 비저장, 최대 240자 snippet만 기록 | 모델 재현에 필요한 행렬·통계와 검색 결과의 확인 가능성은 유지하면서 원문 재배포와 불필요한 노출을 줄인다. | snippet에도 잔여 자유형 정보가 있을 수 있으므로 저장 직전에 structured sanitization을 다시 적용하고 한계를 명시한다. |
-
-#### 시행착오와 현재 정책을 선택한 근거
-
-현재 정책을 처음부터 전제로 삼은 것은 아니다. commit `56e2c33`에서는 개인정보처럼 보이는 자유 텍스트를 남기지 않기 위해 graphics, baseball, space 분야에서 미리 고른 68개 일반 주제어만 허용했다. 이 방식은 규칙이 단순하고 허용되지 않은 이름·연락처·건강 관련 표현을 함께 제거한다는 장점이 있었지만, 개인정보 처리 규칙과 ML vocabulary를 하나로 묶는 문제가 있었다. 검색·분류에 쓸 수 있는 단어를 개인정보 정책이 미리 결정하므로 모델은 실제 문서가 아니라 사람이 골라 준 클래스별 핵심어만 보게 되었다.
-
-commit `f4fdefd`의 allowlist 실험과 commit `d45cdfe` 이후 현재 실험은 다음 차이를 보였다. 두 실험은 같은 세 카테고리와 8:2 계층 분할을 사용하지만 정제 후 남은 문서 집합과 feature 공간이 다르므로, 점수만으로 우열을 직접 판단하지 않는다.
-
-| 항목 | 68-term allowlist | 현재 structured redaction | 변화의 의미 |
-|---|---:|---:|---|
-| retained 문서 | 2,048 | 2,863 | 815개, 약 39.8% 더 많은 문서를 실험에 사용한다. |
-| vocabulary | 68 | 21,662 | 사람이 고른 주제어가 아니라 정제된 실제 문장 어휘를 학습한다. |
-| `nnz` | 6,260 | 178,950 | 문서가 가진 검색·분류 단서를 훨씬 더 많이 보존한다. |
-| Accuracy | 94.15% | 90.40% | 약 3.74%p 낮아졌지만, 클래스 정답을 암시하는 수동 어휘 선택 효과를 제거했다. |
-| macro F1 | 94.21% | 90.31% | 약 3.90%p 낮아졌으며, 더 크고 어려운 feature 공간에서 측정한 결과다. |
-
-allowlist 검색은 `space shuttle orbit`에 0.92에 가까운 높은 유사도를 냈지만, 결과 snippet도 `mission space orbit ... shuttle`처럼 허용된 주제어의 반복만 남았다. 높은 점수와 낮은 오분류 수는 얻었어도 사용자가 문서를 읽고 관련성을 판단할 문맥이 사라졌고, 새로운 질의어가 68개 목록 밖에 있으면 검색할 수도 없었다. 따라서 이 점수는 개인정보 보호와 모델 성능을 동시에 개선했다는 증거라기보다, 사람이 정답과 가까운 feature를 먼저 선택해 문제를 단순화했을 때 나타난 결과로 해석하는 편이 타당하다.
-
-allowlist 없이 모든 사람 이름과 주소를 제거하는 방법도 검토했지만, 범용 자유형 엔터티 탐지는 이 미션과 별도의 문제가 된다. `Alice Smith`가 개인인지 예시 문구인지, `Jordan`이 사람인지 지명인지, 어떤 건강 관련 문장이 특정 개인의 건강정보인지 판정하려면 NER 또는 비식별화 모델, 별도의 정답 라벨, precision·recall 평가와 오탐·누락 분석이 필요하다. 이를 검증하지 않은 단순 이름 목록이나 대문자 규칙은 PII-free라는 잘못된 확신을 주고, 사람·회사·제품·기술 용어를 함께 삭제해 TF-IDF 실험을 다시 왜곡할 수 있다. 이 때문에 commit `bab416e`의 재설계 기록에서는 자유형 이름·주소 NER를 명시적으로 범위에서 제외하고, 프로젝트의 중심을 개인정보 탐지기가 아니라 NumPy TF-IDF 검색·분류에 유지했다.
-
-결국 현재 정책은 가장 높은 분류 점수나 가장 강한 개인정보 제거 주장 중 하나를 택한 것이 아니다. 직접 식별 가능성이 높고 규칙으로 검증할 수 있는 structured identifier는 제거하되, ML에 필요한 일반 어휘와 문맥은 보존하고, 남는 불확실성은 full-text 비저장·bounded snippet·처리 통계·한계 공개로 관리하는 절충이다. 범위가 더 넓은 개인정보 탐지가 실제 요구사항이 된다면 현재 regex에 추측성 규칙을 덧붙이기보다, 별도의 비식별화 데이터셋과 평가 기준을 가진 독립 단계로 검증하는 것이 맞다.
-
-따라서 이 정책은 개인정보가 절대로 존재하지 않는다는 인증이 아니라, 미션에서 추천한 공개 연구 데이터셋을 교육용 검색·분류 실험에 필요한 범위로 제한하고 식별 가능성이 높은 정보와 불필요한 원문 보관을 줄인 위험 기반 처리다. 운영 서비스나 민감정보 데이터셋에 그대로 적용할 수준의 보증은 아니지만, 데이터 윤리 요구를 무시한 것이 아니라 선택 근거, 처리 범위, 측정 결과와 잔여 한계를 검토 가능한 형태로 남겼다는 데 의미가 있다.
+| 처리 | 근거 |
+|---|---|
+| headers, footers, quotes 제거 | 작성자·서명·반복 인용문처럼 불필요한 metadata 노출을 줄인다. |
+| 이메일·전화번호·URL·유효한 IP redaction | 직접 식별·연락에 쓰일 수 있는 structured identifier를 재현 가능한 규칙으로 제거한다. |
+| 자유형 엔터티 미탐지 | 검증되지 않은 추측성 이름 규칙은 오탐과 어휘 왜곡을 낳을 수 있어 적용하지 않는다. |
+| full text 비저장, 최대 240자 snippet | 원문 재배포와 불필요한 노출을 줄이면서 검색 결과를 확인할 수 있게 한다. |
+| 빈 문서만 제외 | 주관적 문서 제거 대신 제외 수와 카테고리별 유지율을 build마다 기록한다. |
 
 ### 실제 privacy 처리 결과
 
@@ -95,7 +106,7 @@ allowlist 없이 모든 사람 이름과 주소를 제거하는 방법도 검토
 | `rec.sport.baseball` | 994 | 956 | 38 | 96.18% |
 | `sci.space` | 987 | 954 | 33 | 96.66% |
 
-카테고리 유지율의 최대 차이는 약 1.76%p다. 현재 측정에서는 sanitization 후 빈 문서 제외 때문에 한 클래스만 크게 무너지는 현상이 없다.
+카테고리별 유지율 차이는 최대 약 1.76%p로, sanitization 후 제외가 특정 클래스에 크게 집중되지는 않았다.
 
 | 제외 사유 | 문서 수 |
 |---|---:|
@@ -166,8 +177,6 @@ dtype=float64
 | macro F1 | 0.9030980112997345 |
 | 전체 오분류 | 55 |
 
-기존 68-term allowlist와 현재 정책의 상세 비교 및 변경 근거는 앞의 「시행착오와 현재 정책을 선택한 근거」에 기록했다.
-
 `space shuttle orbit`의 Top-5도 모두 `sci.space`였다.
 
 | 순위 | 점수 | source document ID | 카테고리 |
@@ -195,34 +204,11 @@ dtype=float64
 
 ## 과거 20-Category 기준선
 
-privacy-conscious redesign 이전에는 전체 20 Newsgroups 말뭉치(20개 카테고리, 문서 18,846개)로도 실험을 수행했다. 아래 값은 공개 benchmark에 대한 **historical pre-privacy-redesign baseline**으로 보존하는 aggregate metrics이며, 현재 privacy-conscious pipeline의 공식 성능이 아니다.
+privacy-conscious redesign 이전에는 전체 20 Newsgroups 말뭉치(20개 카테고리, 18,846개 문서)에서도 실험했으며, Accuracy 75.94%, Macro-F1 74.80%를 기록했다. 당시에도 `headers`, `footers`, `quotes`는 제거했지만, 현재의 structured-PII redaction 및 artifact 최소화 정책이 도입되기 전의 historical engineering baseline이다.
 
-### 분류 품질
+따라서 이 결과는 현재 privacy-conscious pipeline의 공식 성능이 아니며, 데이터 범위와 전처리·privacy 정책이 다른 현재 3-category 결과와 직접 비교하지 않는다.
 
-| 실험 | 카테고리 | 문서 | Accuracy | Macro-F1 | 목적 |
-|---|---:|---:|---:|---:|---|
-| 과거 전체 말뭉치 기준선 | 20 | 18,846 | 75.94% | 74.80% | privacy redesign 이전 engineering baseline |
-| 현재 privacy-conscious 실험 | 3 | 2,863 retained | 90.40% | 90.31% | 현재 지원하는 실험 |
-
-이 점수들은 직접 비교할 수 없다. historical 결과는 structured-PII redaction 및 artifact 최소화 정책보다 앞선 전체 말뭉치 실험이고, 현재 결과는 서로 다른 데이터 범위와 전처리·privacy 정책을 적용한 3-category 실험이다.
-
-historical 분류 결과는 Accuracy 75.94%, Macro-F1 74.80%, 오분류 907 / 3,770 test documents이며, 혼동 행렬은 20 × 20이다. 이 수치는 과거 engineering baseline을 참고하기 위한 것이며, 현재 privacy-conscious system의 성능으로 해석해서는 안 된다.
-
-### 표현 방식 및 자원 효율
-
-다음 historical TF-IDF 수치는 분류 품질이 아니라 표현 방식과 자원 효율을 설명한다. Accuracy나 Macro-F1의 향상으로 해석하지 않는다.
-
-| 항목 | Historical full-corpus 값 |
-|---|---:|
-| 전체 행렬 shape | 18,846 × 89,304 |
-| `nnz` | 1,253,490 |
-| 희소율 | 약 99.925522% |
-| 예상 dense `float64` 크기 | 13,464,185,472 bytes |
-| 자체 sparse 표현 크기 | 15,117,268 bytes |
-| dense 대비 크기 | 약 890.65배 작음 |
-| scikit-learn TF-IDF validation 최대 절대 오차 | 약 7.55e-15 |
-
-과거 실험의 전체 세부사항은 commit `dd9e42d261ae8d4a3a876906f77e539aba09e630`에서 확인할 수 있다.
+전체 실험과 당시 TF-IDF·희소 행렬 통계는 commit `dd9e42d261ae8d4a3a876906f77e539aba09e630`에서 확인할 수 있다.
 
 ## 한계와 개선 방향
 

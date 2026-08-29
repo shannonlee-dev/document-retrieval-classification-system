@@ -30,7 +30,7 @@ class DatasetBundle:
     privacy_report: PrivacyReport | None = None
 
 
-def validate_dataset(
+def _validate_dataset(
     texts: Sequence[str],
     labels: Sequence[int | str],
     *,
@@ -76,7 +76,7 @@ def load_20newsgroups() -> DatasetBundle:
     texts = tuple(row[1] for row in retained)
     labels = np.asarray([row[2] for row in retained], dtype=np.int32)
     target_names = tuple(dataset.target_names)
-    validate_dataset(texts, labels, source_doc_ids=source_doc_ids)
+    _validate_dataset(texts, labels, source_doc_ids=source_doc_ids)
     return DatasetBundle(
         texts=texts,
         labels=labels,

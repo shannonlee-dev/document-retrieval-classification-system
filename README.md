@@ -133,6 +133,8 @@ loader는 headers, footers, quotes를 제거한 뒤 이메일, 명확한 전화�
 
 동의어 치환은 사용하지 않는다. 외부 어휘 자원에 새로운 의미 가정을 의존하게 되고, 문맥에 맞지 않는 치환이 생길 수 있으며, 직접 구현과 scikit-learn 검증의 분석 경계도 불필요하게 달라지기 때문이다.
 
+고정 불용어는 동일한 분할과 seed의 미적용 조건보다 Accuracy `1.05%p`, macro F1 `0.98%p`, MAP@10 `4.91%p` 높았다. 평가 정의와 한계는 [stop-word ablation](docs/stop-word-ablation.md)에 기록했다.
+
 TF-IDF는 다음 정의를 NumPy 배열과 자체 `SparseMatrix`로 계산한다.
 
 ```text
@@ -199,6 +201,7 @@ dtype=float64
 | `artifacts/reports/privacy_report.json` | redaction·제외·카테고리별 유지 통계 |
 | `artifacts/reports/stage_example.json` | TF → IDF → TF-IDF 중간값 |
 | `artifacts/reports/search_examples.json` | 세 쿼리의 안전한 Top-5 스니펫 |
+| `artifacts/reports/stop_word_ablation.json` | 불용어 적용·미적용 분류 및 검색 지표 비교 |
 | `artifacts/reports/misclassifications.json` | 안전한 오분류 스니펫 최대 20건 |
 | `artifacts/reports/confusion_matrix.png` | 세 클래스 혼동 행렬 |
 

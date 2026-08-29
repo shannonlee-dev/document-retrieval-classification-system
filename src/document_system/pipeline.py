@@ -27,7 +27,7 @@ from .constants import (
 )
 from .dataset import MINIMUM_CATEGORY_COUNT, DatasetBundle, load_20newsgroups
 from .preprocessing import EnglishPreprocessor
-from .privacy import PrivacyReport, make_safe_snippet
+from .privacy import make_safe_snippet
 from .search import DocumentSearch
 from .tfidf import NumpyTfidfVectorizer
 from .validation import stage_example, validate_against_sklearn
@@ -140,11 +140,7 @@ def build_from_dataset(bundle: DatasetBundle, config: BuildConfig) -> BuildRepor
     ]
 
     config.reports_dir.mkdir(parents=True, exist_ok=True)
-    privacy_report = bundle.privacy_report or PrivacyReport.for_retained_documents(
-        len(bundle.texts),
-        bundle.labels,
-        bundle.target_names,
-    )
+    privacy_report = bundle.privacy_report
     if privacy_report.retained_document_count != len(bundle.texts):
         raise ValueError("privacy report retained count must match the dataset")
     _write_json(config.reports_dir / "privacy_report.json", privacy_report.to_dict())

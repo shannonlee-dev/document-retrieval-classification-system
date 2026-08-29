@@ -30,7 +30,7 @@ class DatasetBundle:
     labels: np.ndarray
     target_names: tuple[str, ...]
     source_doc_ids: np.ndarray
-    privacy_report: PrivacyReport | None = None
+    privacy_report: PrivacyReport
 
 
 def _validate_dataset(

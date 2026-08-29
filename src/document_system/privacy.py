@@ -57,29 +57,6 @@ class PrivacyReport:
         return self.retained_document_count / self.raw_document_count
 
     @classmethod
-    def for_retained_documents(
-        cls,
-        document_count: int,
-        labels: Sequence[int] | None = None,
-        target_names: tuple[str, ...] = (),
-    ) -> PrivacyReport:
-        category_counts = {
-            name: {"raw": 0, "retained": 0, "excluded": 0}
-            for name in target_names
-        }
-        if labels is not None:
-            for label in labels:
-                category = target_names[int(label)]
-                category_counts[category]["raw"] += 1
-                category_counts[category]["retained"] += 1
-        return cls(
-            raw_document_count=document_count,
-            retained_document_count=document_count,
-            redactions={kind: 0 for kind in REDACTION_KINDS},
-            category_counts=category_counts,
-        )
-
-    @classmethod
     def from_sanitization_results(
         cls,
         results: Sequence[SanitizationResult],

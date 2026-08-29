@@ -2,11 +2,27 @@ import json
 from pathlib import Path
 
 import numpy as np
+import pytest
 
 import document_system.pipeline as pipeline_module
 from document_system.dataset import DatasetBundle
 from document_system.pipeline import BuildConfig, build_from_dataset, build_project
-from document_system.privacy import SNIPPET_LIMIT, is_safe_text
+from document_system.privacy import (
+    SNIPPET_LIMIT,
+    PrivacyReport,
+    is_safe_text,
+    sanitize_document,
+)
+
+
+def test_dataset_bundle_requires_privacy_report() -> None:
+    with pytest.raises(TypeError, match="privacy_report"):
+        DatasetBundle(
+            texts=("space orbit", "baseball game"),
+            labels=np.array([0, 1], dtype=np.int32),
+            target_names=("space", "baseball"),
+            source_doc_ids=np.array([0, 1], dtype=np.int32),
+        )
 
 
 def test_small_pipeline_writes_consistent_report_and_runtime_artifacts(
@@ -34,6 +50,11 @@ def test_small_pipeline_writes_consistent_report_and_runtime_artifacts(
         labels=np.array([0, 0, 0, 1, 1, 1, 0, 1, 0, 1], dtype=np.int32),
         target_names=("space", "baseball"),
         source_doc_ids=source_doc_ids,
+        privacy_report=PrivacyReport.from_sanitization_results(
+            [sanitize_document(text) for text in texts],
+            [0, 0, 0, 1, 1, 1, 0, 1, 0, 1],
+            ("space", "baseball"),
+        ),
     )
     config = BuildConfig(
         runtime_dir=tmp_path / "runtime",
@@ -125,6 +146,11 @@ def test_build_project_accepts_sanitized_dataset(monkeypatch, tmp_path: Path) ->
         labels=np.array([0] * 200 + [1] * 200 + [2] * 200, dtype=np.int32),
         target_names=("comp.graphics", "rec.sport.baseball", "sci.space"),
         source_doc_ids=np.arange(len(texts), dtype=np.int32),
+        privacy_report=PrivacyReport.from_sanitization_results(
+            [sanitize_document(text) for text in texts],
+            [0] * 200 + [1] * 200 + [2] * 200,
+            ("comp.graphics", "rec.sport.baseball", "sci.space"),
+        ),
     )
     monkeypatch.setattr(pipeline_module, "load_20newsgroups", lambda: bundle)
 

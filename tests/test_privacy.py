@@ -86,6 +86,10 @@ def test_make_safe_snippet_is_limited_without_cutting_a_word() -> None:
     assert is_safe_text(snippet)
 
 
+def test_make_safe_snippet_keeps_a_word_ending_at_the_limit() -> None:
+    assert make_safe_snippet("hello test more", limit=10) == "hello test"
+
+
 def test_make_safe_snippet_reapplies_structured_redaction() -> None:
     assert make_safe_snippet("graphics alice@example.com rendering") == (
         "graphics rendering"

@@ -155,8 +155,10 @@ def make_safe_snippet(text: str, limit: int = SNIPPET_LIMIT) -> str:
         raise ValueError("snippet source must contain text after sanitization")
     if len(sanitized) <= limit:
         return sanitized
-    prefix = sanitized[: limit + 1]
-    return prefix.rsplit(" ", maxsplit=1)[0] or sanitized[:limit]
+    prefix = sanitized[:limit]
+    if sanitized[limit] == " ":
+        return prefix
+    return prefix.rsplit(" ", maxsplit=1)[0] or prefix
 
 
 def _redact_ipv6(text: str) -> tuple[str, int]:

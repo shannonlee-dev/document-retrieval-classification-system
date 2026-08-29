@@ -5,6 +5,10 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
+TOKEN_PATTERN = r"[^a-z\s]+"
+TOKEN_REPLACEMENT = " "
+MINIMUM_TOKEN_LENGTH = 1
+
 DEFAULT_STOP_WORDS = frozenset(
     {
         "a",
@@ -144,9 +148,9 @@ class EnglishPreprocessor:
     def tokenize(self, text: str) -> list[str]:
         if not isinstance(text, str):
             raise TypeError("text must be a string")
-        cleaned_text = re.sub(r"[^a-z\s]+", " ", text.lower())
+        cleaned_text = re.sub(TOKEN_PATTERN, TOKEN_REPLACEMENT, text.lower())
         return [
             token
             for token in cleaned_text.split()
-            if len(token) > 1 and token not in self.stop_words
+            if len(token) > MINIMUM_TOKEN_LENGTH and token not in self.stop_words
         ]

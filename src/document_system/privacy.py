@@ -7,6 +7,8 @@ import re
 from collections.abc import Sequence
 from dataclasses import dataclass
 
+from .constants import SNIPPET_LIMIT
+
 _EMAIL_RE = re.compile(r"\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b", re.IGNORECASE)
 _URL_RE = re.compile(r"\b(?:https?://|ftp://|www\.)\S+", re.IGNORECASE)
 _IPV4_RE = re.compile(r"\b(?:\d{1,3}\.){3}\d{1,3}\b")
@@ -19,7 +21,6 @@ _PHONE_RE = re.compile(
     r"[ .-]\d{3,4}[ .-]\d{4}|\d{3}[-.]\d{4})(?!\w)"
 )
 
-SNIPPET_LIMIT = 240
 REDACTION_KINDS = (
     "email",
     "phone",
@@ -27,6 +28,8 @@ REDACTION_KINDS = (
     "ipv4",
     "ipv6",
 )
+REDACTION_REPLACEMENT = " "
+MINIMUM_SNIPPET_LIMIT = 1
 
 
 @dataclass(frozen=True)
@@ -96,10 +99,10 @@ def sanitize_document(text: str) -> SanitizationResult:
         ("email", _EMAIL_RE),
         ("url", _URL_RE),
     ):
-        sanitized, redactions[kind] = pattern.subn(" ", sanitized)
+        sanitized, redactions[kind] = pattern.subn(REDACTION_REPLACEMENT, sanitized)
     sanitized, redactions["ipv4"] = _redact_ipv4(sanitized)
     sanitized, redactions["ipv6"] = _redact_ipv6(sanitized)
-    sanitized, redactions["phone"] = _PHONE_RE.subn(" ", sanitized)
+    sanitized, redactions["phone"] = _PHONE_RE.subn(REDACTION_REPLACEMENT, sanitized)
 
     normalized = " ".join(re.findall(r"[a-z]+", sanitized.lower()))
     if not normalized:
@@ -141,7 +144,7 @@ def is_safe_text(text: str) -> bool:
 def make_safe_snippet(text: str, limit: int = SNIPPET_LIMIT) -> str:
     """Re-sanitize text and create an artifact-safe word-boundary snippet."""
 
-    if limit < 1:
+    if limit < MINIMUM_SNIPPET_LIMIT:
         raise ValueError("snippet limit must be positive")
     sanitized = sanitize_document(text).text
     if not sanitized:
@@ -192,7 +195,7 @@ def _redact_ipv6(text: str) -> tuple[str, int]:
         except ValueError:
             return match.group()
         count += 1
-        return " "
+        return REDACTION_REPLACEMENT
 
     return _IPV6_CANDIDATE_RE.sub(replace, text), count
 
@@ -207,7 +210,7 @@ def _redact_ipv4(text: str) -> tuple[str, int]:
         except ValueError:
             return match.group()
         count += 1
-        return " "
+        return REDACTION_REPLACEMENT
 
     return _IPV4_RE.sub(replace, text), count
 

@@ -18,6 +18,9 @@ VALIDATION_SETTINGS: dict[str, bool | str] = {
     "use_idf": True,
     "dtype": "float64",
 }
+DEFAULT_VALIDATION_TOLERANCE = 1e-6
+DEFAULT_STAGE_EXAMPLE_TERMS = 5
+MINIMUM_STAGE_EXAMPLE_TERMS = 1
 
 
 @dataclass(frozen=True)
@@ -40,7 +43,7 @@ def validate_against_sklearn(
     vectorizer: NumpyTfidfVectorizer,
     custom: SparseMatrix,
     *,
-    tolerance: float = 1e-6,
+    tolerance: float = DEFAULT_VALIDATION_TOLERANCE,
 ) -> ValidationResult:
     """Compare two sparse matrices exactly without densifying the corpus."""
 
@@ -104,11 +107,11 @@ def stage_example(
     stages: TfidfStages,
     vectorizer: NumpyTfidfVectorizer,
     *,
-    max_terms: int = 5,
+    max_terms: int = DEFAULT_STAGE_EXAMPLE_TERMS,
 ) -> dict[str, object]:
     """Return traceable TF, IDF, and TF-IDF values from one real row."""
 
-    if max_terms < 1:
+    if max_terms < MINIMUM_STAGE_EXAMPLE_TERMS:
         raise ValueError("max_terms must be positive")
     document_id = next(
         (row_id for row_id in range(stages.counts.shape[0]) if stages.counts.row(row_id)[0].size),

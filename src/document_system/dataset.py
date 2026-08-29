@@ -8,6 +8,7 @@ from dataclasses import dataclass
 import numpy as np
 from sklearn.datasets import fetch_20newsgroups
 
+from .constants import DEFAULT_RANDOM_STATE, MINIMUM_DOCUMENTS
 from .privacy import (
     PrivacyReport,
     aggregate_privacy_report,
@@ -19,6 +20,9 @@ SAFE_CATEGORIES = (
     "rec.sport.baseball",
     "sci.space",
 )
+DATASET_SUBSET = "all"
+METADATA_FIELDS_TO_REMOVE = ("headers", "footers", "quotes")
+MINIMUM_CATEGORY_COUNT = 2
 
 
 @dataclass(frozen=True)
@@ -35,7 +39,7 @@ def _validate_dataset(
     labels: Sequence[int | str],
     *,
     source_doc_ids: Sequence[int] | None = None,
-    minimum_documents: int = 500,
+    minimum_documents: int = MINIMUM_DOCUMENTS,
 ) -> None:
     """Validate the portable text-classification input contract."""
 
@@ -51,7 +55,7 @@ def _validate_dataset(
         raise ValueError("all texts must be nonblank")
     if source_doc_ids is not None and len(texts) != len(source_doc_ids):
         raise ValueError("texts and source document IDs must have the same length")
-    if len(set(labels)) < 2:
+    if len(set(labels)) < MINIMUM_CATEGORY_COUNT:
         raise ValueError("dataset must contain at least two labels")
 
 
@@ -59,11 +63,11 @@ def load_20newsgroups() -> DatasetBundle:
     """Load the complete, metadata-stripped 20 Newsgroups corpus."""
 
     dataset = fetch_20newsgroups(
-        subset="all",
+        subset=DATASET_SUBSET,
         categories=SAFE_CATEGORIES,
-        remove=("headers", "footers", "quotes"),
+        remove=METADATA_FIELDS_TO_REMOVE,
         shuffle=True,
-        random_state=42,
+        random_state=DEFAULT_RANDOM_STATE,
     )
     retained = []
     privacy_results = []

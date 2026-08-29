@@ -9,13 +9,17 @@ from pathlib import Path
 
 import numpy as np
 
+from .constants import SNIPPET_LIMIT
 from .preprocessing import EnglishPreprocessor
-from .privacy import SNIPPET_LIMIT, is_safe_text
+from .privacy import is_safe_text
 from .sparse_matrix import SparseMatrix
 from .tfidf import NumpyTfidfVectorizer
 
 ARTIFACT_VERSION = 1
 PRIVACY_POLICY = "structured-pii-redaction-v3"
+MATRIX_FILENAME = "matrix.npz"
+METADATA_FILENAME = "metadata.json"
+REQUIRED_METADATA_FIELDS = frozenset({"snippets", "document_ids", "privacy_policy"})
 
 
 @dataclass(frozen=True)
@@ -49,7 +53,7 @@ def save_search_artifacts(
     path = Path(directory)
     path.mkdir(parents=True, exist_ok=True)
     np.savez_compressed(
-        path / "matrix.npz",
+        path / MATRIX_FILENAME,
         data=matrix.data,
         indices=matrix.indices,
         indptr=matrix.indptr,
@@ -68,7 +72,7 @@ def save_search_artifacts(
         "document_ids": np.asarray(document_ids).astype(int).tolist(),
         "privacy_policy": PRIVACY_POLICY,
     }
-    (path / "metadata.json").write_text(
+    (path / METADATA_FILENAME).write_text(
         json.dumps(metadata, ensure_ascii=False),
         encoding="utf-8",
     )
@@ -76,8 +80,8 @@ def save_search_artifacts(
 
 def load_search_artifacts(directory: str | Path) -> SearchArtifacts:
     path = Path(directory)
-    matrix_path = path / "matrix.npz"
-    metadata_path = path / "metadata.json"
+    matrix_path = path / MATRIX_FILENAME
+    metadata_path = path / METADATA_FILENAME
     if not matrix_path.is_file() or not metadata_path.is_file():
         raise FileNotFoundError(
             f"search artifacts are missing under {path}; run `python main.py build` first"
@@ -85,8 +89,7 @@ def load_search_artifacts(directory: str | Path) -> SearchArtifacts:
     metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
     if metadata.get("artifact_version") != ARTIFACT_VERSION:
         raise ValueError("artifact version mismatch; rebuild with `python main.py build`")
-    required_fields = {"snippets", "document_ids", "privacy_policy"}
-    if not required_fields.issubset(metadata):
+    if not REQUIRED_METADATA_FIELDS.issubset(metadata):
         raise ValueError("artifact metadata is outdated; rebuild with `python main.py build`")
     if metadata["privacy_policy"] != PRIVACY_POLICY:
         raise ValueError("artifact privacy policy is outdated; rebuild with `python main.py build`")

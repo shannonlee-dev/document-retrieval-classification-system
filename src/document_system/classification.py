@@ -11,11 +11,23 @@ import numpy as np
 from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import accuracy_score, confusion_matrix, f1_score
 
+from .constants import DEFAULT_BATCH_SIZE, DEFAULT_EPOCHS, DEFAULT_RANDOM_STATE
 from .privacy import make_safe_snippet
 from .sparse_matrix import SparseMatrix
 
 matplotlib.use("Agg")
 from matplotlib import pyplot as plt
+
+LINEAR_SVM_LOSS = "hinge"
+LINEAR_SVM_DESCRIPTION = "linear SVM trained with SGDClassifier hinge loss"
+SGD_MAX_ITER_PER_BATCH = 1
+CONFUSION_MATRIX_MIN_FIGURE_SIZE = 7.0
+CONFUSION_MATRIX_FIGURE_SIZE_FACTOR = 0.48
+CONFUSION_MATRIX_COLORBAR_FRACTION = 0.046
+CONFUSION_MATRIX_COLORBAR_PADDING = 0.04
+CONFUSION_MATRIX_TICK_FONT_SIZE = 7
+CONFUSION_MATRIX_TICK_ROTATION = 55
+CONFUSION_MATRIX_DPI = 160
 
 
 @dataclass(frozen=True)
@@ -29,7 +41,7 @@ class ClassificationReport:
 
     def metrics_dict(self) -> dict[str, object]:
         return {
-            "model": "linear SVM trained with SGDClassifier hinge loss",
+            "model": LINEAR_SVM_DESCRIPTION,
             "accuracy": self.accuracy,
             "macro_f1": self.macro_f1,
             "model_settings": self.model_settings,
@@ -42,9 +54,9 @@ def train_linear_svm(
     matrix: SparseMatrix,
     labels: np.ndarray,
     *,
-    batch_size: int = 128,
-    epochs: int = 6,
-    random_state: int = 42,
+    batch_size: int = DEFAULT_BATCH_SIZE,
+    epochs: int = DEFAULT_EPOCHS,
+    random_state: int = DEFAULT_RANDOM_STATE,
 ) -> SGDClassifier:
     """Train a hinge-loss linear SVM without densifying the full matrix."""
 
@@ -58,9 +70,9 @@ def train_linear_svm(
         raise ValueError("linear SVM training requires at least two classes")
 
     model = SGDClassifier(
-        loss="hinge",
+        loss=LINEAR_SVM_LOSS,
         random_state=random_state,
-        max_iter=1,
+        max_iter=SGD_MAX_ITER_PER_BATCH,
         tol=None,
         shuffle=False,
     )
@@ -85,7 +97,7 @@ def predict_sparse(
     model: SGDClassifier,
     matrix: SparseMatrix,
     *,
-    batch_size: int = 128,
+    batch_size: int = DEFAULT_BATCH_SIZE,
 ) -> np.ndarray:
     if batch_size < 1:
         raise ValueError("batch_size must be positive")
@@ -105,7 +117,7 @@ def evaluate_classifier(
     snippets: Sequence[str],
     target_names: tuple[str, ...],
     *,
-    batch_size: int = 128,
+    batch_size: int = DEFAULT_BATCH_SIZE,
     document_ids: Sequence[int] | None = None,
 ) -> ClassificationReport:
     labels = np.asarray(labels)
@@ -136,7 +148,7 @@ def evaluate_classifier(
         predictions=predictions,
         misclassifications=errors,
         model_settings={
-            "loss": "hinge",
+            "loss": LINEAR_SVM_LOSS,
             "batch_size": batch_size,
             "random_state": int(model.random_state or 0),
             "input_representation": "NumPy dense batches",
@@ -151,10 +163,18 @@ def save_confusion_matrix(
 ) -> None:
     output = Path(path)
     output.parent.mkdir(parents=True, exist_ok=True)
-    size = max(7.0, len(target_names) * 0.48)
+    size = max(
+        CONFUSION_MATRIX_MIN_FIGURE_SIZE,
+        len(target_names) * CONFUSION_MATRIX_FIGURE_SIZE_FACTOR,
+    )
     figure, axis = plt.subplots(figsize=(size, size))
     image = axis.imshow(report.confusion_matrix, interpolation="nearest", cmap="Blues")
-    figure.colorbar(image, ax=axis, fraction=0.046, pad=0.04)
+    figure.colorbar(
+        image,
+        ax=axis,
+        fraction=CONFUSION_MATRIX_COLORBAR_FRACTION,
+        pad=CONFUSION_MATRIX_COLORBAR_PADDING,
+    )
     axis.set(
         title="20 Newsgroups Confusion Matrix",
         xlabel="Predicted label",
@@ -164,8 +184,13 @@ def save_confusion_matrix(
         xticklabels=target_names,
         yticklabels=target_names,
     )
-    plt.setp(axis.get_xticklabels(), rotation=55, ha="right", fontsize=7)
-    plt.setp(axis.get_yticklabels(), fontsize=7)
+    plt.setp(
+        axis.get_xticklabels(),
+        rotation=CONFUSION_MATRIX_TICK_ROTATION,
+        ha="right",
+        fontsize=CONFUSION_MATRIX_TICK_FONT_SIZE,
+    )
+    plt.setp(axis.get_yticklabels(), fontsize=CONFUSION_MATRIX_TICK_FONT_SIZE)
     figure.tight_layout()
-    figure.savefig(output, dpi=160)
+    figure.savefig(output, dpi=CONFUSION_MATRIX_DPI)
     plt.close(figure)

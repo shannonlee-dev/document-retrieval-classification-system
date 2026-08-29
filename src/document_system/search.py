@@ -8,7 +8,8 @@ from dataclasses import asdict, dataclass
 
 import numpy as np
 
-from .privacy import SNIPPET_LIMIT, is_safe_text
+from .constants import DEFAULT_TOP_K, SNIPPET_LIMIT
+from .privacy import is_safe_text
 from .sparse_matrix import SparseMatrix
 from .tfidf import NumpyTfidfVectorizer
 
@@ -72,7 +73,7 @@ class DocumentSearch:
         ):
             raise ValueError("snippets must be safe, nonblank, and within the length limit")
 
-    def search(self, query: str, topk: int = 5) -> list[SearchResult]:
+    def search(self, query: str, topk: int = DEFAULT_TOP_K) -> list[SearchResult]:
         document_count = self.matrix.shape[0]
         if not 1 <= topk <= document_count:
             raise ValueError(f"topk must be between 1 and {document_count}")
@@ -102,6 +103,6 @@ class DocumentSearch:
         ]
 
 
-def _snippet(text: str, limit: int = 240) -> str:
+def _snippet(text: str, limit: int = SNIPPET_LIMIT) -> str:
     normalized = re.sub(r"\s+", " ", text).strip()
     return normalized[:limit]

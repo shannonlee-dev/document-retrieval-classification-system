@@ -8,6 +8,13 @@ from collections.abc import Sequence
 from pathlib import Path
 
 from .artifacts import load_search_artifacts
+from .constants import (
+    DEFAULT_BATCH_SIZE,
+    DEFAULT_EPOCHS,
+    DEFAULT_REPORTS_DIR,
+    DEFAULT_RUNTIME_DIR,
+    DEFAULT_TOP_K,
+)
 from .search import DocumentSearch
 
 
@@ -22,10 +29,10 @@ def _run_build(arguments: Sequence[str]) -> int:
     from .pipeline import BuildConfig, build_project
 
     parser = argparse.ArgumentParser(description="Build TF-IDF reports and search index")
-    parser.add_argument("--artifacts", type=Path, default=Path("artifacts/runtime"))
-    parser.add_argument("--reports", type=Path, default=Path("artifacts/reports"))
-    parser.add_argument("--batch-size", type=int, default=128)
-    parser.add_argument("--epochs", type=int, default=6)
+    parser.add_argument("--artifacts", type=Path, default=DEFAULT_RUNTIME_DIR)
+    parser.add_argument("--reports", type=Path, default=DEFAULT_REPORTS_DIR)
+    parser.add_argument("--batch-size", type=int, default=DEFAULT_BATCH_SIZE)
+    parser.add_argument("--epochs", type=int, default=DEFAULT_EPOCHS)
     options = parser.parse_args(arguments)
     report = build_project(
         BuildConfig(
@@ -46,9 +53,9 @@ def _run_build(arguments: Sequence[str]) -> int:
 
 def _run_search(arguments: Sequence[str]) -> int:
     parser = argparse.ArgumentParser(description="Search the 20 Newsgroups corpus")
-    parser.add_argument("--artifacts", type=Path, default=Path("artifacts/runtime"))
+    parser.add_argument("--artifacts", type=Path, default=DEFAULT_RUNTIME_DIR)
     parser.add_argument("--query", required=True)
-    parser.add_argument("--topk", type=int, default=5)
+    parser.add_argument("--topk", type=int, default=DEFAULT_TOP_K)
     options = parser.parse_args(arguments)
     try:
         artifacts = load_search_artifacts(options.artifacts)

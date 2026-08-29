@@ -15,26 +15,39 @@ from .classification import (
     save_confusion_matrix,
     train_linear_svm,
 )
-from .dataset import DatasetBundle, load_20newsgroups
+from .constants import (
+    DEFAULT_BATCH_SIZE,
+    DEFAULT_EPOCHS,
+    DEFAULT_RANDOM_STATE,
+    DEFAULT_REPORTS_DIR,
+    DEFAULT_RUNTIME_DIR,
+    DEFAULT_TEST_SIZE,
+    DEFAULT_TOP_K,
+    MINIMUM_DOCUMENTS,
+)
+from .dataset import MINIMUM_CATEGORY_COUNT, DatasetBundle, load_20newsgroups
 from .preprocessing import EnglishPreprocessor
 from .privacy import PrivacyReport, make_safe_snippet
 from .search import DocumentSearch
 from .tfidf import NumpyTfidfVectorizer
 from .validation import stage_example, validate_against_sklearn
 
+DEFAULT_SEARCH_QUERIES = (
+    "space shuttle orbit",
+    "baseball pitcher season",
+    "computer graphics image",
+)
+MAX_REPORTED_MISCLASSIFICATIONS = 20
+
 
 @dataclass(frozen=True)
 class BuildConfig:
-    runtime_dir: Path = Path("artifacts/runtime")
-    reports_dir: Path = Path("artifacts/reports")
-    batch_size: int = 128
-    epochs: int = 6
-    random_state: int = 42
-    search_queries: tuple[str, ...] = (
-        "space shuttle orbit",
-        "baseball pitcher season",
-        "computer graphics image",
-    )
+    runtime_dir: Path = DEFAULT_RUNTIME_DIR
+    reports_dir: Path = DEFAULT_REPORTS_DIR
+    batch_size: int = DEFAULT_BATCH_SIZE
+    epochs: int = DEFAULT_EPOCHS
+    random_state: int = DEFAULT_RANDOM_STATE
+    search_queries: tuple[str, ...] = DEFAULT_SEARCH_QUERIES
 
 
 @dataclass(frozen=True)
@@ -52,7 +65,10 @@ class BuildReport:
 
 def build_project(config: BuildConfig | None = None) -> BuildReport:
     bundle = load_20newsgroups()
-    if len(bundle.texts) < 500 or len(bundle.target_names) < 2:
+    if (
+        len(bundle.texts) < MINIMUM_DOCUMENTS
+        or len(bundle.target_names) < MINIMUM_CATEGORY_COUNT
+    ):
         raise ValueError("the full build requires at least 500 documents and two categories")
     return build_from_dataset(bundle, config or BuildConfig())
 
@@ -63,7 +79,7 @@ def build_from_dataset(bundle: DatasetBundle, config: BuildConfig) -> BuildRepor
     document_ids = np.arange(len(bundle.texts))
     train_ids, test_ids = train_test_split(
         document_ids,
-        test_size=0.2,
+        test_size=DEFAULT_TEST_SIZE,
         stratify=bundle.labels,
         random_state=config.random_state,
     )
@@ -114,7 +130,10 @@ def build_from_dataset(bundle: DatasetBundle, config: BuildConfig) -> BuildRepor
             "query": query,
             "results": [
                 result.to_dict()
-                for result in searcher.search(query, topk=min(5, len(bundle.texts)))
+                for result in searcher.search(
+                    query,
+                    topk=min(DEFAULT_TOP_K, len(bundle.texts)),
+                )
             ],
         }
         for query in config.search_queries
@@ -146,7 +165,7 @@ def build_from_dataset(bundle: DatasetBundle, config: BuildConfig) -> BuildRepor
             "category_count": len(bundle.target_names),
             "train_count": len(train_ids),
             "test_count": len(test_ids),
-            "test_size": 0.2,
+            "test_size": DEFAULT_TEST_SIZE,
             "stratified": True,
             "epochs": config.epochs,
             "random_state": config.random_state,
@@ -159,7 +178,7 @@ def build_from_dataset(bundle: DatasetBundle, config: BuildConfig) -> BuildRepor
     )
     _write_json(
         config.reports_dir / "misclassifications.json",
-        classification.misclassifications[:20],
+        classification.misclassifications[:MAX_REPORTED_MISCLASSIFICATIONS],
     )
     _write_json(config.reports_dir / "search_examples.json", search_examples)
     save_confusion_matrix(

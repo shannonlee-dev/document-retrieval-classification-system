@@ -91,7 +91,7 @@ loader는 headers, footers, quotes를 제거한 뒤 이메일, 명확한 전화�
 
 | 처리 | 근거 |
 |---|---|
-| headers, footers, quotes 제거 | 작성자·서명·반복 인용문처럼 불필요한 metadata 노출을 줄인다. |
+| headers, footers, quotes 제거 | 불필요한 metadata 노출과 metadata 과적합을 줄여 더 현실적인 분류 평가를 한다. ([scikit-learn 권장](https://scikit-learn.org/stable/datasets/real_world.html)) |
 | 이메일·전화번호·URL·유효한 IP redaction | 직접 식별·연락에 쓰일 수 있는 structured identifier를 재현 가능한 규칙으로 제거한다. |
 | 자유형 엔터티 미탐지 | 검증되지 않은 추측성 이름 규칙은 오탐과 어휘 왜곡을 낳을 수 있어 적용하지 않는다. |
 | full text 비저장, 최대 240자 snippet | 원문 재배포와 불필요한 노출을 줄이면서 검색 결과를 확인할 수 있게 한다. |

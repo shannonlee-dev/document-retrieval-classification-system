@@ -6,7 +6,6 @@ from document_system.privacy import (
     is_safe_text,
     make_safe_snippet,
     sanitize_document,
-    sanitize_text,
 )
 
 
@@ -14,14 +13,16 @@ def test_privacy_policy_has_no_fixed_topic_allowlist() -> None:
     assert not hasattr(privacy_module, "SAFE_TERMS")
 
 
-def test_sanitize_text_preserves_general_vocabulary() -> None:
-    assert sanitize_text("framework shading polygon rocket orbit") == (
+def test_sanitize_document_preserves_general_vocabulary() -> None:
+    assert sanitize_document("framework shading polygon rocket orbit").text == (
         "framework shading polygon rocket orbit"
     )
 
 
-def test_sanitize_text_does_not_treat_proper_nouns_as_person_names() -> None:
-    assert sanitize_text("Open Graphics Consortium released Polygon Framework") == (
+def test_sanitize_document_does_not_treat_proper_nouns_as_person_names() -> None:
+    assert sanitize_document(
+        "Open Graphics Consortium released Polygon Framework"
+    ).text == (
         "open graphics consortium released polygon framework"
     )
 
@@ -59,8 +60,8 @@ def test_sanitize_document_does_not_guess_free_form_names_or_addresses() -> None
     assert address_result.excluded_reason is None
 
 
-def test_sanitize_text_does_not_guess_free_form_health_information() -> None:
-    assert sanitize_text("rocket orbit patient treatment") == (
+def test_sanitize_document_does_not_guess_free_form_health_information() -> None:
+    assert sanitize_document("rocket orbit patient treatment").text == (
         "rocket orbit patient treatment"
     )
 

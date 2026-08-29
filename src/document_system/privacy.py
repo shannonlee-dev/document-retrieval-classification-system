@@ -124,12 +124,6 @@ def sanitize_document(text: str) -> SanitizationResult:
     return SanitizationResult(text=normalized, redactions=redactions)
 
 
-def sanitize_text(text: str) -> str:
-    """Return the retained ML text, or blank text when privacy checks fail."""
-
-    return sanitize_document(text).text
-
-
 def is_safe_text(text: str) -> bool:
     """Return whether text matches the canonical sanitized-text contract."""
 

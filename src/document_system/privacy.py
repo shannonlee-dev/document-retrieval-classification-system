@@ -79,6 +79,39 @@ class PrivacyReport:
             category_counts=category_counts,
         )
 
+    @classmethod
+    def from_sanitization_results(
+        cls,
+        results: Sequence[SanitizationResult],
+        labels: Sequence[int],
+        target_names: tuple[str, ...],
+    ) -> PrivacyReport:
+        """Build a report from per-document sanitization results."""
+
+        if len(results) != len(labels):
+            raise ValueError("privacy results and labels must have the same length")
+        redactions = {kind: 0 for kind in REDACTION_KINDS}
+        category_counts = {
+            name: {"raw": 0, "retained": 0, "excluded": 0} for name in target_names
+        }
+        retained_count = 0
+        for result, label in zip(results, labels, strict=True):
+            category = target_names[int(label)]
+            category_counts[category]["raw"] += 1
+            for kind, count in result.redactions.items():
+                redactions[kind] += count
+            if result.excluded_reason is None:
+                retained_count += 1
+                category_counts[category]["retained"] += 1
+                continue
+            category_counts[category]["excluded"] += 1
+        return cls(
+            raw_document_count=len(results),
+            retained_document_count=retained_count,
+            redactions=redactions,
+            category_counts=category_counts,
+        )
+
     def to_dict(self) -> dict[str, object]:
         return {
             "documents_input": self.raw_document_count,
@@ -153,36 +186,6 @@ def make_safe_snippet(text: str, limit: int = SNIPPET_LIMIT) -> str:
         return sanitized
     prefix = sanitized[: limit + 1]
     return prefix.rsplit(" ", maxsplit=1)[0] or sanitized[:limit]
-
-
-def aggregate_privacy_report(
-    results: list[SanitizationResult],
-    labels: Sequence[int],
-    target_names: tuple[str, ...],
-) -> PrivacyReport:
-    if len(results) != len(labels):
-        raise ValueError("privacy results and labels must have the same length")
-    redactions = {kind: 0 for kind in REDACTION_KINDS}
-    category_counts = {
-        name: {"raw": 0, "retained": 0, "excluded": 0} for name in target_names
-    }
-    retained_count = 0
-    for result, label in zip(results, labels, strict=True):
-        category = target_names[int(label)]
-        category_counts[category]["raw"] += 1
-        for kind, count in result.redactions.items():
-            redactions[kind] += count
-        if result.excluded_reason is None:
-            retained_count += 1
-            category_counts[category]["retained"] += 1
-            continue
-        category_counts[category]["excluded"] += 1
-    return PrivacyReport(
-        raw_document_count=len(results),
-        retained_document_count=retained_count,
-        redactions=redactions,
-        category_counts=category_counts,
-    )
 
 
 def _redact_ipv6(text: str) -> tuple[str, int]:

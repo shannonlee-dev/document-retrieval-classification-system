@@ -11,7 +11,6 @@ from sklearn.datasets import fetch_20newsgroups
 from .constants import DEFAULT_RANDOM_STATE, MINIMUM_DOCUMENTS
 from .privacy import (
     PrivacyReport,
-    aggregate_privacy_report,
     sanitize_document,
 )
 
@@ -76,6 +75,8 @@ def load_20newsgroups() -> DatasetBundle:
         privacy_results.append(result)
         if result.text:
             retained.append((source_doc_id, result.text, label))
+
+    raw_labels = dataset.target
     source_doc_ids = np.asarray([row[0] for row in retained], dtype=np.int32)
     texts = tuple(row[1] for row in retained)
     labels = np.asarray([row[2] for row in retained], dtype=np.int32)
@@ -86,9 +87,9 @@ def load_20newsgroups() -> DatasetBundle:
         labels=labels,
         target_names=target_names,
         source_doc_ids=source_doc_ids,
-        privacy_report=aggregate_privacy_report(
+        privacy_report=PrivacyReport.from_sanitization_results(
             privacy_results,
-            dataset.target,
+            raw_labels,
             target_names,
         ),
     )

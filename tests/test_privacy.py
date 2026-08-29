@@ -1,6 +1,8 @@
 import document_system.privacy as privacy_module
 from document_system.privacy import (
     SNIPPET_LIMIT,
+    PrivacyReport,
+    SanitizationResult,
     is_safe_text,
     make_safe_snippet,
     sanitize_document,
@@ -87,3 +89,33 @@ def test_make_safe_snippet_reapplies_structured_redaction() -> None:
     assert make_safe_snippet("graphics alice@example.com rendering") == (
         "graphics rendering"
     )
+
+
+def test_privacy_report_aggregates_sanitization_results() -> None:
+    report = PrivacyReport.from_sanitization_results(
+        [
+            SanitizationResult(
+                text="space orbit",
+                redactions={"email": 1, "phone": 0, "url": 0, "ipv4": 0, "ipv6": 0},
+            ),
+            SanitizationResult(
+                text="",
+                redactions={"email": 0, "phone": 1, "url": 0, "ipv4": 0, "ipv6": 0},
+                excluded_reason="empty_after_sanitization",
+            ),
+        ],
+        labels=[0, 1],
+        target_names=("space", "baseball"),
+    )
+
+    assert report.to_dict() == {
+        "documents_input": 2,
+        "documents_retained": 1,
+        "documents_dropped_after_sanitization": 1,
+        "retention_rate": 0.5,
+        "redactions": {"email": 1, "phone": 1, "url": 0, "ipv4": 0, "ipv6": 0},
+        "category_counts": {
+            "space": {"raw": 1, "retained": 1, "excluded": 0},
+            "baseball": {"raw": 1, "retained": 0, "excluded": 1},
+        },
+    }

@@ -49,7 +49,7 @@ class SparseMatrix:
         object.__setattr__(self, "indptr", indptr)
 
     @property
-    def nnz(self) -> int:
+    def _nnz(self) -> int:
         return int(self.data.size)
 
     def row(self, row_id: int) -> tuple[np.ndarray, np.ndarray]:
@@ -68,13 +68,13 @@ class SparseMatrix:
 
     def memory_stats(self) -> dict[str, int | float | list[int]]:
         total_elements = self.shape[0] * self.shape[1]
-        density = self.nnz / total_elements if total_elements else 0.0
+        density = self._nnz / total_elements if total_elements else 0.0
         dense_bytes = total_elements * np.dtype(np.float64).itemsize
         sparse_bytes = self.data.nbytes + self.indices.nbytes + self.indptr.nbytes
         compression_ratio = dense_bytes / sparse_bytes if sparse_bytes else 0.0
         return {
             "shape": [self.shape[0], self.shape[1]],
-            "nnz": self.nnz,
+            "nnz": self._nnz,
             "density": density,
             "sparsity": 1.0 - density,
             "dense_bytes": dense_bytes,

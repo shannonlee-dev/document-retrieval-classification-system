@@ -39,7 +39,7 @@ def test_transform_ignores_out_of_vocabulary_terms_and_keeps_zero_row() -> None:
 
     transformed = vectorizer.transform(["unknown"])
 
-    assert transformed.nnz == 0
+    assert transformed._nnz == 0
     np.testing.assert_array_equal(
         transformed.to_dense_rows([0]),
         np.array([[0.0, 0.0]]),

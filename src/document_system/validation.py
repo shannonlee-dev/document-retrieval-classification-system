@@ -69,7 +69,7 @@ def validate_against_sklearn(
     max_error = 0.0
     absolute_error_sum = 0.0
     for row_id in range(custom.shape[0]):
-        custom_indices, custom_values = custom.row(row_id)
+        custom_indices, custom_values = custom.get_sparse_row(row_id)
         start, end = reference.indptr[row_id], reference.indptr[row_id + 1]
         reference_indices = reference.indices[start:end]
         reference_values = reference.data[start:end]
@@ -115,14 +115,14 @@ def stage_example(
         raise ValueError("max_terms must be positive")
     document_id = None
     for row_id in range(stages.counts.shape[0]):
-        column_indices, _ = stages.counts.row(row_id)
+        column_indices, _ = stages.counts.get_sparse_row(row_id)
         if column_indices.size:
             document_id = row_id
             break
     if document_id is None:
         raise ValueError("stage example requires a nonzero document")
-    indices, counts = stages.counts.row(document_id)
-    _, normalized = stages.tfidf.row(document_id)
+    indices, counts = stages.counts.get_sparse_row(document_id)
+    _, normalized = stages.tfidf.get_sparse_row(document_id)
     terms: list[dict[str, int | float | str]] = []
     for column, count, tfidf_value in zip(
         indices[:max_terms],

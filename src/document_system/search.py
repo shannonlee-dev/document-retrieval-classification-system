@@ -78,13 +78,13 @@ class DocumentSearch:
         if not 1 <= topk <= document_count:
             raise ValueError(f"topk must be between 1 and {document_count}")
         query_matrix = self.vectorizer.transform([query])
-        query_indices, query_values = query_matrix.row(0)
+        query_indices, query_values = query_matrix.get_sparse_row(0)
         if query_indices.size == 0:
             raise ValueError("query has no terms in the fitted vocabulary")
 
         scores = np.zeros(document_count, dtype=np.float64)
         for doc_id in range(document_count):
-            document_indices, document_values = self.matrix.row(doc_id)
+            document_indices, document_values = self.matrix.get_sparse_row(doc_id)
             scores[doc_id] = sparse_dot(
                 query_indices,
                 query_values,

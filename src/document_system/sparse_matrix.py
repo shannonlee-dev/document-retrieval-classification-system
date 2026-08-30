@@ -52,7 +52,7 @@ class SparseMatrix:
     def _nnz(self) -> int:
         return int(self.data.size)
 
-    def row(self, row_id: int) -> tuple[np.ndarray, np.ndarray]:
+    def get_sparse_row(self, row_id: int) -> tuple[np.ndarray, np.ndarray]:
         if not 0 <= row_id < self.shape[0]:
             raise IndexError(f"row index {row_id} is outside matrix")
         start, end = int(self.indptr[row_id]), int(self.indptr[row_id + 1])
@@ -62,7 +62,7 @@ class SparseMatrix:
         selected = [int(row_id) for row_id in row_ids]
         dense = np.zeros((len(selected), self.shape[1]), dtype=np.float64)
         for output_row, row_id in enumerate(selected):
-            indices, values = self.row(row_id)
+            indices, values = self.get_sparse_row(row_id)
             dense[output_row, indices] = values
         return dense
 

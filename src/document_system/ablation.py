@@ -91,10 +91,10 @@ def evaluate_label_retrieval(
     labels = np.asarray(corpus_labels)
     ranked_labels = []
     for query_id in range(query_matrix.shape[0]):
-        query_indices, query_values = query_matrix.row(query_id)
+        query_indices, query_values = query_matrix.get_sparse_row(query_id)
         scores = np.zeros(corpus_matrix.shape[0], dtype=np.float64)
         for document_id in range(corpus_matrix.shape[0]):
-            document_indices, document_values = corpus_matrix.row(document_id)
+            document_indices, document_values = corpus_matrix.get_sparse_row(document_id)
             scores[document_id] = sparse_dot(
                 query_indices,
                 query_values,

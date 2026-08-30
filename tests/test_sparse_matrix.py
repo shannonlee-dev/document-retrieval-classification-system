@@ -23,7 +23,7 @@ def test_sparse_matrix_restores_selected_rows() -> None:
 
 
 def test_sparse_matrix_row_returns_nonzero_views() -> None:
-    indices, values = make_matrix().row(0)
+    indices, values = make_matrix().get_sparse_row(0)
 
     np.testing.assert_array_equal(indices, np.array([0, 2], dtype=np.int32))
     np.testing.assert_array_equal(values, np.array([2.0, 1.0]))

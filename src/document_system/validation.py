@@ -121,13 +121,13 @@ def stage_example(
             break
     if document_id is None:
         raise ValueError("stage example requires a nonzero document")
-    indices, counts = stages.counts.get_sparse_row(document_id)
-    _, normalized = stages.tfidf.get_sparse_row(document_id)
+    column_indices, term_counts = stages.counts.get_sparse_row(document_id)
+    _, normalized_tfidf_values = stages.tfidf.get_sparse_row(document_id)
     terms: list[dict[str, int | float | str]] = []
-    for column, count, tfidf_value in zip(
-        indices[:max_terms],
-        counts[:max_terms],
-        normalized[:max_terms],
+    for column, term_count, normalized_tfidf_value in zip(
+        column_indices[:max_terms],
+        term_counts[:max_terms],
+        normalized_tfidf_values[:max_terms],
         strict=True,
     ):
         column_id = int(column)
@@ -136,10 +136,10 @@ def stage_example(
             {
                 "term": vectorizer.feature_names_[column_id],
                 "column": column_id,
-                "tf": float(count),
+                "tf": float(term_count),
                 "idf": idf,
-                "tfidf_before_norm": float(count * idf),
-                "tfidf_after_norm": float(tfidf_value),
+                "tfidf_before_norm": float(term_count * idf),
+                "tfidf_after_norm": float(normalized_tfidf_value),
             }
         )
     return {

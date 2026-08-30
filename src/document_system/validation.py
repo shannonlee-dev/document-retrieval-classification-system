@@ -113,10 +113,12 @@ def stage_example(
 
     if max_terms < MINIMUM_STAGE_EXAMPLE_TERMS:
         raise ValueError("max_terms must be positive")
-    document_id = next(
-        (row_id for row_id in range(stages.counts.shape[0]) if stages.counts.row(row_id)[0].size),
-        None,
-    )
+    document_id = None
+    for row_id in range(stages.counts.shape[0]):
+        column_indices, _ = stages.counts.row(row_id)
+        if column_indices.size:
+            document_id = row_id
+            break
     if document_id is None:
         raise ValueError("stage example requires a nonzero document")
     indices, counts = stages.counts.row(document_id)

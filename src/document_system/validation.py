@@ -66,39 +66,55 @@ def validate_against_sklearn(
             f"matrix shape mismatch: custom={custom.shape}, sklearn={reference.shape}"
         )
 
-    max_error = 0.0
+    max_absolute_error = 0.0
     absolute_error_sum = 0.0
     for row_id in range(custom.shape[0]):
         custom_indices, custom_values = custom.get_sparse_row(row_id)
-        start, end = reference.indptr[row_id], reference.indptr[row_id + 1]
-        reference_indices = reference.indices[start:end]
-        reference_values = reference.data[start:end]
-        left = right = 0
-        while left < custom_indices.size or right < reference_indices.size:
-            if right >= reference_indices.size or (
-                left < custom_indices.size
-                and custom_indices[left] < reference_indices[right]
+        reference_row_start, reference_row_end = (
+            reference.indptr[row_id],
+            reference.indptr[row_id + 1],
+        )
+        reference_indices = reference.indices[reference_row_start:reference_row_end]
+        reference_values = reference.data[reference_row_start:reference_row_end]
+        custom_position = reference_position = 0
+        while (
+            custom_position < custom_indices.size
+            or reference_position < reference_indices.size
+        ):
+            if reference_position >= reference_indices.size or (
+                custom_position < custom_indices.size
+                and custom_indices[custom_position]
+                < reference_indices[reference_position]
             ):
-                error = abs(float(custom_values[left]))
-                left += 1
-            elif left >= custom_indices.size or reference_indices[right] < custom_indices[left]:
-                error = abs(float(reference_values[right]))
-                right += 1
+                absolute_error = abs(float(custom_values[custom_position]))
+                custom_position += 1
+            elif (
+                custom_position >= custom_indices.size
+                or reference_indices[reference_position]
+                < custom_indices[custom_position]
+            ):
+                absolute_error = abs(float(reference_values[reference_position]))
+                reference_position += 1
             else:
-                error = abs(float(custom_values[left] - reference_values[right]))
-                left += 1
-                right += 1
-            max_error = max(max_error, error)
-            absolute_error_sum += error
+                absolute_error = abs(
+                    float(
+                        custom_values[custom_position]
+                        - reference_values[reference_position]
+                    )
+                )
+                custom_position += 1
+                reference_position += 1
+            max_absolute_error = max(max_absolute_error, absolute_error)
+            absolute_error_sum += absolute_error
 
     element_count = custom.shape[0] * custom.shape[1]
-    mean_error = absolute_error_sum / element_count if element_count else 0.0
+    mean_absolute_error = absolute_error_sum / element_count if element_count else 0.0
     return ValidationResult(
         shape=custom.shape,
-        max_absolute_error=max_error,
-        mean_absolute_error=mean_error,
+        max_absolute_error=max_absolute_error,
+        mean_absolute_error=mean_absolute_error,
         tolerance=tolerance,
-        passed=max_error <= tolerance,
+        passed=max_absolute_error <= tolerance,
         settings=dict(VALIDATION_SETTINGS),
     )
 

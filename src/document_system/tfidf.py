@@ -38,25 +38,21 @@ class NumpyTfidfVectorizer:
     def fit_transform_with_stages(self, texts: Sequence[str]) -> TfidfStages:
         feature_names = tuple(
             sorted(
-                {
-                    token
-                    for text in texts
-                    for token in self.preprocessor.tokenize(text)
-                }
+                {token for text in texts for token in self.preprocessor.tokenize(text)}
             )
         )
         if not feature_names:
             raise ValueError("vocabulary is empty after preprocessing")
         self.feature_names_ = feature_names
         self.vocabulary_ = {term: index for index, term in enumerate(feature_names)}
-        counts = self._count_matrix(texts)
+        count_matrix = self._count_matrix(texts)
         document_frequency = np.bincount(
-            counts.indices,
+            count_matrix.indices,
             minlength=len(self.vocabulary_),
         ).astype(np.float64)
         self.idf_ = np.log((1.0 + len(texts)) / (1.0 + document_frequency)) + 1.0
-        tfidf = self._weight_and_normalize(counts)
-        return TfidfStages(counts=counts, idf=self.idf_.copy(), tfidf=tfidf)
+        tfidf = self._weight_and_normalize(count_matrix)
+        return TfidfStages(counts=count_matrix, idf=self.idf_.copy(), tfidf=tfidf)
 
     def transform(self, texts: Sequence[str]) -> SparseMatrix:
         if self.idf_ is None or not self.vocabulary_:
@@ -64,41 +60,46 @@ class NumpyTfidfVectorizer:
         return self._weight_and_normalize(self._count_matrix(texts))
 
     def _count_matrix(self, texts: Sequence[str]) -> SparseMatrix:
-        values: list[float] = []
-        columns: list[int] = []
+        count_values: list[float] = []
+        column_indices: list[int] = []
         row_pointers = [0]
         for text in texts:
             token_counts = Counter(self.preprocessor.tokenize(text))
-            indexed_counts = sorted(
+            column_term_counts = sorted(
                 (self.vocabulary_[token], count)
                 for token, count in token_counts.items()
                 if token in self.vocabulary_
             )
-            columns.extend(index for index, _ in indexed_counts)
-            values.extend(float(count) for _, count in indexed_counts)
-            row_pointers.append(len(values))
-        pointer_dtype = np.int32 if len(values) <= np.iinfo(np.int32).max else np.int64
+            column_indices.extend(index for index, _ in column_term_counts)
+            count_values.extend(float(count) for _, count in column_term_counts)
+            row_pointers.append(len(count_values))
+        row_pointer_dtype = (
+            np.int32 if len(count_values) <= np.iinfo(np.int32).max else np.int64
+        )
         return SparseMatrix(
-            data=np.asarray(values, dtype=np.float64),
-            indices=np.asarray(columns, dtype=np.int32),
-            indptr=np.asarray(row_pointers, dtype=pointer_dtype),
+            data=np.asarray(count_values, dtype=np.float64),
+            indices=np.asarray(column_indices, dtype=np.int32),
+            indptr=np.asarray(row_pointers, dtype=row_pointer_dtype),
             shape=(len(texts), len(self.vocabulary_)),
         )
 
-    def _weight_and_normalize(self, counts: SparseMatrix) -> SparseMatrix:
+    def _weight_and_normalize(self, count_matrix: SparseMatrix) -> SparseMatrix:
         if self.idf_ is None:
             raise RuntimeError("vectorizer is not fitted")
-        weighted = counts.data * self.idf_[counts.indices]
-        for row_id in range(counts.shape[0]):
-            start, end = int(counts.indptr[row_id]), int(counts.indptr[row_id + 1])
-            if start == end:
+        tfidf_values = count_matrix.data * self.idf_[count_matrix.indices]
+        for row_id in range(count_matrix.shape[0]):
+            row_start, row_end = (
+                int(count_matrix.indptr[row_id]),
+                int(count_matrix.indptr[row_id + 1]),
+            )
+            if row_start == row_end:
                 continue
-            norm = float(np.linalg.norm(weighted[start:end]))
-            if norm:
-                weighted[start:end] /= norm
+            row_l2_norm = float(np.linalg.norm(tfidf_values[row_start:row_end]))
+            if row_l2_norm:
+                tfidf_values[row_start:row_end] /= row_l2_norm
         return SparseMatrix(
-            data=weighted,
-            indices=counts.indices.copy(),
-            indptr=counts.indptr.copy(),
-            shape=counts.shape,
+            data=tfidf_values,
+            indices=count_matrix.indices.copy(),
+            indptr=count_matrix.indptr.copy(),
+            shape=count_matrix.shape,
         )

@@ -76,20 +76,20 @@ def train_linear_svm(
         tol=None,
         shuffle=False,
     )
-    generator = np.random.default_rng(random_state)
+    random_generator = np.random.default_rng(random_state)
     first_batch = True
     row_ids = np.arange(matrix.shape[0])
     for _ in range(epochs):
-        shuffled = generator.permutation(row_ids)
-        for start in range(0, shuffled.size, batch_size):
-            batch_ids = shuffled[start : start + batch_size]
-            features = matrix.to_dense_rows(batch_ids)
-            batch_labels = labels[batch_ids]
+        shuffled_row_ids = random_generator.permutation(row_ids)
+        for batch_start in range(0, shuffled_row_ids.size, batch_size):
+            batch_row_ids = shuffled_row_ids[batch_start : batch_start + batch_size]
+            batch_features = matrix.to_dense_rows(batch_row_ids)
+            batch_labels = labels[batch_row_ids]
             if first_batch:
-                model.partial_fit(features, batch_labels, classes=classes)
+                model.partial_fit(batch_features, batch_labels, classes=classes)
                 first_batch = False
             else:
-                model.partial_fit(features, batch_labels)
+                model.partial_fit(batch_features, batch_labels)
     return model
 
 
@@ -102,9 +102,10 @@ def predict_sparse(
     if batch_size < 1:
         raise ValueError("batch_size must be positive")
     predictions: list[np.ndarray] = []
-    for start in range(0, matrix.shape[0], batch_size):
-        end = min(start + batch_size, matrix.shape[0])
-        predictions.append(model.predict(matrix.to_dense_rows(range(start, end))))
+    for batch_start in range(0, matrix.shape[0], batch_size):
+        batch_end = min(batch_start + batch_size, matrix.shape[0])
+        batch_row_ids = range(batch_start, batch_end)
+        predictions.append(model.predict(matrix.to_dense_rows(batch_row_ids)))
     if not predictions:
         return np.array([], dtype=np.int32)
     return np.concatenate(predictions)
@@ -129,11 +130,11 @@ def evaluate_classifier(
         raise ValueError("document_ids must contain one ID per matrix row")
     predictions = predict_sparse(model, matrix, batch_size=batch_size)
     class_ids = np.arange(len(target_names))
-    errors: list[dict[str, int | str]] = []
+    misclassifications: list[dict[str, int | str]] = []
     for row_id, (actual, predicted) in enumerate(zip(labels, predictions, strict=True)):
         if actual == predicted:
             continue
-        errors.append(
+        misclassifications.append(
             {
                 "doc_id": int(document_ids[row_id]),
                 "actual": target_names[int(actual)],
@@ -146,7 +147,7 @@ def evaluate_classifier(
         macro_f1=float(f1_score(labels, predictions, average="macro", zero_division=0)),
         confusion_matrix=confusion_matrix(labels, predictions, labels=class_ids),
         predictions=predictions,
-        misclassifications=errors,
+        misclassifications=misclassifications,
         model_settings={
             "loss": LINEAR_SVM_LOSS,
             "batch_size": batch_size,

@@ -49,8 +49,8 @@ def evaluate_ranked_labels(
         raise ValueError("query labels and rankings must have the same length")
 
     relevant_counts = Counter(int(label) for label in corpus_labels)
-    precisions = []
-    average_precisions = []
+    precision_at_k_values = []
+    average_precision_at_k_values = []
     for query_label, ranking in zip(query_labels, ranked_labels, strict=True):
         if len(ranking) < k:
             raise ValueError("each ranking must contain at least k results")
@@ -60,12 +60,20 @@ def evaluate_ranked_labels(
             if int(result_label) == int(query_label):
                 relevant_seen += 1
                 precision_sum += relevant_seen / rank
-        precisions.append(relevant_seen / k)
-        denominator = min(relevant_counts[int(query_label)], k)
-        average_precisions.append(precision_sum / denominator if denominator else 0.0)
+        precision_at_k_values.append(relevant_seen / k)
+        relevant_result_count = min(relevant_counts[int(query_label)], k)
+        average_precision_at_k_values.append(
+            precision_sum / relevant_result_count if relevant_result_count else 0.0
+        )
     return RetrievalMetrics(
-        precision_at_k=float(np.mean(precisions)) if precisions else 0.0,
-        map_at_k=float(np.mean(average_precisions)) if average_precisions else 0.0,
+        precision_at_k=(
+            float(np.mean(precision_at_k_values)) if precision_at_k_values else 0.0
+        ),
+        map_at_k=(
+            float(np.mean(average_precision_at_k_values))
+            if average_precision_at_k_values
+            else 0.0
+        ),
     )
 
 
@@ -88,24 +96,26 @@ def evaluate_label_retrieval(
     if not 1 <= k <= corpus_matrix.shape[0]:
         raise ValueError("k must be between 1 and the corpus size")
 
-    labels = np.asarray(corpus_labels)
-    ranked_labels = []
-    for query_id in range(query_matrix.shape[0]):
-        query_indices, query_values = query_matrix.get_sparse_row(query_id)
+    corpus_label_array = np.asarray(corpus_labels)
+    ranked_result_labels: list[list[int]] = []
+    for query_row_id in range(query_matrix.shape[0]):
+        query_indices, query_values = query_matrix.get_sparse_row(query_row_id)
         scores = np.zeros(corpus_matrix.shape[0], dtype=np.float64)
-        for document_id in range(corpus_matrix.shape[0]):
-            document_indices, document_values = corpus_matrix.get_sparse_row(document_id)
-            scores[document_id] = sparse_dot(
+        for corpus_row_id in range(corpus_matrix.shape[0]):
+            document_indices, document_values = corpus_matrix.get_sparse_row(
+                corpus_row_id
+            )
+            scores[corpus_row_id] = sparse_dot(
                 query_indices,
                 query_values,
                 document_indices,
                 document_values,
             )
-        ranked_ids = np.argsort(-scores, kind="stable")[:k]
-        ranked_labels.append(labels[ranked_ids].tolist())
+        ranked_row_ids = np.argsort(-scores, kind="stable")[:k]
+        ranked_result_labels.append(corpus_label_array[ranked_row_ids].tolist())
     return evaluate_ranked_labels(
         query_labels=query_labels,
-        ranked_labels=ranked_labels,
+        ranked_labels=ranked_result_labels,
         corpus_labels=corpus_labels,
         k=k,
     )
@@ -127,25 +137,27 @@ def run_stop_word_ablation(
 ) -> dict[str, object]:
     """Compare fixed default stop words with no stop-word removal."""
 
-    data = bundle or load_20newsgroups()
-    document_ids = np.arange(len(data.texts))
-    train_ids, test_ids = train_test_split(
-        document_ids,
+    dataset = bundle or load_20newsgroups()
+    dataset_row_ids = np.arange(len(dataset.texts))
+    train_row_ids, test_row_ids = train_test_split(
+        dataset_row_ids,
         test_size=DEFAULT_TEST_SIZE,
-        stratify=data.labels,
+        stratify=dataset.labels,
         random_state=DEFAULT_RANDOM_STATE,
     )
-    train_texts = [data.texts[int(index)] for index in train_ids]
-    test_texts = [data.texts[int(index)] for index in test_ids]
-    train_labels = data.labels[train_ids]
-    test_labels = data.labels[test_ids]
+    train_texts = [dataset.texts[int(row_id)] for row_id in train_row_ids]
+    test_texts = [dataset.texts[int(row_id)] for row_id in test_row_ids]
+    train_labels = dataset.labels[train_row_ids]
+    test_labels = dataset.labels[test_row_ids]
     test_snippets = [make_safe_snippet(text) for text in test_texts]
-    variants = []
-    for name, stop_words in (
+    ablation_variants: list[AblationVariant] = []
+    for variant_name, variant_stop_words in (
         ("default_stop_words", DEFAULT_STOP_WORDS),
         ("no_stop_words", frozenset()),
     ):
-        vectorizer = NumpyTfidfVectorizer(EnglishPreprocessor(stop_words=stop_words))
+        vectorizer = NumpyTfidfVectorizer(
+            EnglishPreprocessor(stop_words=variant_stop_words)
+        )
         train_matrix = vectorizer.fit_transform(train_texts)
         test_matrix = vectorizer.transform(test_texts)
         model = train_linear_svm(
@@ -155,40 +167,40 @@ def run_stop_word_ablation(
             epochs=DEFAULT_EPOCHS,
             random_state=DEFAULT_RANDOM_STATE,
         )
-        classification = evaluate_classifier(
+        classification_report = evaluate_classifier(
             model,
             test_matrix,
             test_labels,
             test_snippets,
-            data.target_names,
+            dataset.target_names,
             batch_size=DEFAULT_BATCH_SIZE,
-            document_ids=data.source_doc_ids[test_ids],
+            document_ids=dataset.source_doc_ids[test_row_ids],
         )
-        retrieval = evaluate_label_retrieval(
+        retrieval_metrics = evaluate_label_retrieval(
             test_matrix,
             test_labels,
             train_matrix,
             train_labels,
         )
-        variants.append(
+        ablation_variants.append(
             AblationVariant(
-                name=name,
-                stop_word_count=len(stop_words),
+                name=variant_name,
+                stop_word_count=len(variant_stop_words),
                 vocabulary_size=len(vectorizer.vocabulary_),
-                accuracy=classification.accuracy,
-                macro_f1=classification.macro_f1,
-                precision_at_10=retrieval.precision_at_k,
-                map_at_10=retrieval.map_at_k,
+                accuracy=classification_report.accuracy,
+                macro_f1=classification_report.macro_f1,
+                precision_at_10=retrieval_metrics.precision_at_k,
+                map_at_10=retrieval_metrics.map_at_k,
             )
         )
-    default, none = variants
+    default_variant, no_stop_words_variant = ablation_variants
     return {
         "dataset": "20 Newsgroups: comp.graphics, rec.sport.baseball, sci.space",
         "split": {
             "random_state": DEFAULT_RANDOM_STATE,
             "test_size": DEFAULT_TEST_SIZE,
-            "train_documents": len(train_ids),
-            "test_queries": len(test_ids),
+            "train_documents": len(train_row_ids),
+            "test_queries": len(test_row_ids),
         },
         "retrieval_definition": {
             "corpus": "training documents",
@@ -196,12 +208,14 @@ def run_stop_word_ablation(
             "relevance": "same category label",
             "metrics": "Precision@10 and MAP@10",
         },
-        "variants": [asdict(variant) for variant in variants],
+        "variants": [asdict(variant) for variant in ablation_variants],
         "delta_default_minus_none": {
-            "accuracy": default.accuracy - none.accuracy,
-            "macro_f1": default.macro_f1 - none.macro_f1,
-            "precision_at_10": default.precision_at_10 - none.precision_at_10,
-            "map_at_10": default.map_at_10 - none.map_at_10,
+            "accuracy": default_variant.accuracy - no_stop_words_variant.accuracy,
+            "macro_f1": default_variant.macro_f1 - no_stop_words_variant.macro_f1,
+            "precision_at_10": (
+                default_variant.precision_at_10 - no_stop_words_variant.precision_at_10
+            ),
+            "map_at_10": default_variant.map_at_10 - no_stop_words_variant.map_at_10,
         },
     }
 

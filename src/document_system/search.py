@@ -71,7 +71,9 @@ class DocumentSearch:
             or not is_safe_text(snippet)
             for snippet in self.snippets
         ):
-            raise ValueError("snippets must be safe, nonblank, and within the length limit")
+            raise ValueError(
+                "snippets must be safe, nonblank, and within the length limit"
+            )
 
     def search(self, query: str, topk: int = DEFAULT_TOP_K) -> list[SearchResult]:
         document_count = self.matrix.shape[0]
@@ -83,23 +85,25 @@ class DocumentSearch:
             raise ValueError("query has no terms in the fitted vocabulary")
 
         scores = np.zeros(document_count, dtype=np.float64)
-        for doc_id in range(document_count):
-            document_indices, document_values = self.matrix.get_sparse_row(doc_id)
-            scores[doc_id] = sparse_dot(
+        for matrix_row_id in range(document_count):
+            document_indices, document_values = self.matrix.get_sparse_row(
+                matrix_row_id
+            )
+            scores[matrix_row_id] = sparse_dot(
                 query_indices,
                 query_values,
                 document_indices,
                 document_values,
             )
-        ranked_ids = np.lexsort((self.document_ids, -scores))[:topk]
+        ranked_row_ids = np.lexsort((self.document_ids, -scores))[:topk]
         return [
             SearchResult(
-                score=float(scores[doc_id]),
-                doc_id=int(self.document_ids[doc_id]),
-                label=self.target_names[int(self.labels[doc_id])],
-                text_snippet=_snippet(self.snippets[doc_id]),
+                score=float(scores[matrix_row_id]),
+                doc_id=int(self.document_ids[matrix_row_id]),
+                label=self.target_names[int(self.labels[matrix_row_id])],
+                text_snippet=_snippet(self.snippets[matrix_row_id]),
             )
-            for doc_id in ranked_ids
+            for matrix_row_id in ranked_row_ids
         ]
 
 

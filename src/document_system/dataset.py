@@ -11,6 +11,7 @@ from sklearn.datasets import fetch_20newsgroups
 from .constants import DEFAULT_RANDOM_STATE, MINIMUM_DOCUMENTS
 from .privacy import (
     PrivacyReport,
+    SanitizationResult,
     sanitize_document,
 )
 
@@ -31,6 +32,13 @@ class DatasetBundle:
     target_names: tuple[str, ...]
     source_doc_ids: np.ndarray
     privacy_report: PrivacyReport
+
+
+@dataclass(frozen=True)
+class _RetainedDocument:
+    source_doc_id: int
+    text: str
+    label: int
 
 
 def _validate_dataset(
@@ -68,18 +76,30 @@ def load_20newsgroups() -> DatasetBundle:
         shuffle=True,
         random_state=DEFAULT_RANDOM_STATE,
     )
-    retained = []
-    privacy_results = []
+    retained_documents: list[_RetainedDocument] = []
+    privacy_results: list[SanitizationResult] = []
     for source_doc_id, (text, label) in enumerate(zip(dataset.data, dataset.target)):
-        result = sanitize_document(text)
-        privacy_results.append(result)
-        if result.text:
-            retained.append((source_doc_id, result.text, label))
+        sanitization_result = sanitize_document(text)
+        privacy_results.append(sanitization_result)
+        if sanitization_result.text:
+            retained_documents.append(
+                _RetainedDocument(
+                    source_doc_id=source_doc_id,
+                    text=sanitization_result.text,
+                    label=int(label),
+                )
+            )
 
     raw_labels = dataset.target
-    source_doc_ids = np.asarray([row[0] for row in retained], dtype=np.int32)
-    texts = tuple(row[1] for row in retained)
-    labels = np.asarray([row[2] for row in retained], dtype=np.int32)
+    source_doc_ids = np.asarray(
+        [document.source_doc_id for document in retained_documents],
+        dtype=np.int32,
+    )
+    texts = tuple(document.text for document in retained_documents)
+    labels = np.asarray(
+        [document.label for document in retained_documents],
+        dtype=np.int32,
+    )
     target_names = tuple(dataset.target_names)
     _validate_dataset(texts, labels, source_doc_ids=source_doc_ids)
     return DatasetBundle(

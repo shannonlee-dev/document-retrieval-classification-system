@@ -69,24 +69,26 @@ def build_project(config: BuildConfig | None = None) -> BuildReport:
         len(bundle.texts) < MINIMUM_DOCUMENTS
         or len(bundle.target_names) < MINIMUM_CATEGORY_COUNT
     ):
-        raise ValueError("the full build requires at least 500 documents and two categories")
+        raise ValueError(
+            "the full build requires at least 500 documents and two categories"
+        )
     return build_from_dataset(bundle, config or BuildConfig())
 
 
 def build_from_dataset(bundle: DatasetBundle, config: BuildConfig) -> BuildReport:
     if config.batch_size < 1 or config.epochs < 1:
         raise ValueError("batch_size and epochs must be positive")
-    document_ids = np.arange(len(bundle.texts))
-    train_ids, test_ids = train_test_split(
-        document_ids,
+    dataset_row_ids = np.arange(len(bundle.texts))
+    train_row_ids, test_row_ids = train_test_split(
+        dataset_row_ids,
         test_size=DEFAULT_TEST_SIZE,
         stratify=bundle.labels,
         random_state=config.random_state,
     )
-    train_texts = [bundle.texts[int(index)] for index in train_ids]
-    test_texts = [bundle.texts[int(index)] for index in test_ids]
-    train_labels = bundle.labels[train_ids]
-    test_labels = bundle.labels[test_ids]
+    train_texts = [bundle.texts[int(row_id)] for row_id in train_row_ids]
+    test_texts = [bundle.texts[int(row_id)] for row_id in test_row_ids]
+    train_labels = bundle.labels[train_row_ids]
+    test_labels = bundle.labels[test_row_ids]
 
     vectorizer = NumpyTfidfVectorizer(EnglishPreprocessor())
     stages = vectorizer.fit_transform_with_stages(train_texts)
@@ -105,7 +107,7 @@ def build_from_dataset(bundle: DatasetBundle, config: BuildConfig) -> BuildRepor
         random_state=config.random_state,
     )
     snippets = tuple(make_safe_snippet(text) for text in bundle.texts)
-    test_snippets = [snippets[int(index)] for index in test_ids]
+    test_snippets = [snippets[int(row_id)] for row_id in test_row_ids]
     classification = evaluate_classifier(
         model,
         test_matrix,
@@ -113,7 +115,7 @@ def build_from_dataset(bundle: DatasetBundle, config: BuildConfig) -> BuildRepor
         test_snippets,
         bundle.target_names,
         batch_size=config.batch_size,
-        document_ids=bundle.source_doc_ids[test_ids],
+        document_ids=bundle.source_doc_ids[test_row_ids],
     )
 
     full_matrix = vectorizer.transform(bundle.texts)
@@ -159,8 +161,8 @@ def build_from_dataset(bundle: DatasetBundle, config: BuildConfig) -> BuildRepor
         {
             "document_count": len(bundle.texts),
             "category_count": len(bundle.target_names),
-            "train_count": len(train_ids),
-            "test_count": len(test_ids),
+            "train_count": len(train_row_ids),
+            "test_count": len(test_row_ids),
             "test_size": DEFAULT_TEST_SIZE,
             "stratified": True,
             "epochs": config.epochs,
@@ -194,8 +196,8 @@ def build_from_dataset(bundle: DatasetBundle, config: BuildConfig) -> BuildRepor
     return BuildReport(
         document_count=len(bundle.texts),
         category_count=len(bundle.target_names),
-        train_count=len(train_ids),
-        test_count=len(test_ids),
+        train_count=len(train_row_ids),
+        test_count=len(test_row_ids),
         vocabulary_size=len(vectorizer.vocabulary_),
         validation_passed=validation.passed,
         max_absolute_error=validation.max_absolute_error,

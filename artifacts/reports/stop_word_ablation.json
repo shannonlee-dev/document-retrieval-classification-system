@@ -1,0 +1,495 @@
+{
+  "dataset": "20 Newsgroups: all 20 categories",
+  "experiment": {
+    "seed_count": 10,
+    "random_states": [
+      42,
+      43,
+      44,
+      45,
+      46,
+      47,
+      48,
+      49,
+      50,
+      51
+    ],
+    "test_size": 0.2,
+    "retrieval_top_k": 10,
+    "retrieval_implementation": "vectorized sparse dot product with stable score/document-order ties"
+  },
+  "retrieval_definition": {
+    "corpus": "training documents",
+    "queries": "held-out test documents",
+    "relevance": "same category label",
+    "metrics": "Precision@10 and MAP@10"
+  },
+  "per_seed": [
+    {
+      "random_state": 42,
+      "duration_seconds": 524.2748718820003,
+      "split": {
+        "random_state": 42,
+        "test_size": 0.2,
+        "train_documents": 14647,
+        "test_queries": 3662
+      },
+      "variants": [
+        {
+          "name": "default_stop_words",
+          "stop_word_count": 124,
+          "vocabulary_size": 78613,
+          "accuracy": 0.7670671764063354,
+          "macro_f1": 0.7543850883245388,
+          "precision_at_10": 0.5188694702348443,
+          "map_at_10": 0.42868312917739454
+        },
+        {
+          "name": "no_stop_words",
+          "stop_word_count": 0,
+          "vocabulary_size": 78735,
+          "accuracy": 0.7624249044238122,
+          "macro_f1": 0.7521180029499864,
+          "precision_at_10": 0.4547788093937739,
+          "map_at_10": 0.37051387913621664
+        }
+      ],
+      "delta_default_minus_none": {
+        "accuracy": 0.004642271982523205,
+        "macro_f1": 0.0022670853745523356,
+        "precision_at_10": 0.0640906608410704,
+        "map_at_10": 0.0581692500411779
+      }
+    },
+    {
+      "random_state": 43,
+      "duration_seconds": 539.0555839390008,
+      "split": {
+        "random_state": 43,
+        "test_size": 0.2,
+        "train_documents": 14647,
+        "test_queries": 3662
+      },
+      "variants": [
+        {
+          "name": "default_stop_words",
+          "stop_word_count": 124,
+          "vocabulary_size": 81573,
+          "accuracy": 0.77198252321136,
+          "macro_f1": 0.7622683415470584,
+          "precision_at_10": 0.5139814309120699,
+          "map_at_10": 0.42334954444184375
+        },
+        {
+          "name": "no_stop_words",
+          "stop_word_count": 0,
+          "vocabulary_size": 81695,
+          "accuracy": 0.7618787547788094,
+          "macro_f1": 0.7518155765879493,
+          "precision_at_10": 0.4448661933369743,
+          "map_at_10": 0.3598467638466273
+        }
+      ],
+      "delta_default_minus_none": {
+        "accuracy": 0.010103768432550564,
+        "macro_f1": 0.010452764959109073,
+        "precision_at_10": 0.06911523757509563,
+        "map_at_10": 0.06350278059521647
+      }
+    },
+    {
+      "random_state": 44,
+      "duration_seconds": 537.8960002349995,
+      "split": {
+        "random_state": 44,
+        "test_size": 0.2,
+        "train_documents": 14647,
+        "test_queries": 3662
+      },
+      "variants": [
+        {
+          "name": "default_stop_words",
+          "stop_word_count": 124,
+          "vocabulary_size": 81172,
+          "accuracy": 0.7730748225013654,
+          "macro_f1": 0.7610754102144771,
+          "precision_at_10": 0.5157564172583288,
+          "map_at_10": 0.42232301067159067
+        },
+        {
+          "name": "no_stop_words",
+          "stop_word_count": 0,
+          "vocabulary_size": 81294,
+          "accuracy": 0.7566903331512834,
+          "macro_f1": 0.7435289948732675,
+          "precision_at_10": 0.44732386673948665,
+          "map_at_10": 0.3622056751883349
+        }
+      ],
+      "delta_default_minus_none": {
+        "accuracy": 0.016384489350081965,
+        "macro_f1": 0.017546415341209598,
+        "precision_at_10": 0.06843255051884212,
+        "map_at_10": 0.06011733548325576
+      }
+    },
+    {
+      "random_state": 45,
+      "duration_seconds": 536.813393726,
+      "split": {
+        "random_state": 45,
+        "test_size": 0.2,
+        "train_documents": 14647,
+        "test_queries": 3662
+      },
+      "variants": [
+        {
+          "name": "default_stop_words",
+          "stop_word_count": 124,
+          "vocabulary_size": 81179,
+          "accuracy": 0.7643364281813216,
+          "macro_f1": 0.7491743696829128,
+          "precision_at_10": 0.5122610595303113,
+          "map_at_10": 0.4240964690991998
+        },
+        {
+          "name": "no_stop_words",
+          "stop_word_count": 0,
+          "vocabulary_size": 81301,
+          "accuracy": 0.7547788093937738,
+          "macro_f1": 0.7381174133686896,
+          "precision_at_10": 0.45447842708902236,
+          "map_at_10": 0.37070779476910004
+        }
+      ],
+      "delta_default_minus_none": {
+        "accuracy": 0.009557618787547795,
+        "macro_f1": 0.01105695631422321,
+        "precision_at_10": 0.05778263244128895,
+        "map_at_10": 0.05338867433009975
+      }
+    },
+    {
+      "random_state": 46,
+      "duration_seconds": 459.8792872339991,
+      "split": {
+        "random_state": 46,
+        "test_size": 0.2,
+        "train_documents": 14647,
+        "test_queries": 3662
+      },
+      "variants": [
+        {
+          "name": "default_stop_words",
+          "stop_word_count": 124,
+          "vocabulary_size": 77573,
+          "accuracy": 0.7626979792463134,
+          "macro_f1": 0.7488519702357367,
+          "precision_at_10": 0.517394866193337,
+          "map_at_10": 0.4274438896257574
+        },
+        {
+          "name": "no_stop_words",
+          "stop_word_count": 0,
+          "vocabulary_size": 77695,
+          "accuracy": 0.756417258328782,
+          "macro_f1": 0.7378260379696473,
+          "precision_at_10": 0.44909885308574554,
+          "map_at_10": 0.363418398307803
+        }
+      ],
+      "delta_default_minus_none": {
+        "accuracy": 0.006280720917531402,
+        "macro_f1": 0.011025932266089389,
+        "precision_at_10": 0.06829601310759142,
+        "map_at_10": 0.06402549131795443
+      }
+    },
+    {
+      "random_state": 47,
+      "duration_seconds": 463.8830693489999,
+      "split": {
+        "random_state": 47,
+        "test_size": 0.2,
+        "train_documents": 14647,
+        "test_queries": 3662
+      },
+      "variants": [
+        {
+          "name": "default_stop_words",
+          "stop_word_count": 124,
+          "vocabulary_size": 78420,
+          "accuracy": 0.7651556526488258,
+          "macro_f1": 0.7562678551292007,
+          "precision_at_10": 0.5204259967231021,
+          "map_at_10": 0.43098483567830914
+        },
+        {
+          "name": "no_stop_words",
+          "stop_word_count": 0,
+          "vocabulary_size": 78542,
+          "accuracy": 0.7599672310212998,
+          "macro_f1": 0.7510001991886723,
+          "precision_at_10": 0.4595576187875478,
+          "map_at_10": 0.37494198243652094
+        }
+      ],
+      "delta_default_minus_none": {
+        "accuracy": 0.005188421627525974,
+        "macro_f1": 0.00526765594052836,
+        "precision_at_10": 0.060868377935554274,
+        "map_at_10": 0.056042853241788204
+      }
+    },
+    {
+      "random_state": 48,
+      "duration_seconds": 476.9346338329997,
+      "split": {
+        "random_state": 48,
+        "test_size": 0.2,
+        "train_documents": 14647,
+        "test_queries": 3662
+      },
+      "variants": [
+        {
+          "name": "default_stop_words",
+          "stop_word_count": 124,
+          "vocabulary_size": 80771,
+          "accuracy": 0.761605679956308,
+          "macro_f1": 0.748336067742387,
+          "precision_at_10": 0.520398689240852,
+          "map_at_10": 0.42998292198729116
+        },
+        {
+          "name": "no_stop_words",
+          "stop_word_count": 0,
+          "vocabulary_size": 80893,
+          "accuracy": 0.7550518842162752,
+          "macro_f1": 0.7417770000071319,
+          "precision_at_10": 0.4517476788640088,
+          "map_at_10": 0.3657494711884389
+        }
+      ],
+      "delta_default_minus_none": {
+        "accuracy": 0.006553795740032786,
+        "macro_f1": 0.006559067735255164,
+        "precision_at_10": 0.06865101037684318,
+        "map_at_10": 0.06423345079885223
+      }
+    },
+    {
+      "random_state": 49,
+      "duration_seconds": 475.9648122489998,
+      "split": {
+        "random_state": 49,
+        "test_size": 0.2,
+        "train_documents": 14647,
+        "test_queries": 3662
+      },
+      "variants": [
+        {
+          "name": "default_stop_words",
+          "stop_word_count": 124,
+          "vocabulary_size": 80378,
+          "accuracy": 0.778809393773894,
+          "macro_f1": 0.7695512718486577,
+          "precision_at_10": 0.5235117422173675,
+          "map_at_10": 0.43216034693506017
+        },
+        {
+          "name": "no_stop_words",
+          "stop_word_count": 0,
+          "vocabulary_size": 80500,
+          "accuracy": 0.774986346258875,
+          "macro_f1": 0.7652900071566788,
+          "precision_at_10": 0.4612506826870562,
+          "map_at_10": 0.3773417791474864
+        }
+      ],
+      "delta_default_minus_none": {
+        "accuracy": 0.0038230475150190513,
+        "macro_f1": 0.00426126469197885,
+        "precision_at_10": 0.0622610595303113,
+        "map_at_10": 0.05481856778757377
+      }
+    },
+    {
+      "random_state": 50,
+      "duration_seconds": 325.50702978999925,
+      "split": {
+        "random_state": 50,
+        "test_size": 0.2,
+        "train_documents": 14647,
+        "test_queries": 3662
+      },
+      "variants": [
+        {
+          "name": "default_stop_words",
+          "stop_word_count": 124,
+          "vocabulary_size": 78434,
+          "accuracy": 0.7747132714363736,
+          "macro_f1": 0.7632426536346287,
+          "precision_at_10": 0.5241125068268705,
+          "map_at_10": 0.434354578987976
+        },
+        {
+          "name": "no_stop_words",
+          "stop_word_count": 0,
+          "vocabulary_size": 78556,
+          "accuracy": 0.7703440742763518,
+          "macro_f1": 0.7606769487041978,
+          "precision_at_10": 0.4517749863462589,
+          "map_at_10": 0.3682876474820767
+        }
+      ],
+      "delta_default_minus_none": {
+        "accuracy": 0.0043691971600218205,
+        "macro_f1": 0.0025657049304309565,
+        "precision_at_10": 0.0723375204806116,
+        "map_at_10": 0.06606693150589932
+      }
+    },
+    {
+      "random_state": 51,
+      "duration_seconds": 331.0466448089992,
+      "split": {
+        "random_state": 51,
+        "test_size": 0.2,
+        "train_documents": 14647,
+        "test_queries": 3662
+      },
+      "variants": [
+        {
+          "name": "default_stop_words",
+          "stop_word_count": 124,
+          "vocabulary_size": 81857,
+          "accuracy": 0.772801747678864,
+          "macro_f1": 0.7651477615476923,
+          "precision_at_10": 0.518596395412343,
+          "map_at_10": 0.4283128310490408
+        },
+        {
+          "name": "no_stop_words",
+          "stop_word_count": 0,
+          "vocabulary_size": 81979,
+          "accuracy": 0.7599672310212998,
+          "macro_f1": 0.750114657340933,
+          "precision_at_10": 0.45843801201529216,
+          "map_at_10": 0.37254368113529773
+        }
+      ],
+      "delta_default_minus_none": {
+        "accuracy": 0.012834516657564188,
+        "macro_f1": 0.015033104206759296,
+        "precision_at_10": 0.060158383397050874,
+        "map_at_10": 0.055769149913743044
+      }
+    }
+  ],
+  "aggregate": {
+    "variants": {
+      "default_stop_words": {
+        "vocabulary_size": {
+          "mean": 79997.0,
+          "sample_std": 1570.0846403228643,
+          "min": 77573.0,
+          "max": 81857.0
+        },
+        "accuracy": {
+          "mean": 0.769224467504096,
+          "sample_std": 0.005802009985512139,
+          "min": 0.761605679956308,
+          "max": 0.778809393773894
+        },
+        "macro_f1": {
+          "mean": 0.7578300789907291,
+          "sample_std": 0.007530926220658191,
+          "min": 0.748336067742387,
+          "max": 0.7695512718486577
+        },
+        "precision_at_10": {
+          "mean": 0.5185308574549427,
+          "sample_std": 0.0038320137935871877,
+          "min": 0.5122610595303113,
+          "max": 0.5241125068268705
+        },
+        "map_at_10": {
+          "mean": 0.4281691557653463,
+          "sample_std": 0.003947017627308209,
+          "min": 0.42232301067159067,
+          "max": 0.434354578987976
+        }
+      },
+      "no_stop_words": {
+        "vocabulary_size": {
+          "mean": 80119.0,
+          "sample_std": 1570.0846403228643,
+          "min": 77695.0,
+          "max": 81979.0
+        },
+        "accuracy": {
+          "mean": 0.7612506826870562,
+          "sample_std": 0.006674120976427237,
+          "min": 0.7547788093937738,
+          "max": 0.774986346258875
+        },
+        "macro_f1": {
+          "mean": 0.7492264838147153,
+          "sample_std": 0.00912558632490764,
+          "min": 0.7378260379696473,
+          "max": 0.7652900071566788
+        },
+        "precision_at_10": {
+          "mean": 0.45333151283451667,
+          "sample_std": 0.005390982379192521,
+          "min": 0.4448661933369743,
+          "max": 0.4612506826870562
+        },
+        "map_at_10": {
+          "mean": 0.3685557072637903,
+          "sample_std": 0.005704352978293678,
+          "min": 0.3598467638466273,
+          "max": 0.3773417791474864
+        }
+      }
+    },
+    "delta_default_minus_none": {
+      "accuracy": {
+        "mean": 0.007973784817039874,
+        "sample_std": 0.004154967008216407,
+        "min": 0.0038230475150190513,
+        "max": 0.016384489350081965,
+        "default_wins": 10,
+        "no_stop_words_wins": 0,
+        "ties": 0
+      },
+      "macro_f1": {
+        "mean": 0.008603595176013622,
+        "sample_std": 0.00524288552628737,
+        "min": 0.0022670853745523356,
+        "max": 0.017546415341209598,
+        "default_wins": 10,
+        "no_stop_words_wins": 0,
+        "ties": 0
+      },
+      "precision_at_10": {
+        "mean": 0.06519934462042598,
+        "sample_std": 0.004799115958647935,
+        "min": 0.05778263244128895,
+        "max": 0.0723375204806116,
+        "default_wins": 10,
+        "no_stop_words_wins": 0,
+        "ties": 0
+      },
+      "map_at_10": {
+        "mean": 0.05961344850155609,
+        "sample_std": 0.004584890378362998,
+        "min": 0.05338867433009975,
+        "max": 0.06606693150589932,
+        "default_wins": 10,
+        "no_stop_words_wins": 0,
+        "ties": 0
+      }
+    }
+  }
+}

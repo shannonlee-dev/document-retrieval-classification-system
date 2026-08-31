@@ -135,7 +135,7 @@ loader는 headers, footers, quotes를 제거한 뒤 이메일, 명확한 전화�
 
 동의어 치환은 사용하지 않는다. 외부 어휘 자원에 새로운 의미 가정을 의존하게 되고, 문맥에 맞지 않는 치환이 생길 수 있으며, 직접 구현과 scikit-learn 검증의 분석 경계도 불필요하게 달라지기 때문이다.
 
-불용어 적용·미적용의 이전 수치 비교는 세 카테고리 범위에서만 수행된 기록이므로 현재 20-category 결과로 일반화하지 않는다. 전체 카테고리 loader를 쓰는 방법과 현재 Python 검색 루프의 계산 한계는 [stop-word ablation](docs/stop-word-ablation.md)에 기록했다.
+20개 카테고리에서 `random_state=42..51` 10개 stratified 80:20 split을 비교한 결과, 고정 불용어를 적용한 쪽이 모든 seed와 모든 지표에서 높았다. 평균 차이(`default - none`)는 Accuracy `+0.007974`, macro F1 `+0.008604`, Precision@10 `+0.065199`, MAP@10 `+0.059613`이다. 이는 동일 카테고리를 relevance로 사용한 실험 결과이며 일반적 검색 품질을 보장하지는 않는다. seed별 값과 표준편차는 [stop-word ablation](docs/stop-word-ablation.md)과 [결과 JSON](artifacts/reports/stop_word_ablation.json)에 기록했다.
 
 TF-IDF는 다음 정의를 NumPy 배열과 자체 `SparseMatrix`로 계산한다.
 

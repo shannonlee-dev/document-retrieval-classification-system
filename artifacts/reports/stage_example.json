@@ -8,44 +8,46 @@
   },
   "terms": [
     {
-      "term": "advantage",
-      "column": 283,
+      "term": "acceleration",
+      "column": 336,
       "tf": 1.0,
-      "idf": 5.153224743997385,
-      "tfidf_before_norm": 5.153224743997385,
-      "tfidf_after_norm": 0.11504025527489274
+      "idf": 7.333962548332865,
+      "tfidf_before_norm": 7.333962548332865,
+      "tfidf_after_norm": 0.20647376524166816
     },
     {
-      "term": "ask",
-      "column": 1130,
+      "term": "analysis",
+      "column": 2454,
       "tf": 1.0,
-      "idf": 4.625869818280185,
-      "tfidf_before_norm": 4.625869818280185,
-      "tfidf_after_norm": 0.10326761808385126
+      "idf": 5.5486339694351,
+      "tfidf_before_norm": 5.5486339694351,
+      "tfidf_after_norm": 0.15621123506793927
     },
     {
-      "term": "assume",
-      "column": 1187,
+      "term": "anything",
+      "column": 2955,
       "tf": 1.0,
-      "idf": 5.023171615749187,
-      "tfidf_before_norm": 5.023171615749187,
-      "tfidf_after_norm": 0.11213695766684674
+      "idf": 3.672375236506936,
+      "tfidf_before_norm": 3.672375236506936,
+      "tfidf_after_norm": 0.10338873937039829
     },
     {
-      "term": "better",
-      "column": 1839,
+      "term": "build",
+      "column": 8484,
       "tf": 1.0,
-      "idf": 3.268683541318364,
-      "tfidf_before_norm": 3.268683541318364,
-      "tfidf_after_norm": 0.07296987957765962
+      "idf": 5.039099501432729,
+      "tfidf_before_norm": 5.039099501432729,
+      "tfidf_after_norm": 0.14186626133300048
     },
     {
-      "term": "big",
-      "column": 1881,
+      "term": "buy",
+      "column": 8796,
       "tf": 1.0,
-      "idf": 3.9745697476557393,
-      "tfidf_before_norm": 3.9745697476557393,
-      "tfidf_after_norm": 0.08872803750909225
+      "idf": 4.353734461314839,
+      "tfidf_before_norm": 4.353734461314839,
+      "tfidf_after_norm": 0.12257111229650651
     }
-  ]
+  ],
+  "fit_scope": "train_split",
+  "fit_document_count": 14647
 }

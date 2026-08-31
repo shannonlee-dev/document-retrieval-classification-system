@@ -1,7 +1,7 @@
 {
   "model": "linear SVM trained with SGDClassifier hinge loss",
-  "accuracy": 0.9040139616055847,
-  "macro_f1": 0.9030980112997345,
+  "accuracy": 0.7670671764063354,
+  "macro_f1": 0.7543850883245388,
   "model_settings": {
     "loss": "hinge",
     "batch_size": 128,
@@ -9,16 +9,17 @@
     "input_representation": "NumPy dense batches"
   },
   "confusion_matrix_shape": [
-    3,
-    3
+    20,
+    20
   ],
-  "misclassification_count": 55,
-  "document_count": 2863,
-  "category_count": 3,
-  "train_count": 2290,
-  "test_count": 573,
+  "misclassification_count": 853,
+  "document_count": 18309,
+  "category_count": 20,
+  "train_count": 14647,
+  "test_count": 3662,
   "test_size": 0.2,
   "stratified": true,
   "epochs": 6,
-  "random_state": 42
+  "random_state": 42,
+  "classification_vocabulary_size": 78613
 }

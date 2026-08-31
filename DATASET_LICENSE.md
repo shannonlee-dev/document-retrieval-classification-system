@@ -8,7 +8,12 @@
 - DOI: `10.24432/C5C323`
 - 프로젝트 loader: [scikit-learn `fetch_20newsgroups`](https://scikit-learn.org/stable/modules/generated/sklearn.datasets.fetch_20newsgroups.html)
 
-UCI는 이 데이터셋을 [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/) (CC BY 4.0)로 표시한다. 이 조건은 적절한 출처를 밝히고 변경 여부를 표시하면 공유와 개작을 허용한다. 이 프로젝트는 세 카테고리만 선택하고 아래의 privacy pipeline을 적용한 파생 데이터를 사용한다.
+UCI는 이 데이터셋을 [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/) (CC BY 4.0)로 표시한다. 이 조건은 적절한 출처를 밝히고 변경 여부를 표시하면 공유와 개작을 허용한다. 이 프로젝트는 아래 20개 카테고리 전체에 privacy pipeline을 적용한 파생 데이터를 사용한다.
+
+- `alt.atheism`, `comp.graphics`, `comp.os.ms-windows.misc`, `comp.sys.ibm.pc.hardware`, `comp.sys.mac.hardware`, `comp.windows.x`
+- `misc.forsale`, `rec.autos`, `rec.motorcycles`, `rec.sport.baseball`, `rec.sport.hockey`
+- `sci.crypt`, `sci.electronics`, `sci.med`, `sci.space`, `soc.religion.christian`
+- `talk.politics.guns`, `talk.politics.mideast`, `talk.politics.misc`, `talk.religion.misc`
 
 ## 이 저장소의 처리 정책
 
@@ -21,4 +26,4 @@ UCI는 이 데이터셋을 [Creative Commons Attribution 4.0 International](http
 - runtime artifact와 report에는 detector를 다시 통과한 최대 240자의 snippet만 저장한다.
 - build가 실제 redaction, 빈 문서 제외와 카테고리별 유지 통계를 `privacy_report.json`에 기록한다.
 
-이 처리는 원본에 대한 변경이다. CC BY 4.0 귀속 의무와 별개로, 원문에 적용될 수 있는 개인정보·퍼블리시티·인격권 등 다른 권리가 모두 해결되었다고 가정하지 않는다. structured redaction은 자유형 엔터티까지 탐지하는 PII-free 보증이 아니므로, 이 저장소는 원문과 정제된 전체 문서를 배포하지 않고 제한된 snippet과 수치 파생물만 저장한다.
+이 처리는 원본에 대한 변경이다. CC BY 4.0 귀속 의무와 별개로, 원문에 적용될 수 있는 개인정보·퍼블리시티·인격권 등 다른 권리가 모두 해결되었다고 가정하지 않는다. structured redaction은 자유형 엔터티, 주소, 사람 이름 또는 건강 정보를 탐지하지 않으며 PII-free 처리를 주장하지 않는다. 특히 `sci.med`를 포함한 전체 범위에는 자유 형식 건강 정보가 남을 수 있는 잔여 위험이 있다. 이 저장소는 원문과 정제된 전체 문서를 배포하지 않고 제한된 snippet과 수치 파생물만 저장한다.

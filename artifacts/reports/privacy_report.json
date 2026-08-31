@@ -1,30 +1,115 @@
 {
-  "documents_input": 2954,
-  "documents_retained": 2863,
-  "documents_dropped_after_sanitization": 91,
-  "retention_rate": 0.9691943127962085,
+  "documents_input": 18846,
+  "documents_retained": 18309,
+  "documents_dropped_after_sanitization": 537,
+  "retention_rate": 0.9715058898439988,
   "redactions": {
-    "email": 1237,
-    "phone": 566,
-    "url": 1,
-    "ipv4": 485,
-    "ipv6": 8
+    "email": 6405,
+    "phone": 2157,
+    "url": 2,
+    "ipv4": 759,
+    "ipv6": 253
   },
   "category_counts": {
+    "alt.atheism": {
+      "raw": 799,
+      "retained": 779,
+      "excluded": 20
+    },
     "comp.graphics": {
       "raw": 973,
       "retained": 953,
       "excluded": 20
+    },
+    "comp.os.ms-windows.misc": {
+      "raw": 985,
+      "retained": 947,
+      "excluded": 38
+    },
+    "comp.sys.ibm.pc.hardware": {
+      "raw": 982,
+      "retained": 963,
+      "excluded": 19
+    },
+    "comp.sys.mac.hardware": {
+      "raw": 963,
+      "retained": 928,
+      "excluded": 35
+    },
+    "comp.windows.x": {
+      "raw": 988,
+      "retained": 980,
+      "excluded": 8
+    },
+    "misc.forsale": {
+      "raw": 975,
+      "retained": 959,
+      "excluded": 16
+    },
+    "rec.autos": {
+      "raw": 990,
+      "retained": 935,
+      "excluded": 55
+    },
+    "rec.motorcycles": {
+      "raw": 996,
+      "retained": 968,
+      "excluded": 28
     },
     "rec.sport.baseball": {
       "raw": 994,
       "retained": 956,
       "excluded": 38
     },
+    "rec.sport.hockey": {
+      "raw": 999,
+      "retained": 974,
+      "excluded": 25
+    },
+    "sci.crypt": {
+      "raw": 991,
+      "retained": 961,
+      "excluded": 30
+    },
+    "sci.electronics": {
+      "raw": 984,
+      "retained": 956,
+      "excluded": 28
+    },
+    "sci.med": {
+      "raw": 990,
+      "retained": 960,
+      "excluded": 30
+    },
     "sci.space": {
       "raw": 987,
       "retained": 954,
       "excluded": 33
+    },
+    "soc.religion.christian": {
+      "raw": 997,
+      "retained": 974,
+      "excluded": 23
+    },
+    "talk.politics.guns": {
+      "raw": 910,
+      "retained": 885,
+      "excluded": 25
+    },
+    "talk.politics.mideast": {
+      "raw": 940,
+      "retained": 917,
+      "excluded": 23
+    },
+    "talk.politics.misc": {
+      "raw": 775,
+      "retained": 755,
+      "excluded": 20
+    },
+    "talk.religion.misc": {
+      "raw": 628,
+      "retained": 605,
+      "excluded": 23
     }
   }
 }

@@ -197,7 +197,7 @@ def run_stop_word_ablation(
         )
     ]
     return {
-        "dataset": "20 Newsgroups: comp.graphics, rec.sport.baseball, sci.space",
+        "dataset": "20 Newsgroups: all 20 categories",
         "split": {
             "seeds": list(ABLATION_SEEDS),
             "test_size": DEFAULT_TEST_SIZE,

@@ -1,8 +1,10 @@
 import pytest
 
+from document_system import ablation as ablation_module
 from document_system.ablation import (
     AblationVariant,
     evaluate_ranked_labels,
+    run_stop_word_ablation,
     summarize_variants,
 )
 
@@ -48,3 +50,22 @@ def test_summarize_variants_reports_mean_and_sample_standard_deviation() -> None
         "precision_at_10": {"mean": 0.7, "std": pytest.approx(0.1414213562)},
         "map_at_10": {"mean": 0.6, "std": pytest.approx(0.1414213562)},
     }
+
+
+def test_stop_word_ablation_reports_full_20_category_dataset_description(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    variants = [
+        AblationVariant("default_stop_words", 2, 100, 0.8, 0.7, 0.6, 0.5),
+        AblationVariant("no_stop_words", 0, 120, 0.7, 0.6, 0.5, 0.4),
+    ]
+    monkeypatch.setattr(
+        ablation_module,
+        "_run_stop_word_ablation_seed",
+        lambda _dataset, _seed: variants,
+    )
+
+    report = run_stop_word_ablation(object())  # type: ignore[arg-type]
+
+    assert report["dataset"] == "20 Newsgroups: all 20 categories"
+    assert report["split"]["seeds"] == list(range(10))

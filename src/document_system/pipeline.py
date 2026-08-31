@@ -6,15 +6,9 @@ import json
 from dataclasses import dataclass
 from pathlib import Path
 
-import numpy as np
-from sklearn.model_selection import train_test_split
-
 from .artifacts import save_search_artifacts
-from .classification import (
-    evaluate_classifier,
-    save_confusion_matrix,
-    train_linear_svm,
-)
+from .build_stages import run_classification_stage, run_search_stage
+from .classification import save_confusion_matrix
 from .constants import (
     DEFAULT_BATCH_SIZE,
     DEFAULT_EPOCHS,
@@ -22,15 +16,16 @@ from .constants import (
     DEFAULT_REPORTS_DIR,
     DEFAULT_RUNTIME_DIR,
     DEFAULT_TEST_SIZE,
-    DEFAULT_TOP_K,
     MINIMUM_DOCUMENTS,
 )
-from .dataset import MINIMUM_CATEGORY_COUNT, DatasetBundle, load_20newsgroups
-from .preprocessing import EnglishPreprocessor
+from .dataset import (
+    MINIMUM_CATEGORY_COUNT,
+    DatasetBundle,
+    load_20newsgroups,
+    validate_full_20_newsgroups,
+)
 from .privacy import make_safe_snippet
-from .search import DocumentSearch
-from .tfidf import NumpyTfidfVectorizer
-from .validation import stage_example, validate_against_sklearn
+from .validation import ValidationResult
 
 DEFAULT_SEARCH_QUERIES = (
     "space shuttle orbit",
@@ -56,15 +51,19 @@ class BuildReport:
     category_count: int
     train_count: int
     test_count: int
-    vocabulary_size: int
-    validation_passed: bool
-    max_absolute_error: float
+    classification_vocabulary_size: int
+    search_vocabulary_size: int
+    classification_validation_passed: bool
+    search_validation_passed: bool
+    classification_max_absolute_error: float
+    search_max_absolute_error: float
     accuracy: float
     macro_f1: float
 
 
 def build_project(config: BuildConfig | None = None) -> BuildReport:
     bundle = load_20newsgroups()
+    validate_full_20_newsgroups(bundle)
     if (
         len(bundle.texts) < MINIMUM_DOCUMENTS
         or len(bundle.target_names) < MINIMUM_CATEGORY_COUNT
@@ -78,116 +77,93 @@ def build_project(config: BuildConfig | None = None) -> BuildReport:
 def build_from_dataset(bundle: DatasetBundle, config: BuildConfig) -> BuildReport:
     if config.batch_size < 1 or config.epochs < 1:
         raise ValueError("batch_size and epochs must be positive")
-    dataset_row_ids = np.arange(len(bundle.texts))
-    train_row_ids, test_row_ids = train_test_split(
-        dataset_row_ids,
-        test_size=DEFAULT_TEST_SIZE,
-        stratify=bundle.labels,
-        random_state=config.random_state,
-    )
-    train_texts = [bundle.texts[int(row_id)] for row_id in train_row_ids]
-    test_texts = [bundle.texts[int(row_id)] for row_id in test_row_ids]
-    train_labels = bundle.labels[train_row_ids]
-    test_labels = bundle.labels[test_row_ids]
-
-    vectorizer = NumpyTfidfVectorizer(EnglishPreprocessor())
-    stages = vectorizer.fit_transform_with_stages(train_texts)
-    test_matrix = vectorizer.transform(test_texts)
-    validation = validate_against_sklearn(train_texts, vectorizer, stages.tfidf)
-    if not validation.passed:
-        raise RuntimeError(
-            f"TF-IDF validation failed: max error {validation.max_absolute_error}"
-        )
-
-    model = train_linear_svm(
-        stages.tfidf,
-        train_labels,
+    snippets = tuple(make_safe_snippet(text) for text in bundle.texts)
+    classification = run_classification_stage(
+        bundle,
+        snippets,
         batch_size=config.batch_size,
         epochs=config.epochs,
         random_state=config.random_state,
     )
-    snippets = tuple(make_safe_snippet(text) for text in bundle.texts)
-    test_snippets = [snippets[int(row_id)] for row_id in test_row_ids]
-    classification = evaluate_classifier(
-        model,
-        test_matrix,
-        test_labels,
-        test_snippets,
-        bundle.target_names,
-        batch_size=config.batch_size,
-        document_ids=bundle.source_doc_ids[test_row_ids],
+    search = run_search_stage(
+        bundle,
+        snippets,
+        config.search_queries,
     )
-
-    full_matrix = vectorizer.transform(bundle.texts)
-    searcher = DocumentSearch(
-        vectorizer=vectorizer,
-        matrix=full_matrix,
-        snippets=snippets,
-        labels=bundle.labels,
-        target_names=bundle.target_names,
-        document_ids=bundle.source_doc_ids,
-    )
-    search_examples = [
-        {
-            "query": query,
-            "results": [
-                result.to_dict()
-                for result in searcher.search(
-                    query,
-                    topk=min(DEFAULT_TOP_K, len(bundle.texts)),
-                )
-            ],
-        }
-        for query in config.search_queries
-    ]
 
     config.reports_dir.mkdir(parents=True, exist_ok=True)
     privacy_report = bundle.privacy_report
     if privacy_report.retained_document_count != len(bundle.texts):
         raise ValueError("privacy report retained count must match the dataset")
     _write_json(config.reports_dir / "privacy_report.json", privacy_report.to_dict())
-    _write_json(config.reports_dir / "tfidf_validation.json", validation.to_dict())
-    matrix_stats = full_matrix.memory_stats()
+    _write_json(
+        config.reports_dir / "tfidf_validation.json",
+        {
+            "classification": _validation_payload(
+                classification.validation,
+                fit_scope="train_split",
+                fit_document_count=classification.train_count,
+            ),
+            "search": _validation_payload(
+                search.validation,
+                fit_scope="full_corpus",
+                fit_document_count=len(bundle.texts),
+            ),
+        },
+    )
+    matrix_stats = search.matrix.memory_stats()
     matrix_stats.update(
         {
             "document_count": len(bundle.texts),
-            "vocabulary_size": len(vectorizer.vocabulary_),
+            "category_count": len(bundle.target_names),
+            "fit_scope": "full_corpus",
+            "fit_document_count": len(bundle.texts),
+            "search_vocabulary_size": search.vocabulary_size,
+            "vocabulary_size": search.vocabulary_size,
             "representation": "NumPy CSR-like data/indices/indptr",
         }
     )
     _write_json(config.reports_dir / "matrix_stats.json", matrix_stats)
-    metrics = classification.metrics_dict()
+    metrics = classification.report.metrics_dict()
     metrics.update(
         {
             "document_count": len(bundle.texts),
             "category_count": len(bundle.target_names),
-            "train_count": len(train_row_ids),
-            "test_count": len(test_row_ids),
+            "train_count": classification.train_count,
+            "test_count": classification.test_count,
             "test_size": DEFAULT_TEST_SIZE,
             "stratified": True,
             "epochs": config.epochs,
             "random_state": config.random_state,
+            "classification_vocabulary_size": classification.vocabulary_size,
         }
     )
     _write_json(config.reports_dir / "metrics.json", metrics)
+    stage_payload = dict(classification.stage_example)
+    stage_payload.update(
+        {
+            "fit_scope": "train_split",
+            "fit_document_count": classification.train_count,
+        }
+    )
     _write_json(
         config.reports_dir / "stage_example.json",
-        stage_example(stages, vectorizer),
+        stage_payload,
     )
     _write_json(
         config.reports_dir / "misclassifications.json",
-        classification.misclassifications[:MAX_REPORTED_MISCLASSIFICATIONS],
+        classification.report.misclassifications[:MAX_REPORTED_MISCLASSIFICATIONS],
     )
-    _write_json(config.reports_dir / "search_examples.json", search_examples)
+    _write_json(config.reports_dir / "search_examples.json", search.search_examples)
     save_confusion_matrix(
-        classification,
+        classification.report,
         bundle.target_names,
         config.reports_dir / "confusion_matrix.png",
     )
     save_search_artifacts(
         config.runtime_dir,
-        vectorizer,
-        full_matrix,
+        search.vectorizer,
+        search.matrix,
         snippets,
         bundle.labels,
         bundle.target_names,
@@ -196,13 +172,16 @@ def build_from_dataset(bundle: DatasetBundle, config: BuildConfig) -> BuildRepor
     return BuildReport(
         document_count=len(bundle.texts),
         category_count=len(bundle.target_names),
-        train_count=len(train_row_ids),
-        test_count=len(test_row_ids),
-        vocabulary_size=len(vectorizer.vocabulary_),
-        validation_passed=validation.passed,
-        max_absolute_error=validation.max_absolute_error,
-        accuracy=classification.accuracy,
-        macro_f1=classification.macro_f1,
+        train_count=classification.train_count,
+        test_count=classification.test_count,
+        classification_vocabulary_size=classification.vocabulary_size,
+        search_vocabulary_size=search.vocabulary_size,
+        classification_validation_passed=classification.validation.passed,
+        search_validation_passed=search.validation.passed,
+        classification_max_absolute_error=classification.validation.max_absolute_error,
+        search_max_absolute_error=search.validation.max_absolute_error,
+        accuracy=classification.report.accuracy,
+        macro_f1=classification.report.macro_f1,
     )
 
 
@@ -211,3 +190,16 @@ def _write_json(path: Path, value: object) -> None:
         json.dumps(value, ensure_ascii=False, indent=2),
         encoding="utf-8",
     )
+
+
+def _validation_payload(
+    validation: ValidationResult,
+    *,
+    fit_scope: str,
+    fit_document_count: int,
+) -> dict[str, object]:
+    payload = validation.to_dict()
+    payload.update(
+        {"fit_scope": fit_scope, "fit_document_count": fit_document_count}
+    )
+    return payload

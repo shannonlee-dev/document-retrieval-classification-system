@@ -1,17 +1,40 @@
 {
-  "shape": [
-    2290,
-    21662
-  ],
-  "max_absolute_error": 1.6653345369377348e-15,
-  "mean_absolute_error": 3.314699770890633e-20,
-  "tolerance": 1e-06,
-  "passed": true,
-  "settings": {
-    "smooth_idf": true,
-    "sublinear_tf": false,
-    "norm": "l2",
-    "use_idf": true,
-    "dtype": "float64"
+  "classification": {
+    "shape": [
+      14647,
+      78613
+    ],
+    "max_absolute_error": 5.440092820663267e-15,
+    "mean_absolute_error": 1.0183519429450044e-20,
+    "tolerance": 1e-06,
+    "passed": true,
+    "settings": {
+      "smooth_idf": true,
+      "sublinear_tf": false,
+      "norm": "l2",
+      "use_idf": true,
+      "dtype": "float64"
+    },
+    "fit_scope": "train_split",
+    "fit_document_count": 14647
+  },
+  "search": {
+    "shape": [
+      18309,
+      91538
+    ],
+    "max_absolute_error": 9.2148511043888e-15,
+    "mean_absolute_error": 7.69712986797591e-21,
+    "tolerance": 1e-06,
+    "passed": true,
+    "settings": {
+      "smooth_idf": true,
+      "sublinear_tf": false,
+      "norm": "l2",
+      "use_idf": true,
+      "dtype": "float64"
+    },
+    "fit_scope": "full_corpus",
+    "fit_document_count": 18309
   }
 }

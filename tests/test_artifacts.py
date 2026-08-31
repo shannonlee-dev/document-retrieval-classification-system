@@ -28,6 +28,7 @@ def test_search_artifacts_round_trip(tmp_path: Path) -> None:
         tmp_path, vectorizer, matrix, snippets, labels, target_names, document_ids
     )
     restored = load_search_artifacts(tmp_path)
+    metadata = json.loads((tmp_path / "metadata.json").read_text(encoding="utf-8"))
 
     assert restored.matrix.shape == matrix.shape
     np.testing.assert_array_equal(restored.matrix.data, matrix.data)
@@ -37,6 +38,10 @@ def test_search_artifacts_round_trip(tmp_path: Path) -> None:
     np.testing.assert_array_equal(restored.document_ids, document_ids)
     np.testing.assert_array_equal(restored.labels, labels)
     assert restored.target_names == target_names
+    assert metadata["artifact_version"] == 2
+    assert metadata["fit_scope"] == "full_corpus"
+    assert metadata["fit_document_count"] == matrix.shape[0]
+    assert metadata["category_count"] == len(target_names)
 
 
 def test_search_artifacts_reject_unknown_version(tmp_path: Path) -> None:
@@ -51,6 +56,60 @@ def test_search_artifacts_reject_unknown_version(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match="rebuild"):
         load_search_artifacts(tmp_path)
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("artifact_version", 1),
+        ("fit_scope", "train_split"),
+        ("fit_document_count", 999),
+        ("category_count", 999),
+    ],
+)
+def test_search_artifacts_reject_incompatible_build_metadata(
+    tmp_path: Path, field: str, value: object
+) -> None:
+    vectorizer, matrix, snippets, labels, target_names, document_ids = make_search_data()
+    save_search_artifacts(
+        tmp_path, vectorizer, matrix, snippets, labels, target_names, document_ids
+    )
+    metadata_path = tmp_path / "metadata.json"
+    metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+    metadata[field] = value
+    metadata_path.write_text(json.dumps(metadata), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="rebuild"):
+        load_search_artifacts(tmp_path)
+
+
+def test_search_artifacts_reject_labels_outside_target_names(tmp_path: Path) -> None:
+    vectorizer, matrix, snippets, labels, target_names, document_ids = make_search_data()
+    save_search_artifacts(
+        tmp_path, vectorizer, matrix, snippets, labels, target_names, document_ids
+    )
+    metadata_path = tmp_path / "metadata.json"
+    metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+    metadata["labels"][0] = len(target_names)
+    metadata_path.write_text(json.dumps(metadata), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="rebuild"):
+        load_search_artifacts(tmp_path)
+
+
+def test_search_artifacts_reject_save_row_count_mismatch(tmp_path: Path) -> None:
+    vectorizer, matrix, snippets, labels, target_names, document_ids = make_search_data()
+
+    with pytest.raises(ValueError, match="row"):
+        save_search_artifacts(
+            tmp_path,
+            vectorizer,
+            matrix,
+            snippets[:-1],
+            labels,
+            target_names,
+            document_ids,
+        )
 
 
 def test_search_artifacts_store_sanitized_search_fields(tmp_path: Path) -> None:

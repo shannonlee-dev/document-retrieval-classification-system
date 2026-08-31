@@ -2,9 +2,11 @@ import os
 import subprocess
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 import numpy as np
 
+import document_system.pipeline as pipeline_module
 from document_system.artifacts import save_search_artifacts
 from document_system.cli import main
 from document_system.preprocessing import EnglishPreprocessor
@@ -50,6 +52,31 @@ def test_cli_missing_artifacts_explains_build_command(
 
     assert exit_code == 2
     assert "python main.py build" in capsys.readouterr().err
+
+
+def test_cli_build_prints_dual_tfidf_metrics(monkeypatch, capsys) -> None:
+    monkeypatch.setattr(
+        pipeline_module,
+        "build_project",
+        lambda _config: SimpleNamespace(
+            document_count=20,
+            classification_vocabulary_size=101,
+            search_vocabulary_size=109,
+            classification_max_absolute_error=1e-8,
+            search_max_absolute_error=2e-8,
+            accuracy=0.75,
+            macro_f1=0.7,
+        ),
+    )
+
+    exit_code = main(["build"])
+    output = capsys.readouterr().out
+
+    assert exit_code == 0
+    assert "classification_vocabulary=101" in output
+    assert "search_vocabulary=109" in output
+    assert "classification_max_error=1.000e-08" in output
+    assert "search_max_error=2.000e-08" in output
 
 
 def test_cli_distinguishes_blank_and_oov_queries(tmp_path: Path, capsys) -> None:

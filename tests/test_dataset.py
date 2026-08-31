@@ -101,6 +101,44 @@ def test_full_dataset_contract_rejects_out_of_range_label(full_bundle) -> None:
         )
 
 
+def test_full_dataset_contract_rejects_fractional_labels(full_bundle) -> None:
+    labels = full_bundle.labels.astype(np.float64) + 0.5
+
+    with pytest.raises(ValueError, match="integer"):
+        dataset_module.validate_full_20_newsgroups(
+            dataclasses.replace(full_bundle, labels=labels)
+        )
+
+
+def test_full_dataset_contract_rejects_non_one_dimensional_labels(full_bundle) -> None:
+    labels = full_bundle.labels.reshape(20, 25)
+
+    with pytest.raises(ValueError, match="one-dimensional"):
+        dataset_module.validate_full_20_newsgroups(
+            dataclasses.replace(full_bundle, labels=labels)
+        )
+
+
+def test_full_dataset_contract_rejects_duplicate_target_names(full_bundle) -> None:
+    target_names = (*full_bundle.target_names[:-1], full_bundle.target_names[-2])
+    privacy_report = dataclasses.replace(
+        full_bundle.privacy_report,
+        category_counts={
+            category: full_bundle.privacy_report.category_counts[category]
+            for category in target_names
+        },
+    )
+
+    with pytest.raises(ValueError, match="exactly 20 unique target categories"):
+        dataset_module.validate_full_20_newsgroups(
+            dataclasses.replace(
+                full_bundle,
+                target_names=target_names,
+                privacy_report=privacy_report,
+            )
+        )
+
+
 def test_loader_returns_only_safe_nonblank_documents(monkeypatch) -> None:
     raw_texts = (
         ["Alice alice@example.com image pixel"] * 200

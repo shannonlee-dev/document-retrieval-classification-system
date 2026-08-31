@@ -20,4 +20,4 @@
 
 프로젝트의 기준 Python 구현은 각 쿼리마다 검색 말뭉치를 순회하므로 query-by-corpus retrieval이 이차 시간 복잡도를 갖는다. 10-seed 실험은 동일한 sparse dot-product 점수와 score/document-order stable tie-break를 유지한 배치 벡터화 평가로 가속했다. 벡터화 결과는 소규모 fixture에서 기준 구현과 일치함을 먼저 확인했다.
 
-기준 single-seed workflow: `uv run python scripts/run_stop_word_ablation.py`. 이 명령은 `random_state=42` 한 번만 실행하며 10-seed 집계 JSON을 재현하지는 않는다.
+기준 single-seed workflow: `uv run python scripts/run_stop_word_ablation.py`. 이 명령은 `random_state=42` 한 번만 실행하며 `artifacts/reports/stop_word_ablation_single_seed.json`에 기록하므로 10-seed 집계 JSON을 덮어쓰거나 재현하지는 않는다.

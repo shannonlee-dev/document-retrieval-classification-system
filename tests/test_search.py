@@ -64,12 +64,17 @@ def test_search_returns_score_id_label_and_snippet() -> None:
     assert result.text_snippet.startswith("space shuttle")
 
 
-def test_search_rejects_oov_or_empty_query() -> None:
+def test_search_rejects_oov_query() -> None:
     searcher = make_small_searcher()
 
     with pytest.raises(ValueError, match="vocabulary"):
         searcher.search("zzzzunknown", topk=1)
-    with pytest.raises(ValueError, match="vocabulary"):
+
+
+def test_search_rejects_blank_query() -> None:
+    searcher = make_small_searcher()
+
+    with pytest.raises(ValueError, match="blank"):
         searcher.search("", topk=1)
 
 
@@ -107,9 +112,30 @@ def test_search_rejects_unsafe_or_blank_snippets() -> None:
         )
 
 
-def test_equal_scores_are_ordered_by_document_id() -> None:
+def test_search_omits_zero_score_results() -> None:
     searcher = make_small_searcher()
 
     results = searcher.search("space", topk=2)
 
+    assert [result.doc_id for result in results] == [42]
+
+
+def test_equal_positive_scores_are_ordered_by_document_id() -> None:
+    texts = ["space shuttle", "space galaxy"]
+    vectorizer = NumpyTfidfVectorizer(
+        EnglishPreprocessor(stop_words=frozenset())
+    )
+    searcher = DocumentSearch(
+        vectorizer=vectorizer,
+        matrix=vectorizer.fit_transform(texts),
+        snippets=texts,
+        labels=np.array([0, 0], dtype=np.int32),
+        target_names=("space",),
+        document_ids=np.array([99, 42], dtype=np.int64),
+    )
+
+    results = searcher.search("space", topk=2)
+
+    assert results[0].score > 0
+    assert results[0].score == pytest.approx(results[1].score)
     assert [result.doc_id for result in results] == [42, 99]

@@ -79,6 +79,8 @@ class DocumentSearch:
         document_count = self.matrix.shape[0]
         if not 1 <= topk <= document_count:
             raise ValueError(f"topk must be between 1 and {document_count}")
+        if not query.strip():
+            raise ValueError("query must not be blank")
         query_matrix = self.vectorizer.transform([query])
         query_indices, query_values = query_matrix.get_sparse_row(0)
         if query_indices.size == 0:
@@ -95,7 +97,12 @@ class DocumentSearch:
                 document_indices,
                 document_values,
             )
-        ranked_row_ids = np.lexsort((self.document_ids, -scores))[:topk]
+        positive_score_row_ids = np.flatnonzero(scores > 0)
+        ranked_row_ids = positive_score_row_ids[
+            np.lexsort(
+                (self.document_ids[positive_score_row_ids], -scores[positive_score_row_ids])
+            )
+        ][:topk]
         return [
             SearchResult(
                 score=float(scores[matrix_row_id]),

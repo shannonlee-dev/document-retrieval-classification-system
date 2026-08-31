@@ -52,6 +52,23 @@ def test_cli_missing_artifacts_explains_build_command(
     assert "python main.py build" in capsys.readouterr().err
 
 
+def test_cli_distinguishes_blank_and_oov_queries(tmp_path: Path, capsys) -> None:
+    write_small_artifacts(tmp_path)
+
+    blank_exit_code = main(
+        ["--artifacts", str(tmp_path), "--query", "", "--topk", "1"]
+    )
+    blank_error = capsys.readouterr().err
+    oov_exit_code = main(
+        ["--artifacts", str(tmp_path), "--query", "zzzzunknown", "--topk", "1"]
+    )
+    oov_error = capsys.readouterr().err
+
+    assert blank_exit_code == oov_exit_code == 2
+    assert "blank" in blank_error
+    assert "vocabulary" in oov_error
+
+
 def test_search_process_does_not_import_build_only_matplotlib(
     tmp_path: Path,
 ) -> None:

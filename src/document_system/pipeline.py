@@ -25,7 +25,12 @@ from .constants import (
     DEFAULT_TOP_K,
     MINIMUM_DOCUMENTS,
 )
-from .dataset import MINIMUM_CATEGORY_COUNT, DatasetBundle, load_20newsgroups
+from .dataset import (
+    MINIMUM_CATEGORY_COUNT,
+    DatasetBundle,
+    load_20newsgroups,
+    validate_full_20_newsgroups,
+)
 from .preprocessing import EnglishPreprocessor
 from .privacy import make_safe_snippet
 from .search import DocumentSearch
@@ -65,6 +70,7 @@ class BuildReport:
 
 def build_project(config: BuildConfig | None = None) -> BuildReport:
     bundle = load_20newsgroups()
+    validate_full_20_newsgroups(bundle)
     if (
         len(bundle.texts) < MINIMUM_DOCUMENTS
         or len(bundle.target_names) < MINIMUM_CATEGORY_COUNT

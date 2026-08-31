@@ -15,11 +15,7 @@ from .privacy import (
     sanitize_document,
 )
 
-SAFE_CATEGORIES = (
-    "comp.graphics",
-    "rec.sport.baseball",
-    "sci.space",
-)
+EXPECTED_CATEGORY_COUNT = 20
 DATASET_SUBSET = "all"
 METADATA_FIELDS_TO_REMOVE = ("headers", "footers", "quotes")
 MINIMUM_CATEGORY_COUNT = 2
@@ -66,12 +62,26 @@ def _validate_dataset(
         raise ValueError("dataset must contain at least two labels")
 
 
+def validate_full_20_newsgroups(bundle: DatasetBundle) -> None:
+    """Validate the fixed production 20 Newsgroups dataset contract."""
+
+    expected_class_ids = set(range(EXPECTED_CATEGORY_COUNT))
+    observed_class_ids = set(np.asarray(bundle.labels, dtype=np.int64).tolist())
+    privacy_categories = set(bundle.privacy_report.category_counts)
+    target_categories = set(bundle.target_names)
+    if len(bundle.target_names) != EXPECTED_CATEGORY_COUNT:
+        raise ValueError("the full build requires exactly 20 target categories")
+    if observed_class_ids != expected_class_ids:
+        raise ValueError("the full build requires all 20 categories and class IDs 0..19")
+    if privacy_categories != target_categories:
+        raise ValueError("privacy report categories must match all target categories")
+
+
 def load_20newsgroups() -> DatasetBundle:
     """Load the complete, metadata-stripped 20 Newsgroups corpus."""
 
     dataset = fetch_20newsgroups(
         subset=DATASET_SUBSET,
-        categories=SAFE_CATEGORIES,
         remove=METADATA_FIELDS_TO_REMOVE,
         shuffle=True,
         random_state=DEFAULT_RANDOM_STATE,
@@ -102,7 +112,7 @@ def load_20newsgroups() -> DatasetBundle:
     )
     target_names = tuple(dataset.target_names)
     _validate_dataset(texts, labels, source_doc_ids=source_doc_ids)
-    return DatasetBundle(
+    bundle = DatasetBundle(
         texts=texts,
         labels=labels,
         target_names=target_names,
@@ -113,3 +123,5 @@ def load_20newsgroups() -> DatasetBundle:
             target_names,
         ),
     )
+    validate_full_20_newsgroups(bundle)
+    return bundle

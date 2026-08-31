@@ -135,21 +135,29 @@ def test_small_pipeline_writes_consistent_report_and_runtime_artifacts(
     )
 
 
-def test_build_project_accepts_sanitized_dataset(monkeypatch, tmp_path: Path) -> None:
+def test_build_project_accepts_sanitized_full_dataset(
+    monkeypatch, tmp_path: Path
+) -> None:
+    target_names = tuple(f"category.{index}" for index in range(20))
+    labels = np.repeat(np.arange(20, dtype=np.int32), 25)
+    category_texts = (
+        "image pixel graphics",
+        "baseball pitcher game",
+        "space rocket orbit",
+    ) + tuple(f"category {index} topic" for index in range(3, 20))
     texts = tuple(
-        ["image pixel graphics"] * 200
-        + ["baseball pitcher game"] * 200
-        + ["space rocket orbit"] * 200
+        f"{category_texts[label]} document {index}"
+        for index, label in enumerate(labels)
     )
     bundle = DatasetBundle(
         texts=texts,
-        labels=np.array([0] * 200 + [1] * 200 + [2] * 200, dtype=np.int32),
-        target_names=("comp.graphics", "rec.sport.baseball", "sci.space"),
+        labels=labels,
+        target_names=target_names,
         source_doc_ids=np.arange(len(texts), dtype=np.int32),
         privacy_report=PrivacyReport.from_sanitization_results(
             [sanitize_document(text) for text in texts],
-            [0] * 200 + [1] * 200 + [2] * 200,
-            ("comp.graphics", "rec.sport.baseball", "sci.space"),
+            labels,
+            target_names,
         ),
     )
     monkeypatch.setattr(pipeline_module, "load_20newsgroups", lambda: bundle)
@@ -163,5 +171,5 @@ def test_build_project_accepts_sanitized_dataset(monkeypatch, tmp_path: Path) ->
         )
     )
 
-    assert report.document_count == 600
-    assert report.category_count == 3
+    assert report.document_count == 500
+    assert report.category_count == 20

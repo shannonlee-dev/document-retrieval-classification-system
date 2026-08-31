@@ -133,7 +133,7 @@ loader는 headers, footers, quotes를 제거한 뒤 이메일, 명확한 전화�
 
 동의어 치환은 사용하지 않는다. 외부 어휘 자원에 새로운 의미 가정을 의존하게 되고, 문맥에 맞지 않는 치환이 생길 수 있으며, 직접 구현과 scikit-learn 검증의 분석 경계도 불필요하게 달라지기 때문이다.
 
-고정 불용어는 동일한 분할과 seed의 미적용 조건보다 Accuracy `1.05%p`, macro F1 `0.98%p`, MAP@10 `4.91%p` 높았다. 평가 정의와 한계는 [stop-word ablation](docs/stop-word-ablation.md)에 기록했다.
+10개 paired seed에서 고정 불용어는 미적용 조건보다 평균 Accuracy `1.41%p`, macro F1 `1.42%p`, MAP@10 `3.39%p` 높았다. 평가 정의와 한계는 [stop-word ablation](docs/stop-word-ablation.md)에 기록했다.
 
 TF-IDF는 다음 정의를 NumPy 배열과 자체 `SparseMatrix`로 계산한다.
 

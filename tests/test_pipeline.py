@@ -4,6 +4,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
+import document_system.build_stages as build_stages_module
 import document_system.pipeline as pipeline_module
 from document_system.dataset import DatasetBundle
 from document_system.pipeline import BuildConfig, build_from_dataset, build_project
@@ -42,7 +43,9 @@ def test_small_pipeline_writes_consistent_report_and_runtime_artifacts(
         "team pitcher hitter",
     )
     texts = tuple(
-        f"{text} {' '.join(['telemetry'] * 40)} farendtoken" for text in base_texts
+        f"{text} {' '.join(['telemetry'] * 40)}"
+        f"{' heldoutonly' if index >= 8 else ''}"
+        for index, text in enumerate(base_texts)
     )
     source_doc_ids = np.arange(100, 110, dtype=np.int32)
     bundle = DatasetBundle(
@@ -65,24 +68,31 @@ def test_small_pipeline_writes_consistent_report_and_runtime_artifacts(
     )
 
     evaluated_document_ids = None
-    evaluate_classifier = pipeline_module.evaluate_classifier
+    evaluate_classifier = build_stages_module.evaluate_classifier
 
     def record_document_ids(*args, **kwargs):
         nonlocal evaluated_document_ids
         evaluated_document_ids = np.asarray(kwargs["document_ids"])
         return evaluate_classifier(*args, **kwargs)
 
-    monkeypatch.setattr(pipeline_module, "evaluate_classifier", record_document_ids)
+    monkeypatch.setattr(build_stages_module, "evaluate_classifier", record_document_ids)
+    monkeypatch.setattr(build_stages_module, "train_test_split", fixed_split)
 
     report = build_from_dataset(bundle, config)
 
     assert report.document_count == 10
     assert report.train_count + report.test_count == 10
-    assert report.validation_passed is True
+    assert report.classification_vocabulary_size < report.search_vocabulary_size
+    assert report.classification_validation_passed is True
+    assert report.search_validation_passed is True
     validation = json.loads(
         (config.reports_dir / "tfidf_validation.json").read_text(encoding="utf-8")
     )
-    assert validation["max_absolute_error"] <= 1e-6
+    assert validation["classification"]["max_absolute_error"] <= 1e-6
+    assert validation["classification"]["fit_scope"] == "train_split"
+    assert validation["classification"]["fit_document_count"] == 8
+    assert validation["search"]["fit_scope"] == "full_corpus"
+    assert validation["search"]["fit_document_count"] == 10
     assert (config.reports_dir / "confusion_matrix.png").stat().st_size > 0
     assert (config.runtime_dir / "matrix.npz").is_file()
     assert evaluated_document_ids is not None
@@ -96,8 +106,9 @@ def test_small_pipeline_writes_consistent_report_and_runtime_artifacts(
     assert all(is_safe_text(text) for text in metadata["snippets"])
     assert all(len(text) <= SNIPPET_LIMIT for text in metadata["snippets"])
     assert all(text not in metadata["snippets"] for text in texts)
-    assert "farendtoken" in metadata["feature_names"]
-    assert all("farendtoken" not in snippet for snippet in metadata["snippets"])
+    assert "heldoutonly" in metadata["feature_names"]
+    assert metadata["fit_document_count"] == 10
+    assert all("heldoutonly" not in snippet for snippet in metadata["snippets"])
 
     privacy_report = json.loads(
         (config.reports_dir / "privacy_report.json").read_text(encoding="utf-8")
@@ -173,3 +184,7 @@ def test_build_project_accepts_sanitized_full_dataset(
 
     assert report.document_count == 500
     assert report.category_count == 20
+
+
+def fixed_split(*_args, **_kwargs):
+    return np.arange(8), np.arange(8, 10)

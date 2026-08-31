@@ -15,11 +15,21 @@ from .privacy import is_safe_text
 from .sparse_matrix import SparseMatrix
 from .tfidf import NumpyTfidfVectorizer
 
-ARTIFACT_VERSION = 1
+ARTIFACT_VERSION = 2
+SEARCH_FIT_SCOPE = "full_corpus"
 PRIVACY_POLICY = "structured-pii-redaction-v3"
 MATRIX_FILENAME = "matrix.npz"
 METADATA_FILENAME = "metadata.json"
-REQUIRED_METADATA_FIELDS = frozenset({"snippets", "document_ids", "privacy_policy"})
+REQUIRED_METADATA_FIELDS = frozenset(
+    {
+        "snippets",
+        "document_ids",
+        "privacy_policy",
+        "fit_scope",
+        "fit_document_count",
+        "category_count",
+    }
+)
 
 
 @dataclass(frozen=True)
@@ -43,6 +53,24 @@ def save_search_artifacts(
 ) -> None:
     if vectorizer.idf_ is None:
         raise RuntimeError("cannot save an unfitted vectorizer")
+    snippets = tuple(snippets)
+    labels = np.asarray(labels).astype(int)
+    document_ids = np.asarray(document_ids).astype(int)
+    target_names = tuple(target_names)
+    if (
+        len(snippets) != matrix.shape[0]
+        or labels.ndim != 1
+        or labels.size != matrix.shape[0]
+        or document_ids.ndim != 1
+        or document_ids.size != matrix.shape[0]
+    ):
+        raise ValueError("search artifact inputs must have row-aligned values")
+    if not target_names:
+        raise ValueError("search artifact target names must not be empty")
+    if labels.size and (
+        int(labels.min()) < 0 or int(labels.max()) >= len(target_names)
+    ):
+        raise ValueError("search artifact labels must be within target names")
     if any(
         not isinstance(snippet, str)
         or len(snippet) > SNIPPET_LIMIT
@@ -67,10 +95,13 @@ def save_search_artifacts(
         "feature_names": list(vectorizer.feature_names_),
         "stop_words": sorted(vectorizer.preprocessor.stop_words),
         "snippets": list(snippets),
-        "labels": np.asarray(labels).astype(int).tolist(),
+        "labels": labels.tolist(),
         "target_names": list(target_names),
-        "document_ids": np.asarray(document_ids).astype(int).tolist(),
+        "document_ids": document_ids.tolist(),
         "privacy_policy": PRIVACY_POLICY,
+        "fit_scope": SEARCH_FIT_SCOPE,
+        "fit_document_count": matrix.shape[0],
+        "category_count": len(target_names),
     }
     (path / METADATA_FILENAME).write_text(
         json.dumps(metadata, ensure_ascii=False),
@@ -113,9 +144,25 @@ def load_search_artifacts(directory: str | Path) -> SearchArtifacts:
     vectorizer.idf_ = idf
     matrix = SparseMatrix(data=data, indices=indices, indptr=indptr, shape=shape)
     snippets = tuple(str(snippet) for snippet in metadata["snippets"])
-    labels = np.asarray(metadata["labels"], dtype=np.int32)
     target_names = tuple(str(name) for name in metadata["target_names"])
+    labels = np.asarray(metadata["labels"], dtype=np.int32)
     document_ids = np.asarray(metadata["document_ids"], dtype=np.int64)
+    if metadata["fit_scope"] != SEARCH_FIT_SCOPE:
+        raise ValueError("artifact fit scope is outdated; rebuild with `python main.py build`")
+    if int(metadata["fit_document_count"]) != shape[0]:
+        raise ValueError(
+            "artifact fit document count mismatch; rebuild with `python main.py build`"
+        )
+    if int(metadata["category_count"]) != len(target_names):
+        raise ValueError(
+            "artifact category count mismatch; rebuild with `python main.py build`"
+        )
+    if labels.size and (
+        int(labels.min()) < 0 or int(labels.max()) >= len(target_names)
+    ):
+        raise ValueError(
+            "artifact labels are outside target names; rebuild with `python main.py build`"
+        )
     if (
         len(snippets) != shape[0]
         or labels.size != shape[0]

@@ -195,7 +195,7 @@ def run_stop_word_ablation(
         )
     default_variant, no_stop_words_variant = ablation_variants
     return {
-        "dataset": "20 Newsgroups: comp.graphics, rec.sport.baseball, sci.space",
+        "dataset": "20 Newsgroups: all 20 categories",
         "split": {
             "random_state": DEFAULT_RANDOM_STATE,
             "test_size": DEFAULT_TEST_SIZE,

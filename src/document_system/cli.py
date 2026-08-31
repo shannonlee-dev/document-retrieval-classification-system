@@ -44,8 +44,10 @@ def _run_build(arguments: Sequence[str]) -> int:
     )
     print(
         f"build complete: documents={report.document_count:,}, "
-        f"vocabulary={report.vocabulary_size:,}, "
-        f"max_error={report.max_absolute_error:.3e}, "
+        f"classification_vocabulary={report.classification_vocabulary_size:,}, "
+        f"search_vocabulary={report.search_vocabulary_size:,}, "
+        f"classification_max_error={report.classification_max_absolute_error:.3e}, "
+        f"search_max_error={report.search_max_absolute_error:.3e}, "
         f"accuracy={report.accuracy:.4f}, macro_f1={report.macro_f1:.4f}"
     )
     return 0

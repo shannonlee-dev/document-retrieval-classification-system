@@ -74,7 +74,7 @@ python main.py --query "space shuttle orbit" --topk 5
 python -m pytest -q
 ```
 
-`build`는 `artifacts/runtime/`의 검색 인덱스와 `artifacts/reports/`의 평가 자료를 같은 경로에 덮어쓴다. 변경 전 runtime metadata는 호환 로딩하지 않으며, 검색 시 재빌드 안내 오류를 낸다.
+`build`는 `artifacts/runtime/search_index_arrays.npz`와 `artifacts/runtime/search_index_data.json`으로 검색 인덱스를 저장하고, `artifacts/reports/`의 평가 자료를 같은 경로에 덮어쓴다. 변경 전 runtime data는 호환 로딩하지 않으며, 검색 시 재빌드 안내 오류를 낸다.
 
 ## 데이터와 개인정보 경계
 
@@ -108,7 +108,7 @@ loader는 headers, footers, quotes를 제거한 뒤 이메일, 명확한 전화�
 | 전체 | 18,846 | 18,309 | 537 | 97.15% |
 | `sci.med` | 990 | 960 | 30 | 96.97% |
 
-카테고리별 raw·retained·excluded 수는 `privacy_report.json`의 20개 항목에 기록한다. 이 수치는 structured redaction의 결과이지, 자유 형식 개인정보가 없다는 보장은 아니다.
+카테고리별 raw·retained·excluded 수는 `dataset_sanitization_report.json`의 20개 항목에 기록한다. 이 수치는 structured redaction의 결과이지, 자유 형식 개인정보가 없다는 보장은 아니다.
 
 | 제외 사유 | 문서 수 |
 |---|---:|
@@ -135,7 +135,7 @@ loader는 headers, footers, quotes를 제거한 뒤 이메일, 명확한 전화�
 
 동의어 치환은 사용하지 않는다. 외부 어휘 자원에 새로운 의미 가정을 의존하게 되고, 문맥에 맞지 않는 치환이 생길 수 있으며, 직접 구현과 scikit-learn 검증의 분석 경계도 불필요하게 달라지기 때문이다.
 
-20개 카테고리에서 `random_state=42..51` 10개 stratified 80:20 split을 비교한 결과, 고정 불용어를 적용한 쪽이 모든 seed와 모든 지표에서 높았다. 평균 차이(`default - none`)는 Accuracy `+0.007974`, macro F1 `+0.008604`, Precision@10 `+0.065199`, MAP@10 `+0.059613`이다. 이는 동일 카테고리를 relevance로 사용한 실험 결과이며 일반적 검색 품질을 보장하지는 않는다. seed별 값과 표준편차는 [stop-word ablation](docs/stop-word-ablation.md)과 [결과 JSON](artifacts/reports/stop_word_ablation.json)에 기록했다.
+20개 카테고리에서 `random_state=42..51` 10개 stratified 80:20 split을 비교한 결과, 고정 불용어를 적용한 쪽이 모든 seed와 모든 지표에서 높았다. 평균 차이(`default - none`)는 Accuracy `+0.007974`, macro F1 `+0.008604`, Precision@10 `+0.065199`, MAP@10 `+0.059613`이다. 이는 동일 카테고리를 relevance로 사용한 실험 결과이며 일반적 검색 품질을 보장하지는 않는다. seed별 값과 표준편차는 [stop-word ablation](docs/stop-word-ablation.md)과 [결과 JSON](artifacts/reports/stop_word_ablation_results.json)에 기록했다.
 
 TF-IDF는 다음 정의를 NumPy 배열과 자체 `SparseMatrix`로 계산한다.
 
@@ -158,7 +158,7 @@ dtype=float64
 
 ### TF-IDF 단계별 계산 예시와 행렬 매핑
 
-`stage_example.json`은 분류 학습 행렬에서 첫 번째 비어 있지 않은 행을 골라 실제 중간값을 기록한다. 현재 예시는 train split 14,647개 문서로 IDF를 학습한 행 0이며, 아래 값은 별도로 다시 계산한 예시가 아니라 build에 사용된 배열에서 추출한 값이다.
+`tfidf_transformation_example.json`은 분류 학습 행렬에서 첫 번째 비어 있지 않은 행을 골라 실제 중간값을 기록한다. 현재 예시는 train split 14,647개 문서로 IDF를 학습한 행 0이며, 아래 값은 별도로 다시 계산한 예시가 아니라 build에 사용된 배열에서 추출한 값이다.
 
 | 단어 | vocabulary 열 | TF | IDF | 정규화 전 TF-IDF | L2 정규화 후 TF-IDF |
 |---|---:|---:|---:|---:|---:|
@@ -211,7 +211,7 @@ TF-IDF 행렬의 shape은 `문서 수 × vocabulary 크기`다. 행은 split 내
 | 4 | 0.368089 | 12,888 | `sci.space` |
 | 5 | 0.364911 | 10,571 | `sci.space` |
 
-![20개 카테고리 혼동 행렬](artifacts/reports/confusion_matrix.png)
+![20개 카테고리 혼동 행렬](artifacts/reports/classification_confusion_matrix.png)
 
 혼동 행렬은 20 × 20이며, 행과 열은 위의 고정된 20개 카테고리 순서를 사용한다.
 
@@ -235,7 +235,7 @@ TF-IDF 행렬의 shape은 `문서 수 × vocabulary 크기`다. 행은 split 내
 
 ### 오분류 사례 5건 분석
 
-아래 분석은 `misclassifications.json`의 정제된 최대 240자 스니펫을 기준으로 한다. 스니펫은 원문의 전체 문맥을 보존하지 않으므로, 관찰 가능한 단서만으로 원인을 해석했다.
+아래 분석은 `classification_error_examples.json`의 정제된 최대 240자 스니펫을 기준으로 한다. 스니펫은 원문의 전체 문맥을 보존하지 않으므로, 관찰 가능한 단서만으로 원인을 해석했다.
 
 | source document ID | 실제 → 예측 | 관찰한 실패 원인 | BoW/TF-IDF 한계와 개선 방향 |
 |---:|---|---|---|
@@ -245,18 +245,21 @@ TF-IDF 행렬의 shape은 `문서 수 × vocabulary 크기`다. 행은 split 내
 | 3,292 | `talk.politics.misc` → `talk.politics.guns` | `BATF`, `assault`, `court`, `search`가 총기 정책 문서에서 강하게 나타날 법한 단서다. | `misc`의 넓은 라벨과 guns 하위 주제가 의미상 겹친다. 클래스별 recall과 confusion pair를 기준으로 모델과 라벨 경계를 점검한다. |
 | 15,723 | `talk.religion.misc` → `alt.atheism` | 관찰과 지각에 관한 철학적 표현이 중심이고 특정 종교를 가리키는 단어가 없다. | BoW는 주장 대상과 화자의 관점을 구분하지 못한다. 문장 문맥을 반영하는 임베딩 모델과 동일 split에서 비교한다. |
 
-정확한 원시 값과 안전 스니펫은 build가 생성한 다음 파일을 기준으로 한다.
+정확한 원시 값과 안전 스니펫은 다음 산출물을 기준으로 한다.
 
 | 파일 | 내용 |
 |---|---|
-| `artifacts/reports/metrics.json` | 문서·분할 수, 모델 설정, Accuracy, macro F1 |
-| `artifacts/reports/tfidf_validation.json` | scikit-learn 대조 설정과 오차 |
-| `artifacts/reports/matrix_stats.json` | shape, `nnz`, 밀도, 저장 byte |
-| `artifacts/reports/privacy_report.json` | redaction·제외·카테고리별 유지 통계 |
-| `artifacts/reports/stage_example.json` | TF → IDF → TF-IDF 중간값 |
-| `artifacts/reports/search_examples.json` | 세 쿼리의 안전한 Top-5 스니펫 |
-| `artifacts/reports/misclassifications.json` | 안전한 오분류 스니펫 최대 20건 |
-| `artifacts/reports/confusion_matrix.png` | 20 × 20 혼동 행렬 |
+| `artifacts/reports/classification_metrics.json` | 문서·분할 수, 모델 설정, Accuracy, macro F1 |
+| `artifacts/reports/tfidf_sklearn_validation.json` | scikit-learn 대조 설정과 오차 |
+| `artifacts/reports/search_index_statistics.json` | shape, `nnz`, 밀도, 저장 byte |
+| `artifacts/reports/dataset_sanitization_report.json` | redaction·제외·카테고리별 유지 통계 |
+| `artifacts/reports/tfidf_transformation_example.json` | TF → IDF → TF-IDF 중간값 |
+| `artifacts/reports/search_result_examples.json` | 세 쿼리의 안전한 Top-5 스니펫 |
+| `artifacts/reports/classification_error_examples.json` | 안전한 오분류 스니펫 최대 20건 |
+| `artifacts/reports/classification_confusion_matrix.png` | 20 × 20 혼동 행렬 |
+| `artifacts/reports/stop_word_ablation_results.json` | 10개 seed의 불용어 제거 실험 결과 |
+| `artifacts/runtime/search_index_arrays.npz` | 검색 행렬과 IDF의 NumPy 배열 |
+| `artifacts/runtime/search_index_data.json` | 검색 vocabulary, 문서 식별자, 라벨과 안전 스니펫 |
 
 ## 한계와 개선 방향
 

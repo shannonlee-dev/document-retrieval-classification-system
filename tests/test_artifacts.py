@@ -28,7 +28,13 @@ def test_search_artifacts_round_trip(tmp_path: Path) -> None:
         tmp_path, vectorizer, matrix, snippets, labels, target_names, document_ids
     )
     restored = load_search_artifacts(tmp_path)
-    metadata = json.loads((tmp_path / "metadata.json").read_text(encoding="utf-8"))
+    assert {path.name for path in tmp_path.iterdir()} == {
+        "search_index_arrays.npz",
+        "search_index_data.json",
+    }
+    metadata = json.loads(
+        (tmp_path / "search_index_data.json").read_text(encoding="utf-8")
+    )
 
     assert restored.matrix.shape == matrix.shape
     np.testing.assert_array_equal(restored.matrix.data, matrix.data)
@@ -49,7 +55,7 @@ def test_search_artifacts_reject_unknown_version(tmp_path: Path) -> None:
     save_search_artifacts(
         tmp_path, vectorizer, matrix, snippets, labels, target_names, document_ids
     )
-    metadata_path = tmp_path / "metadata.json"
+    metadata_path = tmp_path / "search_index_data.json"
     metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
     metadata["artifact_version"] = 999
     metadata_path.write_text(json.dumps(metadata), encoding="utf-8")
@@ -74,7 +80,7 @@ def test_search_artifacts_reject_incompatible_build_metadata(
     save_search_artifacts(
         tmp_path, vectorizer, matrix, snippets, labels, target_names, document_ids
     )
-    metadata_path = tmp_path / "metadata.json"
+    metadata_path = tmp_path / "search_index_data.json"
     metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
     metadata[field] = value
     metadata_path.write_text(json.dumps(metadata), encoding="utf-8")
@@ -88,7 +94,7 @@ def test_search_artifacts_reject_labels_outside_target_names(tmp_path: Path) -> 
     save_search_artifacts(
         tmp_path, vectorizer, matrix, snippets, labels, target_names, document_ids
     )
-    metadata_path = tmp_path / "metadata.json"
+    metadata_path = tmp_path / "search_index_data.json"
     metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
     metadata["labels"][0] = len(target_names)
     metadata_path.write_text(json.dumps(metadata), encoding="utf-8")
@@ -119,7 +125,7 @@ def test_search_artifacts_store_sanitized_search_fields(tmp_path: Path) -> None:
         tmp_path, vectorizer, matrix, snippets, labels, target_names, document_ids
     )
 
-    metadata = json.loads((tmp_path / "metadata.json").read_text())
+    metadata = json.loads((tmp_path / "search_index_data.json").read_text())
     assert "texts" not in metadata
     assert metadata["snippets"] == list(snippets)
     assert metadata["document_ids"] == [42, 99]
@@ -163,7 +169,7 @@ def test_search_artifacts_reject_legacy_metadata(tmp_path: Path) -> None:
     save_search_artifacts(
         tmp_path, vectorizer, matrix, snippets, labels, target_names, document_ids
     )
-    metadata_path = tmp_path / "metadata.json"
+    metadata_path = tmp_path / "search_index_data.json"
     metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
     del metadata["privacy_policy"]
     metadata_path.write_text(json.dumps(metadata), encoding="utf-8")
@@ -184,7 +190,7 @@ def test_search_artifacts_reject_old_privacy_policy(
     save_search_artifacts(
         tmp_path, vectorizer, matrix, snippets, labels, target_names, document_ids
     )
-    metadata_path = tmp_path / "metadata.json"
+    metadata_path = tmp_path / "search_index_data.json"
     metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
     metadata["privacy_policy"] = old_policy
     metadata_path.write_text(json.dumps(metadata), encoding="utf-8")

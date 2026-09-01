@@ -171,12 +171,12 @@ Python과 패키지 버전은 `requirements.txt`에 고정 가능한 범위로 �
 
 전체 데이터 실행에서는 다음 증거를 생성한다.
 
-- `tfidf_validation.json`: sklearn 설정, shape, 최대·평균 오차, PASS
-- `matrix_stats.json`: `nnz`, 밀도, 희소율, 밀집/희소 바이트
-- `metrics.json`: 분할 수, 모델 설정, Accuracy, macro F1
-- `confusion_matrix.png`: 20개 클래스 혼동 행렬
-- `misclassifications.json`: 실제값, 예측값, 스니펫을 포함한 5건 이상
-- `search_examples.json`: 대표 쿼리와 Top-5 결과
+- `tfidf_sklearn_validation.json`: sklearn 설정, shape, 최대·평균 오차, PASS
+- `search_index_statistics.json`: `nnz`, 밀도, 희소율, 밀집/희소 바이트
+- `classification_metrics.json`: 분할 수, 모델 설정, Accuracy, macro F1
+- `classification_confusion_matrix.png`: 20개 클래스 혼동 행렬
+- `classification_error_examples.json`: 실제값, 예측값, 스니펫을 포함한 5건 이상
+- `search_result_examples.json`: 대표 쿼리와 Top-5 결과
 
 README의 수치는 이 산출물에서 가져오며 예시 수치를 실제 결과처럼 작성하지 않는다.
 

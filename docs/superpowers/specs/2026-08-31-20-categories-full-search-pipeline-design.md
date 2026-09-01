@@ -91,7 +91,7 @@ sanitized 20-category DatasetBundle
 
 `ARTIFACT_VERSION`을 `2`로 올린다. 기존 artifact는 행 수가 전체 문서와 같더라도 vectorizer가 80%에 fit되었을 수 있으므로 호환 대상으로 취급하지 않는다.
 
-`metadata.json`에 다음 의미 필드를 추가한다.
+`search_index_data.json`에 다음 의미 필드를 추가한다.
 
 - `fit_scope`: 고정값 `full_corpus`
 - `fit_document_count`: 검색 vectorizer fit에 사용한 전체 문서 수
@@ -112,12 +112,12 @@ loader는 다음을 검증한다.
 
 기존 report 경로는 유지하되 내부 의미를 명시한다.
 
-- `metrics.json`: 분류 결과, 80/20 분할 정보와 `classification_vocabulary_size`
-- `matrix_stats.json`: 검색 행렬 통계, `fit_scope`, `fit_document_count`와 `search_vocabulary_size`
-- `tfidf_validation.json`: `classification`과 `search` 검증 결과 및 각 fit 범위
-- `stage_example.json`: 분류 학습 stage의 예시임을 나타내는 `fit_scope`
-- `search_examples.json`: 100% 검색 feature space에서 생성된 Top-k 예시
-- `privacy_report.json`, `misclassifications.json`, `confusion_matrix.png`: 20개 카테고리 데이터 기준 결과
+- `classification_metrics.json`: 분류 결과, 80/20 분할 정보와 `classification_vocabulary_size`
+- `search_index_statistics.json`: 검색 행렬 통계, `fit_scope`, `fit_document_count`와 `search_vocabulary_size`
+- `tfidf_sklearn_validation.json`: `classification`과 `search` 검증 결과 및 각 fit 범위
+- `tfidf_transformation_example.json`: 분류 학습 stage의 예시임을 나타내는 `fit_scope`
+- `search_result_examples.json`: 100% 검색 feature space에서 생성된 Top-k 예시
+- `dataset_sanitization_report.json`, `classification_error_examples.json`, `classification_confusion_matrix.png`: 20개 카테고리 데이터 기준 결과
 
 `BuildReport`의 모호한 필드는 다음처럼 분리한다.
 

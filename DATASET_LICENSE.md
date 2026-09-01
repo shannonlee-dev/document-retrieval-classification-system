@@ -24,6 +24,6 @@ UCI는 이 데이터셋을 [Creative Commons Attribution 4.0 International](http
 - sanitization 후 빈 문서를 폐기한다.
 - 정제된 전체 문서는 실행 중 TF-IDF, 분류와 검색 행렬 생성에만 사용하고 저장하지 않는다.
 - runtime artifact와 report에는 detector를 다시 통과한 최대 240자의 snippet만 저장한다.
-- build가 실제 redaction, 빈 문서 제외와 카테고리별 유지 통계를 `privacy_report.json`에 기록한다.
+- build가 실제 redaction, 빈 문서 제외와 카테고리별 유지 통계를 `dataset_sanitization_report.json`에 기록한다.
 
 이 처리는 원본에 대한 변경이다. CC BY 4.0 귀속 의무와 별개로, 원문에 적용될 수 있는 개인정보·퍼블리시티·인격권 등 다른 권리가 모두 해결되었다고 가정하지 않는다. structured redaction은 자유형 엔터티, 주소, 사람 이름 또는 건강 정보를 탐지하지 않으며 PII-free 처리를 주장하지 않는다. 특히 `sci.med`를 포함한 전체 범위에는 자유 형식 건강 정보가 남을 수 있는 잔여 위험이 있다. 이 저장소는 원문과 정제된 전체 문서를 배포하지 않고 제한된 snippet과 수치 파생물만 저장한다.

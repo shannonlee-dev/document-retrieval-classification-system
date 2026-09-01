@@ -38,7 +38,7 @@
 
 ## Task 3: Privacy evidence와 문서
 
-**Files:** `artifacts/reports/privacy_report.json`, `README.md`, `DATASET_LICENSE.md`
+**Files:** `artifacts/reports/dataset_sanitization_report.json`, `README.md`, `DATASET_LICENSE.md`
 
 - [x] build에서 실제 측정한 privacy report를 생성한다.
 - [x] 세 카테고리 선택 이유와 structured redaction 정책을 설명한다.
@@ -50,7 +50,7 @@
 
 - [x] `PYTHONPATH=src .venv/bin/pytest -q`
 - [x] `.venv/bin/ruff check src tests`
-- [x] 실제 dataset build와 `privacy_report.json` 생성
+- [x] 실제 dataset build와 `dataset_sanitization_report.json` 생성
 - [x] TF-IDF 최대 오차 `1e-6` 이하 확인
 - [x] runtime metadata에 full document 필드가 없고 snippet이 240자 이하인지 확인
 - [x] CLI 검색과 분류 report 생성 확인

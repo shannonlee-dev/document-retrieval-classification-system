@@ -95,9 +95,12 @@ def build_from_dataset(bundle: DatasetBundle, config: BuildConfig) -> BuildRepor
     privacy_report = bundle.privacy_report
     if privacy_report.retained_document_count != len(bundle.texts):
         raise ValueError("privacy report retained count must match the dataset")
-    _write_json(config.reports_dir / "privacy_report.json", privacy_report.to_dict())
     _write_json(
-        config.reports_dir / "tfidf_validation.json",
+        config.reports_dir / "dataset_sanitization_report.json",
+        privacy_report.to_dict(),
+    )
+    _write_json(
+        config.reports_dir / "tfidf_sklearn_validation.json",
         {
             "classification": _validation_payload(
                 classification.validation,
@@ -123,7 +126,7 @@ def build_from_dataset(bundle: DatasetBundle, config: BuildConfig) -> BuildRepor
             "representation": "NumPy CSR-like data/indices/indptr",
         }
     )
-    _write_json(config.reports_dir / "matrix_stats.json", matrix_stats)
+    _write_json(config.reports_dir / "search_index_statistics.json", matrix_stats)
     metrics = classification.report.metrics_dict()
     metrics.update(
         {
@@ -138,7 +141,7 @@ def build_from_dataset(bundle: DatasetBundle, config: BuildConfig) -> BuildRepor
             "classification_vocabulary_size": classification.vocabulary_size,
         }
     )
-    _write_json(config.reports_dir / "metrics.json", metrics)
+    _write_json(config.reports_dir / "classification_metrics.json", metrics)
     stage_payload = dict(classification.stage_example)
     stage_payload.update(
         {
@@ -147,18 +150,21 @@ def build_from_dataset(bundle: DatasetBundle, config: BuildConfig) -> BuildRepor
         }
     )
     _write_json(
-        config.reports_dir / "stage_example.json",
+        config.reports_dir / "tfidf_transformation_example.json",
         stage_payload,
     )
     _write_json(
-        config.reports_dir / "misclassifications.json",
+        config.reports_dir / "classification_error_examples.json",
         classification.report.misclassifications[:MAX_REPORTED_MISCLASSIFICATIONS],
     )
-    _write_json(config.reports_dir / "search_examples.json", search.search_examples)
+    _write_json(
+        config.reports_dir / "search_result_examples.json",
+        search.search_examples,
+    )
     save_confusion_matrix(
         classification.report,
         bundle.target_names,
-        config.reports_dir / "confusion_matrix.png",
+        config.reports_dir / "classification_confusion_matrix.png",
     )
     save_search_artifacts(
         config.runtime_dir,

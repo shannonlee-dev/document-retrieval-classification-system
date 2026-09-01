@@ -433,13 +433,13 @@ git commit -m "feat: add reproducible build and search CLI"
 
 **Files:**
 - Modify: `README.md`
-- Create: `artifacts/reports/tfidf_validation.json`
-- Create: `artifacts/reports/matrix_stats.json`
-- Create: `artifacts/reports/metrics.json`
-- Create: `artifacts/reports/stage_example.json`
-- Create: `artifacts/reports/misclassifications.json`
-- Create: `artifacts/reports/search_examples.json`
-- Create: `artifacts/reports/confusion_matrix.png`
+- Create: `artifacts/reports/tfidf_sklearn_validation.json`
+- Create: `artifacts/reports/search_index_statistics.json`
+- Create: `artifacts/reports/classification_metrics.json`
+- Create: `artifacts/reports/tfidf_transformation_example.json`
+- Create: `artifacts/reports/classification_error_examples.json`
+- Create: `artifacts/reports/search_result_examples.json`
+- Create: `artifacts/reports/classification_confusion_matrix.png`
 - Create: `tests/test_readme.py`
 
 **Interfaces:**
@@ -479,7 +479,7 @@ Verify that train plus test counts equal 18,846, matrix columns equal vocabulary
 
 - [ ] **Step 5: Rewrite README from measured artifacts**
 
-Use the required three-part report structure. Include preprocessing rationale; TF/IDF/TF-IDF formulas; a stage table sourced from `stage_example.json`; matrix shape, `nnz`, density, sparsity, and byte comparison; sklearn settings and errors; the linear-SVM setup; Accuracy, macro F1, and the confusion image; five or more case-specific error analyses; actual Top-5 search output; BoW examples for word order and polysemy; cosine versus Euclidean distance; vocabulary row/column mapping; input portability contract; 1-million-document bottlenecks and indexing/sharding/ANN responses; and an embedding/BERT comparison plan with Accuracy, macro F1, mAP, and latency metrics.
+Use the required three-part report structure. Include preprocessing rationale; TF/IDF/TF-IDF formulas; a stage table sourced from `tfidf_transformation_example.json`; matrix shape, `nnz`, density, sparsity, and byte comparison; sklearn settings and errors; the linear-SVM setup; Accuracy, macro F1, and the confusion image; five or more case-specific error analyses; actual Top-5 search output; BoW examples for word order and polysemy; cosine versus Euclidean distance; vocabulary row/column mapping; input portability contract; 1-million-document bottlenecks and indexing/sharding/ANN responses; and an embedding/BERT comparison plan with Accuracy, macro F1, mAP, and latency metrics.
 
 - [ ] **Step 6: Verify README, CLI search, and full tests**
 

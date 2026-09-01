@@ -43,9 +43,9 @@
 - Modify: `README.md` — architecture, 실행 의미, 20-category 실제 결과와 한계
 - Modify: `DATASET_LICENSE.md` — 전체 dataset 범위와 privacy 위험
 - Modify: `docs/stop-word-ablation.md` — 20-category 방법과 성능 한계
-- Delete: `artifacts/reports/stop_word_ablation.json` — 재실행하지 않은 3-category 결과 제거
-- Regenerate: `artifacts/reports/{confusion_matrix.png,matrix_stats.json,metrics.json,misclassifications.json,privacy_report.json,search_examples.json,stage_example.json,tfidf_validation.json}`
-- Runtime-only: `artifacts/runtime/{matrix.npz,metadata.json}` — v2 smoke test에 사용하며 `.gitignore` 상태 유지
+- Delete: `artifacts/reports/stop_word_ablation_results.json` — 재실행하지 않은 3-category 결과 제거
+- Regenerate: `artifacts/reports/{classification_confusion_matrix.png,search_index_statistics.json,classification_metrics.json,classification_error_examples.json,dataset_sanitization_report.json,search_result_examples.json,tfidf_transformation_example.json,tfidf_sklearn_validation.json}`
+- Runtime-only: `artifacts/runtime/{search_index_arrays.npz,search_index_data.json}` — v2 smoke test에 사용하며 `.gitignore` 상태 유지
 
 ---
 
@@ -196,7 +196,7 @@ git -c user.name=shannonlee-dev commit -m "feat(dataset): load all 20 newsgroups
 Extend the round-trip assertion in `tests/test_artifacts.py`:
 
 ```python
-metadata = json.loads((tmp_path / "metadata.json").read_text(encoding="utf-8"))
+metadata = json.loads((tmp_path / "search_index_data.json").read_text(encoding="utf-8"))
 assert metadata["artifact_version"] == 2
 assert metadata["fit_scope"] == "full_corpus"
 assert metadata["fit_document_count"] == matrix.shape[0]
@@ -222,7 +222,7 @@ def test_search_artifacts_reject_incompatible_build_metadata(
     save_search_artifacts(
         tmp_path, vectorizer, matrix, snippets, labels, target_names, document_ids
     )
-    metadata_path = tmp_path / "metadata.json"
+    metadata_path = tmp_path / "search_index_data.json"
     metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
     metadata[field] = value
     metadata_path.write_text(json.dumps(metadata), encoding="utf-8")
@@ -511,7 +511,7 @@ assert report.classification_validation_passed is True
 assert report.search_validation_passed is True
 
 validation = json.loads(
-    (config.reports_dir / "tfidf_validation.json").read_text(encoding="utf-8")
+    (config.reports_dir / "tfidf_sklearn_validation.json").read_text(encoding="utf-8")
 )
 assert validation["classification"]["fit_scope"] == "train_split"
 assert validation["classification"]["fit_document_count"] == 8
@@ -519,7 +519,7 @@ assert validation["search"]["fit_scope"] == "full_corpus"
 assert validation["search"]["fit_document_count"] == 10
 
 metadata = json.loads(
-    (config.runtime_dir / "metadata.json").read_text(encoding="utf-8")
+    (config.runtime_dir / "search_index_data.json").read_text(encoding="utf-8")
 )
 assert "heldoutonly" in metadata["feature_names"]
 assert metadata["fit_document_count"] == 10
@@ -559,7 +559,7 @@ def _validation_payload(
     return payload
 ```
 
-Write `tfidf_validation.json` as:
+Write `tfidf_sklearn_validation.json` as:
 
 ```python
 {
@@ -576,7 +576,7 @@ Write `tfidf_validation.json` as:
 }
 ```
 
-Add `classification_vocabulary_size` to `metrics.json`; add `fit_scope`, `fit_document_count`, `category_count` and `search_vocabulary_size` to `matrix_stats.json`; wrap `stage_example.json` with classification fit scope/count. Save runtime artifacts using `search.vectorizer` and `search.matrix`. Save the confusion matrix and misclassifications from `classification.report`.
+Add `classification_vocabulary_size` to `classification_metrics.json`; add `fit_scope`, `fit_document_count`, `category_count` and `search_vocabulary_size` to `search_index_statistics.json`; wrap `tfidf_transformation_example.json` with classification fit scope/count. Save runtime artifacts using `search.vectorizer` and `search.matrix`. Save the confusion matrix and misclassifications from `classification.report`.
 
 Build the stage-example payload without changing its existing term/formula fields:
 
@@ -748,16 +748,16 @@ No commit is created in this task because it is a verification gate over already
 - Modify: `README.md`
 - Modify: `DATASET_LICENSE.md`
 - Modify: `docs/stop-word-ablation.md`
-- Delete: `artifacts/reports/stop_word_ablation.json`
-- Regenerate: `artifacts/reports/confusion_matrix.png`
-- Regenerate: `artifacts/reports/matrix_stats.json`
-- Regenerate: `artifacts/reports/metrics.json`
-- Regenerate: `artifacts/reports/misclassifications.json`
-- Regenerate: `artifacts/reports/privacy_report.json`
-- Regenerate: `artifacts/reports/search_examples.json`
-- Regenerate: `artifacts/reports/stage_example.json`
-- Regenerate: `artifacts/reports/tfidf_validation.json`
-- Runtime-only: `artifacts/runtime/matrix.npz`, `artifacts/runtime/metadata.json`
+- Delete: `artifacts/reports/stop_word_ablation_results.json`
+- Regenerate: `artifacts/reports/classification_confusion_matrix.png`
+- Regenerate: `artifacts/reports/search_index_statistics.json`
+- Regenerate: `artifacts/reports/classification_metrics.json`
+- Regenerate: `artifacts/reports/classification_error_examples.json`
+- Regenerate: `artifacts/reports/dataset_sanitization_report.json`
+- Regenerate: `artifacts/reports/search_result_examples.json`
+- Regenerate: `artifacts/reports/tfidf_transformation_example.json`
+- Regenerate: `artifacts/reports/tfidf_sklearn_validation.json`
+- Runtime-only: `artifacts/runtime/search_index_arrays.npz`, `artifacts/runtime/search_index_data.json`
 
 **Interfaces:**
 - Consumes: `python main.py build` from Tasks 1–4
@@ -775,7 +775,7 @@ Expected: exit code 0; output includes `documents`, both vocabulary sizes, both 
 Run:
 
 ```bash
-.venv/bin/python -c 'import json; from pathlib import Path; p=Path("artifacts/reports"); m=json.loads((p/"metrics.json").read_text()); s=json.loads((p/"matrix_stats.json").read_text()); v=json.loads((p/"tfidf_validation.json").read_text()); q=json.loads((p/"privacy_report.json").read_text()); assert m["category_count"] == 20; assert m["train_count"] + m["test_count"] == m["document_count"]; assert s["fit_scope"] == "full_corpus"; assert s["fit_document_count"] == m["document_count"]; assert q["documents_retained"] == m["document_count"]; assert len(q["category_counts"]) == 20; assert v["classification"]["passed"] and v["search"]["passed"]; assert v["classification"]["max_absolute_error"] <= 1e-6; assert v["search"]["max_absolute_error"] <= 1e-6'
+.venv/bin/python -c 'import json; from pathlib import Path; p=Path("artifacts/reports"); m=json.loads((p/"classification_metrics.json").read_text()); s=json.loads((p/"search_index_statistics.json").read_text()); v=json.loads((p/"tfidf_sklearn_validation.json").read_text()); q=json.loads((p/"dataset_sanitization_report.json").read_text()); assert m["category_count"] == 20; assert m["train_count"] + m["test_count"] == m["document_count"]; assert s["fit_scope"] == "full_corpus"; assert s["fit_document_count"] == m["document_count"]; assert q["documents_retained"] == m["document_count"]; assert len(q["category_counts"]) == 20; assert v["classification"]["passed"] and v["search"]["passed"]; assert v["classification"]["max_absolute_error"] <= 1e-6; assert v["search"]["max_absolute_error"] <= 1e-6'
 ```
 
 Expected: exit code 0 with no output.
@@ -796,7 +796,7 @@ Expected: exit code 0 with no output.
 
 - [ ] **Step 4: Remove stale three-category ablation evidence**
 
-Run: `git rm artifacts/reports/stop_word_ablation.json`
+Run: `git rm artifacts/reports/stop_word_ablation_results.json`
 
 The deletion is intentional and recoverable from Git history. Do not run the current quadratic retrieval ablation over all 20 categories as part of this task.
 
@@ -832,7 +832,7 @@ Run:
 git status --short --ignored artifacts/runtime artifacts/reports
 ```
 
-Expected: runtime files are ignored; report changes are visible and `stop_word_ablation.json` is deleted.
+Expected: runtime files are ignored; report changes are visible and `stop_word_ablation_results.json` is deleted.
 
 - [ ] **Step 7: Run final tests and static checks after documentation updates**
 

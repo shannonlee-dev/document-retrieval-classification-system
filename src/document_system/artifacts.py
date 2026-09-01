@@ -18,8 +18,8 @@ from .tfidf import NumpyTfidfVectorizer
 ARTIFACT_VERSION = 2
 SEARCH_FIT_SCOPE = "full_corpus"
 PRIVACY_POLICY = "structured-pii-redaction-v3"
-MATRIX_FILENAME = "matrix.npz"
-METADATA_FILENAME = "metadata.json"
+SEARCH_INDEX_ARRAYS_FILENAME = "search_index_arrays.npz"
+SEARCH_INDEX_DATA_FILENAME = "search_index_data.json"
 REQUIRED_METADATA_FIELDS = frozenset(
     {
         "snippets",
@@ -81,7 +81,7 @@ def save_search_artifacts(
     path = Path(directory)
     path.mkdir(parents=True, exist_ok=True)
     np.savez_compressed(
-        path / MATRIX_FILENAME,
+        path / SEARCH_INDEX_ARRAYS_FILENAME,
         data=matrix.data,
         indices=matrix.indices,
         indptr=matrix.indptr,
@@ -103,7 +103,7 @@ def save_search_artifacts(
         "fit_document_count": matrix.shape[0],
         "category_count": len(target_names),
     }
-    (path / METADATA_FILENAME).write_text(
+    (path / SEARCH_INDEX_DATA_FILENAME).write_text(
         json.dumps(metadata, ensure_ascii=False),
         encoding="utf-8",
     )
@@ -111,8 +111,8 @@ def save_search_artifacts(
 
 def load_search_artifacts(directory: str | Path) -> SearchArtifacts:
     path = Path(directory)
-    matrix_path = path / MATRIX_FILENAME
-    metadata_path = path / METADATA_FILENAME
+    matrix_path = path / SEARCH_INDEX_ARRAYS_FILENAME
+    metadata_path = path / SEARCH_INDEX_DATA_FILENAME
     if not matrix_path.is_file() or not metadata_path.is_file():
         raise FileNotFoundError(
             f"search artifacts are missing under {path}; run `python main.py build` first"

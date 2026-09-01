@@ -25,7 +25,7 @@
 - `NumpyTfidfVectorizer`의 공개 메서드와 `SearchResult` 출력 필드는 유지한다.
 - 데이터 모델과 검색 artifact 내부 구조는 변경한다.
 - `ARTIFACT_VERSION`은 현재 값 `1`을 유지한다.
-- `build`는 기존 `artifacts/runtime/matrix.npz`, `artifacts/runtime/metadata.json`과 `artifacts/reports/*`를 새 형식과 결과로 덮어쓴다.
+- `build`는 기존 `artifacts/runtime/search_index_arrays.npz`, `artifacts/runtime/search_index_data.json`과 `artifacts/reports/*`를 새 형식과 결과로 덮어쓴다.
 - 변경 전 runtime artifact의 호환 로딩은 지원하지 않는다. 새 필수 필드가 없으면 명확한 재빌드 오류를 반환한다.
 
 ## Dataset and Privacy Boundary
@@ -96,7 +96,7 @@ TF, IDF, TF-IDF, L2 정규화는 현재 NumPy 기반 구현과 공개 인터페�
 
 ## Artifacts
 
-`metadata.json`에는 원문이나 정제된 전체 `texts`를 저장하지 않는다. 다음 값만 기록한다.
+`search_index_data.json`에는 원문이나 정제된 전체 `texts`를 저장하지 않는다. 다음 값만 기록한다.
 
 - shape와 dtype
 - feature names와 stop words
@@ -107,7 +107,7 @@ TF, IDF, TF-IDF, L2 정규화는 현재 NumPy 기반 구현과 공개 인터페�
 
 loader는 이 필수 필드를 검증한다. 변경 전 metadata를 발견하면 `python main.py build`를 다시 실행하라는 오류를 낸다. 버전 숫자는 올리지 않고 정상 build가 기존 파일을 덮어쓴다.
 
-평가 보고서의 검색 예시와 오분류 예시도 같은 제한 snippet만 포함한다. build는 실제 문서 입력·유지·빈 문서 제외 수, structured redaction 수와 카테고리별 처리 수를 `privacy_report.json`에 기록한다.
+평가 보고서의 검색 예시와 오분류 예시도 같은 제한 snippet만 포함한다. build는 실제 문서 입력·유지·빈 문서 제외 수, structured redaction 수와 카테고리별 처리 수를 `dataset_sanitization_report.json`에 기록한다.
 
 ## Documentation and Licensing
 

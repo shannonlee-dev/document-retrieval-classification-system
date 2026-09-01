@@ -85,21 +85,39 @@ def test_small_pipeline_writes_consistent_report_and_runtime_artifacts(
     assert report.classification_vocabulary_size < report.search_vocabulary_size
     assert report.classification_validation_passed is True
     assert report.search_validation_passed is True
+    assert {path.name for path in config.reports_dir.iterdir()} == {
+        "classification_confusion_matrix.png",
+        "classification_error_examples.json",
+        "classification_metrics.json",
+        "dataset_sanitization_report.json",
+        "search_index_statistics.json",
+        "search_result_examples.json",
+        "tfidf_sklearn_validation.json",
+        "tfidf_transformation_example.json",
+    }
+    assert {path.name for path in config.runtime_dir.iterdir()} == {
+        "search_index_arrays.npz",
+        "search_index_data.json",
+    }
     validation = json.loads(
-        (config.reports_dir / "tfidf_validation.json").read_text(encoding="utf-8")
+        (config.reports_dir / "tfidf_sklearn_validation.json").read_text(
+            encoding="utf-8"
+        )
     )
     assert validation["classification"]["max_absolute_error"] <= 1e-6
     assert validation["classification"]["fit_scope"] == "train_split"
     assert validation["classification"]["fit_document_count"] == 8
     assert validation["search"]["fit_scope"] == "full_corpus"
     assert validation["search"]["fit_document_count"] == 10
-    assert (config.reports_dir / "confusion_matrix.png").stat().st_size > 0
-    assert (config.runtime_dir / "matrix.npz").is_file()
+    assert (
+        config.reports_dir / "classification_confusion_matrix.png"
+    ).stat().st_size > 0
+    assert (config.runtime_dir / "search_index_arrays.npz").is_file()
     assert evaluated_document_ids is not None
     assert set(evaluated_document_ids) <= set(source_doc_ids)
 
     metadata = json.loads(
-        (config.runtime_dir / "metadata.json").read_text(encoding="utf-8")
+        (config.runtime_dir / "search_index_data.json").read_text(encoding="utf-8")
     )
     assert "texts" not in metadata
     assert metadata["document_ids"] == source_doc_ids.tolist()
@@ -111,7 +129,9 @@ def test_small_pipeline_writes_consistent_report_and_runtime_artifacts(
     assert all("heldoutonly" not in snippet for snippet in metadata["snippets"])
 
     privacy_report = json.loads(
-        (config.reports_dir / "privacy_report.json").read_text(encoding="utf-8")
+        (config.reports_dir / "dataset_sanitization_report.json").read_text(
+            encoding="utf-8"
+        )
     )
     assert privacy_report["documents_input"] == 10
     assert privacy_report["documents_retained"] == 10
@@ -131,7 +151,7 @@ def test_small_pipeline_writes_consistent_report_and_runtime_artifacts(
     assert "residual_privacy_check" not in privacy_report
 
     search_examples = json.loads(
-        (config.reports_dir / "search_examples.json").read_text(encoding="utf-8")
+        (config.reports_dir / "search_result_examples.json").read_text(encoding="utf-8")
     )
     assert all(
         is_safe_text(result["text_snippet"])
@@ -139,7 +159,9 @@ def test_small_pipeline_writes_consistent_report_and_runtime_artifacts(
         for result in example["results"]
     )
     misclassifications = json.loads(
-        (config.reports_dir / "misclassifications.json").read_text(encoding="utf-8")
+        (config.reports_dir / "classification_error_examples.json").read_text(
+            encoding="utf-8"
+        )
     )
     assert all(
         is_safe_text(item["text_snippet"]) for item in misclassifications

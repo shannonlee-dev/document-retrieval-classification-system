@@ -12,7 +12,7 @@
 | no stop words | 0.761251 ± 0.006674 | 0.749226 ± 0.009126 | 0.453332 ± 0.005391 | 0.368556 ± 0.005704 |
 | default - none | +0.007974 ± 0.004155 | +0.008604 ± 0.005243 | +0.065199 ± 0.004799 | +0.059613 ± 0.004585 |
 
-고정 불용어 적용은 네 지표 모두 10/10 seed에서 높았다. 평균 vocabulary는 불용어 적용 79,997개, 미적용 80,119개였다. seed별 원수치, 범위, 표준편차와 승패 수는 `artifacts/reports/stop_word_ablation.json`에 보존한다.
+고정 불용어 적용은 네 지표 모두 10/10 seed에서 높았다. 평균 vocabulary는 불용어 적용 79,997개, 미적용 80,119개였다. seed별 원수치, 범위, 표준편차와 승패 수는 `artifacts/reports/stop_word_ablation_results.json`에 보존한다.
 
 이 결과는 같은 카테고리 라벨을 relevance로 두는 현 대리 지표에 한정된다. 고정 불용어가 일반적 검색 의도와 모든 corpus에서 더 나은 것을 보장하지는 않는다.
 
@@ -20,4 +20,4 @@
 
 프로젝트의 기준 Python 구현은 각 쿼리마다 검색 말뭉치를 순회하므로 query-by-corpus retrieval이 이차 시간 복잡도를 갖는다. 10-seed 실험은 동일한 sparse dot-product 점수와 score/document-order stable tie-break를 유지한 배치 벡터화 평가로 가속했다. 벡터화 결과는 소규모 fixture에서 기준 구현과 일치함을 먼저 확인했다.
 
-기준 single-seed workflow: `uv run python scripts/run_stop_word_ablation.py`. 이 명령은 `random_state=42` 한 번만 실행하며 `artifacts/reports/stop_word_ablation_single_seed.json`에 기록하므로 10-seed 집계 JSON을 덮어쓰거나 재현하지는 않는다.
+기준 single-seed workflow: `uv run python scripts/run_stop_word_ablation.py`. 이 명령은 `random_state=42` 한 번만 실행하며 `artifacts/reports/stop_word_ablation_single_seed_results.json`에 기록하므로 10-seed 집계 JSON을 덮어쓰거나 재현하지는 않는다.

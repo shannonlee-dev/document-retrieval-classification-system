@@ -1,12 +1,17 @@
+import json
+from pathlib import Path
+
 import pytest
 
-from document_system import ablation as ablation_module
-from document_system.ablation import (
+import document_system.experiments.ablation as ablation_module
+import document_system.experiments.reporting as reporting_module
+from document_system.experiments.ablation import (
     AblationVariant,
-    evaluate_ranked_labels,
     run_stop_word_ablation,
     summarize_variants,
 )
+from document_system.experiments.metrics import evaluate_ranked_labels
+from document_system.experiments.reporting import write_stop_word_ablation_report
 
 
 def test_evaluate_ranked_labels_reports_precision_and_map_at_k() -> None:
@@ -69,3 +74,21 @@ def test_stop_word_ablation_reports_full_20_category_dataset_description(
 
     assert report["dataset"] == "20 Newsgroups: all 20 categories"
     assert report["split"]["seeds"] == list(range(10))
+
+
+def test_write_stop_word_ablation_report_persists_runner_output(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    expected = {"dataset": "small", "variants": []}
+    monkeypatch.setattr(
+        reporting_module,
+        "run_stop_word_ablation",
+        lambda: expected,
+    )
+
+    output = tmp_path / "ablation.json"
+    result = write_stop_word_ablation_report(output)
+
+    assert result == expected
+    assert json.loads(output.read_text(encoding="utf-8")) == expected

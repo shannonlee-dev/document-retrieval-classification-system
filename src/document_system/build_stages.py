@@ -8,7 +8,8 @@ from dataclasses import dataclass
 import numpy as np
 from sklearn.model_selection import train_test_split
 
-from .classification import ClassificationReport, evaluate_classifier, train_linear_svm
+from .classification.evaluation import ClassificationReport, evaluate_classifier
+from .classification.model import train_linear_svm
 from .constants import DEFAULT_TEST_SIZE, DEFAULT_TOP_K
 from .dataset import DatasetBundle
 from .preprocessing import EnglishPreprocessor

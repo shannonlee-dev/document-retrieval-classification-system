@@ -2,13 +2,10 @@ from pathlib import Path
 
 import numpy as np
 
-import document_system.classification as classification_module
-from document_system.classification import (
-    evaluate_classifier,
-    predict_sparse,
-    save_confusion_matrix,
-    train_linear_svm,
-)
+import document_system.classification.model as model_module
+from document_system.classification.evaluation import evaluate_classifier
+from document_system.classification.model import predict_sparse, train_linear_svm
+from document_system.classification.visualization import save_confusion_matrix
 from document_system.preprocessing import EnglishPreprocessor
 from document_system.tfidf import NumpyTfidfVectorizer
 
@@ -60,7 +57,7 @@ def test_training_and_prediction_use_bounded_numpy_batches(monkeypatch) -> None:
             self.prediction_batches.append(features)
             return np.zeros(features.shape[0], dtype=np.int32)
 
-    monkeypatch.setattr(classification_module, "SGDClassifier", RecordingClassifier)
+    monkeypatch.setattr(model_module, "SGDClassifier", RecordingClassifier)
     _, labels, matrix = make_training_data()
 
     model = train_linear_svm(matrix, labels, batch_size=2, epochs=1)
@@ -73,7 +70,8 @@ def test_training_and_prediction_use_bounded_numpy_batches(monkeypatch) -> None:
 
 
 def test_classification_has_no_direct_scipy_dependency() -> None:
-    source = Path("src/document_system/classification.py").read_text()
+    package = Path("src/document_system/classification")
+    source = "\n".join(path.read_text() for path in package.glob("*.py"))
 
     assert "scipy" not in source
     assert "csr_matrix" not in source

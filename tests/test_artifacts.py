@@ -14,15 +14,15 @@ def make_search_data():
     snippets = ["space shuttle orbit", "baseball pitcher game"]
     document_ids = np.array([42, 99], dtype=np.int64)
     labels = np.array([0, 1], dtype=np.int32)
-    vectorizer = NumpyTfidfVectorizer(
-        EnglishPreprocessor(stop_words=frozenset())
-    )
+    vectorizer = NumpyTfidfVectorizer(EnglishPreprocessor(stop_words=frozenset()))
     matrix = vectorizer.fit_transform(snippets)
     return vectorizer, matrix, snippets, labels, ("space", "baseball"), document_ids
 
 
 def test_search_artifacts_round_trip(tmp_path: Path) -> None:
-    vectorizer, matrix, snippets, labels, target_names, document_ids = make_search_data()
+    vectorizer, matrix, snippets, labels, target_names, document_ids = (
+        make_search_data()
+    )
 
     save_search_artifacts(
         tmp_path, vectorizer, matrix, snippets, labels, target_names, document_ids
@@ -51,7 +51,9 @@ def test_search_artifacts_round_trip(tmp_path: Path) -> None:
 
 
 def test_search_artifacts_reject_unknown_version(tmp_path: Path) -> None:
-    vectorizer, matrix, snippets, labels, target_names, document_ids = make_search_data()
+    vectorizer, matrix, snippets, labels, target_names, document_ids = (
+        make_search_data()
+    )
     save_search_artifacts(
         tmp_path, vectorizer, matrix, snippets, labels, target_names, document_ids
     )
@@ -76,7 +78,9 @@ def test_search_artifacts_reject_unknown_version(tmp_path: Path) -> None:
 def test_search_artifacts_reject_incompatible_build_metadata(
     tmp_path: Path, field: str, value: object
 ) -> None:
-    vectorizer, matrix, snippets, labels, target_names, document_ids = make_search_data()
+    vectorizer, matrix, snippets, labels, target_names, document_ids = (
+        make_search_data()
+    )
     save_search_artifacts(
         tmp_path, vectorizer, matrix, snippets, labels, target_names, document_ids
     )
@@ -90,7 +94,9 @@ def test_search_artifacts_reject_incompatible_build_metadata(
 
 
 def test_search_artifacts_reject_labels_outside_target_names(tmp_path: Path) -> None:
-    vectorizer, matrix, snippets, labels, target_names, document_ids = make_search_data()
+    vectorizer, matrix, snippets, labels, target_names, document_ids = (
+        make_search_data()
+    )
     save_search_artifacts(
         tmp_path, vectorizer, matrix, snippets, labels, target_names, document_ids
     )
@@ -104,7 +110,9 @@ def test_search_artifacts_reject_labels_outside_target_names(tmp_path: Path) -> 
 
 
 def test_search_artifacts_reject_save_row_count_mismatch(tmp_path: Path) -> None:
-    vectorizer, matrix, snippets, labels, target_names, document_ids = make_search_data()
+    vectorizer, matrix, snippets, labels, target_names, document_ids = (
+        make_search_data()
+    )
 
     with pytest.raises(ValueError, match="row"):
         save_search_artifacts(
@@ -119,7 +127,9 @@ def test_search_artifacts_reject_save_row_count_mismatch(tmp_path: Path) -> None
 
 
 def test_search_artifacts_store_sanitized_search_fields(tmp_path: Path) -> None:
-    vectorizer, matrix, snippets, labels, target_names, document_ids = make_search_data()
+    vectorizer, matrix, snippets, labels, target_names, document_ids = (
+        make_search_data()
+    )
 
     save_search_artifacts(
         tmp_path, vectorizer, matrix, snippets, labels, target_names, document_ids
@@ -165,7 +175,9 @@ def test_search_artifacts_reject_snippets_over_limit(tmp_path: Path) -> None:
 
 
 def test_search_artifacts_reject_legacy_metadata(tmp_path: Path) -> None:
-    vectorizer, matrix, snippets, labels, target_names, document_ids = make_search_data()
+    vectorizer, matrix, snippets, labels, target_names, document_ids = (
+        make_search_data()
+    )
     save_search_artifacts(
         tmp_path, vectorizer, matrix, snippets, labels, target_names, document_ids
     )
@@ -186,7 +198,9 @@ def test_search_artifacts_reject_old_privacy_policy(
     tmp_path: Path,
     old_policy: str,
 ) -> None:
-    vectorizer, matrix, snippets, labels, target_names, document_ids = make_search_data()
+    vectorizer, matrix, snippets, labels, target_names, document_ids = (
+        make_search_data()
+    )
     save_search_artifacts(
         tmp_path, vectorizer, matrix, snippets, labels, target_names, document_ids
     )
@@ -200,5 +214,5 @@ def test_search_artifacts_reject_old_privacy_policy(
 
 
 def test_search_artifacts_require_all_files(tmp_path: Path) -> None:
-    with pytest.raises(FileNotFoundError, match="python main.py build"):
+    with pytest.raises(FileNotFoundError, match="document-system build"):
         load_search_artifacts(tmp_path)

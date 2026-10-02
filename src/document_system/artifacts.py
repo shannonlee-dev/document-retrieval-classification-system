@@ -115,15 +115,21 @@ def load_search_artifacts(directory: str | Path) -> SearchArtifacts:
     metadata_path = path / SEARCH_INDEX_DATA_FILENAME
     if not matrix_path.is_file() or not metadata_path.is_file():
         raise FileNotFoundError(
-            f"search artifacts are missing under {path}; run `python main.py build` first"
+            f"search artifacts are missing under {path}; run `document-system build` first"
         )
     metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
     if metadata.get("artifact_version") != ARTIFACT_VERSION:
-        raise ValueError("artifact version mismatch; rebuild with `python main.py build`")
+        raise ValueError(
+            "artifact version mismatch; rebuild with `document-system build`"
+        )
     if not REQUIRED_METADATA_FIELDS.issubset(metadata):
-        raise ValueError("artifact metadata is outdated; rebuild with `python main.py build`")
+        raise ValueError(
+            "artifact metadata is outdated; rebuild with `document-system build`"
+        )
     if metadata["privacy_policy"] != PRIVACY_POLICY:
-        raise ValueError("artifact privacy policy is outdated; rebuild with `python main.py build`")
+        raise ValueError(
+            "artifact privacy policy is outdated; rebuild with `document-system build`"
+        )
     with np.load(matrix_path, allow_pickle=False) as arrays:
         data = arrays["data"].copy()
         indices = arrays["indices"].copy()
@@ -131,10 +137,12 @@ def load_search_artifacts(directory: str | Path) -> SearchArtifacts:
         idf = arrays["idf"].copy()
     shape = tuple(int(value) for value in metadata["shape"])
     if len(shape) != 2:
-        raise ValueError("invalid artifact shape; rebuild with `python main.py build`")
+        raise ValueError("invalid artifact shape; rebuild with `document-system build`")
     feature_names = tuple(str(term) for term in metadata["feature_names"])
     if shape[1] != len(feature_names) or idf.size != len(feature_names):
-        raise ValueError("artifact vocabulary mismatch; rebuild with `python main.py build`")
+        raise ValueError(
+            "artifact vocabulary mismatch; rebuild with `document-system build`"
+        )
     preprocessor = EnglishPreprocessor(
         stop_words=frozenset(str(word) for word in metadata["stop_words"])
     )
@@ -148,29 +156,38 @@ def load_search_artifacts(directory: str | Path) -> SearchArtifacts:
     labels = np.asarray(metadata["labels"], dtype=np.int32)
     document_ids = np.asarray(metadata["document_ids"], dtype=np.int64)
     if metadata["fit_scope"] != SEARCH_FIT_SCOPE:
-        raise ValueError("artifact fit scope is outdated; rebuild with `python main.py build`")
+        raise ValueError(
+            "artifact fit scope is outdated; rebuild with `document-system build`"
+        )
     if int(metadata["fit_document_count"]) != shape[0]:
         raise ValueError(
-            "artifact fit document count mismatch; rebuild with `python main.py build`"
+            "artifact fit document count mismatch; rebuild with `document-system build`"
         )
     if int(metadata["category_count"]) != len(target_names):
         raise ValueError(
-            "artifact category count mismatch; rebuild with `python main.py build`"
+            "artifact category count mismatch; rebuild with `document-system build`"
         )
     if labels.size and (
         int(labels.min()) < 0 or int(labels.max()) >= len(target_names)
     ):
         raise ValueError(
-            "artifact labels are outside target names; rebuild with `python main.py build`"
+            "artifact labels are outside target names; rebuild with `document-system build`"
         )
     if (
         len(snippets) != shape[0]
         or labels.size != shape[0]
         or document_ids.size != shape[0]
     ):
-        raise ValueError("artifact document count mismatch; rebuild with `python main.py build`")
-    if any(len(snippet) > SNIPPET_LIMIT or not is_safe_text(snippet) for snippet in snippets):
-        raise ValueError("artifact snippets failed privacy checks; rebuild with `python main.py build`")
+        raise ValueError(
+            "artifact document count mismatch; rebuild with `document-system build`"
+        )
+    if any(
+        len(snippet) > SNIPPET_LIMIT or not is_safe_text(snippet)
+        for snippet in snippets
+    ):
+        raise ValueError(
+            "artifact snippets failed privacy checks; rebuild with `document-system build`"
+        )
     return SearchArtifacts(
         vectorizer=vectorizer,
         matrix=matrix,

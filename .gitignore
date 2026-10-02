@@ -7,3 +7,7 @@ scikit_learn_data/
 artifacts/runtime/
 docs/private/
 .worktrees/
+
+.ruff_cache/
+dist/
+build/

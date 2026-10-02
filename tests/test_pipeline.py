@@ -26,6 +26,7 @@ def test_dataset_bundle_requires_privacy_report() -> None:
         )
 
 
+@pytest.mark.smoke
 def test_small_pipeline_writes_consistent_report_and_runtime_artifacts(
     monkeypatch,
     tmp_path: Path,
@@ -43,8 +44,7 @@ def test_small_pipeline_writes_consistent_report_and_runtime_artifacts(
         "team pitcher hitter",
     )
     texts = tuple(
-        f"{text} {' '.join(['telemetry'] * 40)}"
-        f"{' heldoutonly' if index >= 8 else ''}"
+        f"{text} {' '.join(['telemetry'] * 40)}{' heldoutonly' if index >= 8 else ''}"
         for index, text in enumerate(base_texts)
     )
     source_doc_ids = np.arange(100, 110, dtype=np.int32)
@@ -163,9 +163,7 @@ def test_small_pipeline_writes_consistent_report_and_runtime_artifacts(
             encoding="utf-8"
         )
     )
-    assert all(
-        is_safe_text(item["text_snippet"]) for item in misclassifications
-    )
+    assert all(is_safe_text(item["text_snippet"]) for item in misclassifications)
 
 
 def test_build_project_accepts_sanitized_full_dataset(

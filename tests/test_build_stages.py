@@ -49,9 +49,7 @@ def test_classification_and_search_use_independent_fit_scopes(
             created_vectorizers.append(self)
 
     monkeypatch.setattr(build_stages, "train_test_split", fixed_split)
-    monkeypatch.setattr(
-        build_stages, "NumpyTfidfVectorizer", RecordingVectorizer
-    )
+    monkeypatch.setattr(build_stages, "NumpyTfidfVectorizer", RecordingVectorizer)
     snippets = tuple(make_safe_snippet(text) for text in small_bundle.texts)
 
     classification = build_stages.run_classification_stage(

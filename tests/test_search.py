@@ -9,9 +9,7 @@ from document_system.tfidf import NumpyTfidfVectorizer
 
 def make_small_searcher() -> DocumentSearch:
     texts = ["space shuttle orbit", "baseball pitcher game"]
-    vectorizer = NumpyTfidfVectorizer(
-        EnglishPreprocessor(stop_words=frozenset())
-    )
+    vectorizer = NumpyTfidfVectorizer(EnglishPreprocessor(stop_words=frozenset()))
     matrix = vectorizer.fit_transform(texts)
     return DocumentSearch(
         vectorizer=vectorizer,
@@ -122,9 +120,7 @@ def test_search_omits_zero_score_results() -> None:
 
 def test_equal_positive_scores_are_ordered_by_document_id() -> None:
     texts = ["space shuttle", "space galaxy"]
-    vectorizer = NumpyTfidfVectorizer(
-        EnglishPreprocessor(stop_words=frozenset())
-    )
+    vectorizer = NumpyTfidfVectorizer(EnglishPreprocessor(stop_words=frozenset()))
     searcher = DocumentSearch(
         vectorizer=vectorizer,
         matrix=vectorizer.fit_transform(texts),

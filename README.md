@@ -22,6 +22,15 @@ scikit-learn의 완성된 TF-IDF 구현을 그대로 사용하는 대신, 텍스
 
 프로젝트는 **오프라인 build 단계**와 **온라인 검색 단계**를 분리한다.
 
+| 구성 요소 | 역할 |
+| --- | --- |
+| `src/document_system/dataset.py`, `privacy.py` | 데이터 로딩과 기존 structured identifier 처리 |
+| `preprocessing.py`, `tfidf.py`, `sparse_matrix.py` | 전처리와 NumPy 기반 희소 TF-IDF |
+| `classification/`, `validation.py` | SVM 학습·평가와 scikit-learn 수치 검증 |
+| `pipeline.py`, `build_stages.py`, `reporting.py` | 오프라인 빌드와 연구 보고서 생성 |
+| `artifacts.py`, `search.py`, `cli.py` | 인덱스 저장·읽기, 검색, 등록 CLI |
+| `experiments/`, `artifacts/reports/` | 불용어 실험과 보존 연구 근거 |
+
 ```mermaid
 flowchart TD
     A["20 Newsgroups"] --> B["데이터 로딩<br/>headers / footers / quotes 제거"]
@@ -52,27 +61,32 @@ flowchart TD
 
 ## 실행 방법
 
-Python 3.10 이상이 필요하다. 첫 build는 scikit-learn loader가 원본 데이터셋을 내려받으므로 네트워크 연결이 필요할 수 있다.
-
-### uv 사용
-
-```bash
-uv sync --extra dev
-uv run python main.py build
-uv run python main.py --query "space shuttle orbit" --topk 5
-uv run pytest -q
-```
-
-### venv와 pip 사용
+Python 3.10 이상을 지원하고 개발 환경은 `.python-version`의 Python 3.13을 사용한다.
+첫 build는 scikit-learn loader가 원본 데이터셋을 내려받으므로 네트워크 연결이 필요할 수 있다.
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install -e '.[dev]'
-python main.py build
-python main.py --query "space shuttle orbit" --topk 5
-python -m pytest -q
+make setup
+uv run --frozen document-system build
+uv run --frozen document-system --query "space shuttle orbit" --topk 5
+make run ARGS='--query "space shuttle orbit" --topk 5'
 ```
+
+`document-system`은 설치된 `src/document_system/cli.py`를 실행한다.
+입출력 기본 경로는 현재 작업 디렉터리의 `artifacts/`이며, `--artifacts`와 `--reports`로 지정할 수 있다.
+wheel에는 연구 결과·다운로드 데이터·runtime 인덱스를 포함하지 않는다.
+
+```bash
+make check
+make test
+make smoke
+make build
+make format
+```
+
+`make smoke`는 임시 데이터의 빌드·검색과 다른 작업 디렉터리의 등록 CLI를 확인한다.
+전체 검증은 다운로드 없이 fixture와 임시 디렉터리를 사용한다.
+`make check`는 저장소 구조, Ruff 정적 검사와 포맷을 확인한다.
+`make build`는 패키지 wheel·sdist를 만들며 데이터 인덱스 빌드는 `document-system build`로 실행한다.
 
 `build`는 `artifacts/runtime/search_index_arrays.npz`와 `artifacts/runtime/search_index_data.json`으로 검색 인덱스를 저장하고, `artifacts/reports/`의 평가 자료를 같은 경로에 덮어쓴다. 변경 전 runtime data는 호환 로딩하지 않으며, 검색 시 재빌드 안내 오류를 낸다.
 

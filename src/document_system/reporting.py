@@ -116,7 +116,5 @@ def _validation_payload(
     fit_document_count: int,
 ) -> dict[str, object]:
     payload = validation.to_dict()
-    payload.update(
-        {"fit_scope": fit_scope, "fit_document_count": fit_document_count}
-    )
+    payload.update({"fit_scope": fit_scope, "fit_document_count": fit_document_count})
     return payload

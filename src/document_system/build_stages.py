@@ -63,8 +63,7 @@ def run_classification_stage(
     validation = validate_against_sklearn(train_texts, vectorizer, stages.tfidf)
     if not validation.passed:
         raise RuntimeError(
-            "classification TF-IDF validation failed: "
-            f"{validation.max_absolute_error}"
+            f"classification TF-IDF validation failed: {validation.max_absolute_error}"
         )
     model = train_linear_svm(
         stages.tfidf,

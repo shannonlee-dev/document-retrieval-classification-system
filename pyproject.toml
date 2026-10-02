@@ -5,7 +5,8 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "document-retrieval-classification-system"
 version = "0.1.0"
-description = "NumPy TF-IDF document retrieval and classification"
+description = "NumPy TF-IDF와 희소 행렬로 문서를 검색·분류하고 실험 결과를 비교하는 시스템"
+readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "numpy>=1.26,<3",
@@ -13,17 +14,26 @@ dependencies = [
     "matplotlib>=3.8,<4",
 ]
 
-[project.optional-dependencies]
-dev = ["pytest>=8,<9"]
+[project.scripts]
+document-system = "document_system.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [tool.pytest.ini_options]
-pythonpath = ["src"]
 testpaths = ["tests"]
+addopts = "--strict-markers --import-mode=importlib"
+markers = ["smoke: 외부 서비스·원본 데이터 변경 없이 주요 실행 경로 검증"]
 
 [dependency-groups]
 dev = [
+    "pytest>=8,<9",
     "ruff>=0.9,<1",
 ]
+
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I"]

@@ -100,7 +100,10 @@ class DocumentSearch:
         positive_score_row_ids = np.flatnonzero(scores > 0)
         ranked_row_ids = positive_score_row_ids[
             np.lexsort(
-                (self.document_ids[positive_score_row_ids], -scores[positive_score_row_ids])
+                (
+                    self.document_ids[positive_score_row_ids],
+                    -scores[positive_score_row_ids],
+                )
             )
         ][:topk]
         return [

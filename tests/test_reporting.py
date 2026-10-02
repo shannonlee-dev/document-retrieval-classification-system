@@ -31,9 +31,7 @@ def test_write_build_reports_persists_all_report_outputs(tmp_path: Path) -> None
             target_names,
         ),
     )
-    vectorizer = NumpyTfidfVectorizer(
-        EnglishPreprocessor(stop_words=frozenset())
-    )
+    vectorizer = NumpyTfidfVectorizer(EnglishPreprocessor(stop_words=frozenset()))
     matrix = vectorizer.fit_transform(texts)
     validation = ValidationResult(
         shape=matrix.shape,

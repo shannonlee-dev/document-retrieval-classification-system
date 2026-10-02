@@ -5,6 +5,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import numpy as np
+import pytest
 
 import document_system.pipeline as pipeline_module
 from document_system.artifacts import save_search_artifacts
@@ -17,18 +18,14 @@ def write_small_artifacts(path: Path) -> None:
     snippets = ["space shuttle orbit", "baseball pitcher game"]
     document_ids = np.array([42, 99], dtype=np.int64)
     labels = np.array([0, 1], dtype=np.int32)
-    vectorizer = NumpyTfidfVectorizer(
-        EnglishPreprocessor(stop_words=frozenset())
-    )
+    vectorizer = NumpyTfidfVectorizer(EnglishPreprocessor(stop_words=frozenset()))
     matrix = vectorizer.fit_transform(snippets)
     save_search_artifacts(
         path, vectorizer, matrix, snippets, labels, ("space", "baseball"), document_ids
     )
 
 
-def test_cli_search_prints_rank_score_id_and_snippet(
-    tmp_path: Path, capsys
-) -> None:
+def test_cli_search_prints_rank_score_id_and_snippet(tmp_path: Path, capsys) -> None:
     write_small_artifacts(tmp_path)
 
     exit_code = main(
@@ -43,15 +40,11 @@ def test_cli_search_prints_rank_score_id_and_snippet(
     assert "category=space" in output
 
 
-def test_cli_missing_artifacts_explains_build_command(
-    tmp_path: Path, capsys
-) -> None:
-    exit_code = main(
-        ["--artifacts", str(tmp_path), "--query", "space", "--topk", "1"]
-    )
+def test_cli_missing_artifacts_explains_build_command(tmp_path: Path, capsys) -> None:
+    exit_code = main(["--artifacts", str(tmp_path), "--query", "space", "--topk", "1"])
 
     assert exit_code == 2
-    assert "python main.py build" in capsys.readouterr().err
+    assert "document-system build" in capsys.readouterr().err
 
 
 def test_cli_build_prints_dual_tfidf_metrics(monkeypatch, capsys) -> None:
@@ -82,9 +75,7 @@ def test_cli_build_prints_dual_tfidf_metrics(monkeypatch, capsys) -> None:
 def test_cli_distinguishes_blank_and_oov_queries(tmp_path: Path, capsys) -> None:
     write_small_artifacts(tmp_path)
 
-    blank_exit_code = main(
-        ["--artifacts", str(tmp_path), "--query", "", "--topk", "1"]
-    )
+    blank_exit_code = main(["--artifacts", str(tmp_path), "--query", "", "--topk", "1"])
     blank_error = capsys.readouterr().err
     oov_exit_code = main(
         ["--artifacts", str(tmp_path), "--query", "zzzzunknown", "--topk", "1"]
@@ -96,6 +87,7 @@ def test_cli_distinguishes_blank_and_oov_queries(tmp_path: Path, capsys) -> None
     assert "vocabulary" in oov_error
 
 
+@pytest.mark.smoke
 def test_search_process_does_not_import_build_only_matplotlib(
     tmp_path: Path,
 ) -> None:
@@ -104,12 +96,11 @@ def test_search_process_does_not_import_build_only_matplotlib(
     invalid_config_dir.write_text("not a directory", encoding="utf-8")
     environment = os.environ.copy()
     environment["MPLCONFIGDIR"] = str(invalid_config_dir)
-    environment["PYTHONPATH"] = str(Path("src").resolve())
 
     completed = subprocess.run(
         [
             sys.executable,
-            "main.py",
+            str(Path(sys.executable).with_name("document-system")),
             "--artifacts",
             str(tmp_path),
             "--query",
@@ -121,6 +112,7 @@ def test_search_process_does_not_import_build_only_matplotlib(
         capture_output=True,
         text=True,
         env=environment,
+        cwd=tmp_path,
     )
 
     assert completed.returncode == 0

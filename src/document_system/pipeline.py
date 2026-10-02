@@ -29,6 +29,8 @@ DEFAULT_SEARCH_QUERIES = (
     "baseball pitcher season",
     "computer graphics image",
 )
+
+
 @dataclass(frozen=True)
 class BuildConfig:
     runtime_dir: Path = DEFAULT_RUNTIME_DIR

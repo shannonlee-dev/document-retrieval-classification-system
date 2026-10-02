@@ -20,21 +20,15 @@ def make_training_data():
         "pitcher team stadium",
     ]
     labels = np.array([0, 0, 0, 1, 1, 1], dtype=np.int32)
-    vectorizer = NumpyTfidfVectorizer(
-        EnglishPreprocessor(stop_words=frozenset())
-    )
+    vectorizer = NumpyTfidfVectorizer(EnglishPreprocessor(stop_words=frozenset()))
     return texts, labels, vectorizer.fit_transform(texts)
 
 
 def test_linear_svm_trains_from_sparse_batches_reproducibly() -> None:
     _, labels, matrix = make_training_data()
 
-    first = train_linear_svm(
-        matrix, labels, batch_size=2, epochs=6, random_state=42
-    )
-    second = train_linear_svm(
-        matrix, labels, batch_size=2, epochs=6, random_state=42
-    )
+    first = train_linear_svm(matrix, labels, batch_size=2, epochs=6, random_state=42)
+    second = train_linear_svm(matrix, labels, batch_size=2, epochs=6, random_state=42)
 
     np.testing.assert_array_equal(
         predict_sparse(first, matrix, batch_size=2),

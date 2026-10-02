@@ -28,7 +28,9 @@ def main(argv: Sequence[str] | None = None) -> int:
 def _run_build(arguments: Sequence[str]) -> int:
     from .pipeline import BuildConfig, build_project
 
-    parser = argparse.ArgumentParser(description="Build TF-IDF reports and search index")
+    parser = argparse.ArgumentParser(
+        description="Build TF-IDF reports and search index"
+    )
     parser.add_argument("--artifacts", type=Path, default=DEFAULT_RUNTIME_DIR)
     parser.add_argument("--reports", type=Path, default=DEFAULT_REPORTS_DIR)
     parser.add_argument("--batch-size", type=int, default=DEFAULT_BATCH_SIZE)

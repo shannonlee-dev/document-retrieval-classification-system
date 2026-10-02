@@ -1,4 +1,3 @@
-
 from document_system.preprocessing import EnglishPreprocessor
 from document_system.tfidf import NumpyTfidfVectorizer
 from document_system.validation import stage_example, validate_against_sklearn
@@ -27,9 +26,7 @@ def test_numpy_tfidf_matches_sklearn_without_dense_full_matrix() -> None:
 
 def test_stage_example_reports_values_from_each_tfidf_step() -> None:
     texts = ["apple apple banana", "banana carrot"]
-    vectorizer = NumpyTfidfVectorizer(
-        EnglishPreprocessor(stop_words=frozenset())
-    )
+    vectorizer = NumpyTfidfVectorizer(EnglishPreprocessor(stop_words=frozenset()))
     stages = vectorizer.fit_transform_with_stages(texts)
 
     example = stage_example(stages, vectorizer, max_terms=2)
@@ -45,9 +42,7 @@ def test_stage_example_reports_values_from_each_tfidf_step() -> None:
 
 def test_validation_detects_a_modified_custom_value() -> None:
     texts = ["apple banana", "banana carrot"]
-    vectorizer = NumpyTfidfVectorizer(
-        EnglishPreprocessor(stop_words=frozenset())
-    )
+    vectorizer = NumpyTfidfVectorizer(EnglishPreprocessor(stop_words=frozenset()))
     custom = vectorizer.fit_transform(texts)
     custom.data[0] += 0.01
 

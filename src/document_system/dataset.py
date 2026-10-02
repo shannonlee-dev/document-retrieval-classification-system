@@ -80,12 +80,16 @@ def validate_full_20_newsgroups(bundle: DatasetBundle) -> None:
     if len(target_categories) != EXPECTED_CATEGORY_COUNT:
         raise ValueError("the full build requires exactly 20 unique target categories")
     if observed_class_ids != expected_class_ids:
-        raise ValueError("the full build requires all 20 categories and class IDs 0..19")
+        raise ValueError(
+            "the full build requires all 20 categories and class IDs 0..19"
+        )
     if (
         len(privacy_categories) != EXPECTED_CATEGORY_COUNT
         or privacy_categories != target_categories
     ):
-        raise ValueError("privacy report categories must match all 20 target categories")
+        raise ValueError(
+            "privacy report categories must match all 20 target categories"
+        )
 
 
 def load_20newsgroups() -> DatasetBundle:

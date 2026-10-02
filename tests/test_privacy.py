@@ -22,9 +22,7 @@ def test_sanitize_document_preserves_general_vocabulary() -> None:
 def test_sanitize_document_does_not_treat_proper_nouns_as_person_names() -> None:
     assert sanitize_document(
         "Open Graphics Consortium released Polygon Framework"
-    ).text == (
-        "open graphics consortium released polygon framework"
-    )
+    ).text == ("open graphics consortium released polygon framework")
 
 
 def test_sanitize_document_redacts_explicit_identifiers_and_counts_them() -> None:
@@ -36,7 +34,9 @@ def test_sanitize_document_redacts_explicit_identifiers_and_counts_them() -> Non
 
     result = sanitize_document(text)
 
-    assert result.text == "shared at from or or with and version about polygon rendering"
+    assert (
+        result.text == "shared at from or or with and version about polygon rendering"
+    )
     assert result.excluded_reason is None
     assert result.redactions == {
         "email": 1,

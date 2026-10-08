@@ -49,12 +49,14 @@ def validate_against_sklearn(
 
     if vectorizer.idf_ is None:
         raise RuntimeError("vectorizer is not fitted")
+    if vectorizer.tf_mode == "double":
+        raise ValueError("double TF has no equivalent sklearn option; use hand checks")
     reference_vectorizer = TfidfVectorizer(
         analyzer=vectorizer.preprocessor.tokenize,
         vocabulary=vectorizer.vocabulary_,
         lowercase=False,
         smooth_idf=True,
-        sublinear_tf=False,
+        sublinear_tf=vectorizer.tf_mode == "log",
         norm="l2",
         use_idf=True,
         dtype=np.float64,
@@ -115,7 +117,7 @@ def validate_against_sklearn(
         mean_absolute_error=mean_absolute_error,
         tolerance=tolerance,
         passed=max_absolute_error <= tolerance,
-        settings=dict(VALIDATION_SETTINGS),
+        settings={**VALIDATION_SETTINGS, "sublinear_tf": vectorizer.tf_mode == "log"},
     )
 
 

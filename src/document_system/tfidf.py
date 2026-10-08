@@ -20,9 +20,14 @@ class TfidfStages:
 
 
 class NumpyTfidfVectorizer:
-    """Fit raw-count TF-IDF while storing only nonzero values."""
+    """Fit raw, logarithmic or double TF-IDF using nonzero counts only."""
 
-    def __init__(self, preprocessor: EnglishPreprocessor | None = None) -> None:
+    def __init__(
+        self, preprocessor: EnglishPreprocessor | None = None, *, tf_mode: str = "raw"
+    ) -> None:
+        if tf_mode not in ("raw", "log", "double"):
+            raise ValueError("tf_mode must be raw, log or double")
+        self.tf_mode = tf_mode
         self.preprocessor = preprocessor or EnglishPreprocessor()
         self.vocabulary_: dict[str, int] = {}
         self.feature_names_: tuple[str, ...] = ()
@@ -84,9 +89,27 @@ class NumpyTfidfVectorizer:
         )
 
     def _weight_and_normalize(self, count_matrix: SparseMatrix) -> SparseMatrix:
+        return self.weight_counts(count_matrix)
+
+    def weight_counts(self, count_matrix: SparseMatrix) -> SparseMatrix:
+        """Apply this fitted IDF/TF mode to shared counts without changing them."""
         if self.idf_ is None:
             raise RuntimeError("vectorizer is not fitted")
-        tfidf_values = count_matrix.data * self.idf_[count_matrix.indices]
+        if count_matrix.shape[1] != self.idf_.size:
+            raise ValueError("count columns must match fitted IDF")
+        tf_values = count_matrix.data.copy()
+        if self.tf_mode == "log":
+            tf_values = 1.0 + np.log(tf_values)
+        elif self.tf_mode == "double":
+            for row_id in range(count_matrix.shape[0]):
+                start, end = map(int, count_matrix.indptr[row_id : row_id + 2])
+                if start != end:
+                    maximum = float(np.max(tf_values[start:end]))
+                    if maximum > 0:
+                        tf_values[start:end] = (
+                            0.5 + 0.5 * tf_values[start:end] / maximum
+                        )
+        tfidf_values = tf_values * self.idf_[count_matrix.indices]
         for row_id in range(count_matrix.shape[0]):
             row_start, row_end = (
                 int(count_matrix.indptr[row_id]),

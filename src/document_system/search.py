@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
+import heapq
 import re
-from collections.abc import Sequence
-from dataclasses import asdict, dataclass
+from collections.abc import Mapping, Sequence
+from dataclasses import asdict, dataclass, field
 
 import numpy as np
 
 from .constants import DEFAULT_TOP_K, SNIPPET_LIMIT
+from .inverted_index import InvertedIndex
 from .privacy import is_safe_text
 from .sparse_matrix import SparseMatrix
 from .tfidf import NumpyTfidfVectorizer
@@ -52,6 +54,7 @@ class DocumentSearch:
     labels: np.ndarray
     target_names: tuple[str, ...]
     document_ids: np.ndarray
+    inverted_index: InvertedIndex | None = field(default=None, compare=False)
 
     def __post_init__(self) -> None:
         document_count = self.matrix.shape[0]
@@ -75,10 +78,21 @@ class DocumentSearch:
                 "snippets must be safe, nonblank, and within the length limit"
             )
 
-    def search(self, query: str, topk: int = DEFAULT_TOP_K) -> list[SearchResult]:
+    def validate_topk(self, topk: int) -> None:
         document_count = self.matrix.shape[0]
-        if not 1 <= topk <= document_count:
+        if (
+            isinstance(topk, bool)
+            or not isinstance(topk, (int, np.integer))
+            or not 1 <= topk <= document_count
+        ):
             raise ValueError(f"topk must be between 1 and {document_count}")
+
+    def search(
+        self, query: str, topk: int = DEFAULT_TOP_K, *, strategy: str = "scan"
+    ) -> list[SearchResult]:
+        self.validate_topk(topk)
+        if strategy not in ("scan", "inverted"):
+            raise ValueError("strategy must be scan or inverted")
         if not query.strip():
             raise ValueError("query must not be blank")
         query_matrix = self.vectorizer.transform([query])
@@ -86,6 +100,16 @@ class DocumentSearch:
         if query_indices.size == 0:
             raise ValueError("query has no terms in the fitted vocabulary")
 
+        if strategy == "inverted":
+            index = self.inverted_index
+            if index is None:
+                index = InvertedIndex.from_matrix(self.matrix)
+                object.__setattr__(self, "inverted_index", index)
+            return self.results_from_scores(
+                index.score(query_indices, query_values), topk
+            )
+
+        document_count = self.matrix.shape[0]
         scores = np.zeros(document_count, dtype=np.float64)
         for matrix_row_id in range(document_count):
             document_indices, document_values = self.matrix.get_sparse_row(
@@ -97,15 +121,19 @@ class DocumentSearch:
                 document_indices,
                 document_values,
             )
-        positive_score_row_ids = np.flatnonzero(scores > 0)
-        ranked_row_ids = positive_score_row_ids[
-            np.lexsort(
-                (
-                    self.document_ids[positive_score_row_ids],
-                    -scores[positive_score_row_ids],
-                )
-            )
-        ][:topk]
+        return self.results_from_scores(
+            {int(row): float(scores[row]) for row in np.flatnonzero(scores > 0)}, topk
+        )
+
+    def results_from_scores(
+        self, scores: Mapping[int, float], topk: int
+    ) -> list[SearchResult]:
+        """Bounded heap: positive scores, 1e-12 ties resolved by external ID."""
+        ranked_row_ids = heapq.nsmallest(
+            topk,
+            (row for row, score in scores.items() if score > 0),
+            key=lambda row: (-round(scores[row], 12), int(self.document_ids[row])),
+        )
         return [
             SearchResult(
                 score=float(scores[matrix_row_id]),

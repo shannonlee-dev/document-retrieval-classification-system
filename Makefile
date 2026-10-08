@@ -1,4 +1,4 @@
-.PHONY: setup check format test smoke build run
+.PHONY: setup check format test smoke build run demo benchmark
 
 setup:
 	uv sync --frozen
@@ -23,3 +23,9 @@ build:
 
 run:
 	uv run --frozen document-system $(ARGS)
+
+demo:
+	uv run --frozen python main.py demo $(ARGS)
+
+benchmark:
+	uv run --frozen python main.py benchmark $(ARGS)

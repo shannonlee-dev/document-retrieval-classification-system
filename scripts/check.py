@@ -90,9 +90,12 @@ def main():
                 count += 1
         except (SyntaxError, ValueError, OSError) as exc:
             errors.append(f"{path.relative_to(ROOT)}: {exc}")
-    headings = re.findall(
-        r"^#{1,2} .+$", (ROOT / "README.md").read_text(encoding="utf-8"), re.M
+    heading_text = re.sub(
+        r"(?ms)^(`{3,}|~{3,})[^\n]*\n.*?^\1[^\n]*$",
+        "",
+        (ROOT / "README.md").read_text(encoding="utf-8"),
     )
+    headings = re.findall(r"^#{1,2} .+$", heading_text, re.M)
     if len(headings) < 4 or headings[1:4] != [
         "## 프로젝트 소개",
         "## 핵심 특징",

@@ -1,0 +1,131 @@
+
+DOCUMENT RETRIEVAL & CLASSIFICATION SYSTEM
+----------------------------------------------------------------------------
+Dataset       : 20 Newsgroups
+Documents     : 18,309
+Categories    : 20
+Vectorization : NumPy TF-IDF
+Classifiers   : Linear SVM
+
+Available Retrieval Methods
+  - TF-IDF (Raw / Log / Double)
+  - BM25
+  - Inverted Index Search
+
+[1/6] TF-IDF DOCUMENT SEARCH
+----------------------------------------------------------------------------
+Query      : space shuttle orbit
+Method     : TF-IDF
+TF Mode    : Raw
+Index      : Full Scan
+Top-K      : 5
+Returned   : 5
+Rank | Score    | Document ID | Category
+-----+----------+-------------+----------
+1    | 0.413791 | 4672        | sci.space
+2    | 0.384463 | 4389        | sci.space
+3    | 0.373090 | 5788        | sci.space
+4    | 0.368089 | 12888       | sci.space
+5    | 0.364911 | 10571       | sci.space
+
+Top Result Preview
+1. score=0.413791 doc_id=4672 category=sci.space
+  archive name space schedule last modified date space shuttle answers
+  launch schedules tv coverage shuttle launchings and landings schedules
+  and how to see them shuttle operations are discussed in the usenet group
+  sci space shuttle and ken
+Search Latency: 185.997 ms (current query; excludes load)
+
+[2/6] TF WEIGHTING COMPARISON
+----------------------------------------------------------------------------
+Query: space shuttle orbit
+TF Mode | Top-1 Doc | Top-1 Score
+--------+-----------+------------
+Raw     | 4672      | 0.413791
+Log     | 1569      | 0.305631
+Double  | 1569      | 0.269193
+Raw Top-5 IDs: 4672, 4389, 5788, 12888, 10571
+Log Top-5 IDs: 1569, 2080, 4192, 16785, 12906
+  Rank changes vs Raw: 1569: outside top5 → 1; 2080: outside top5 → 2; 4192: outside top5 → 3; 16785: outside top5 → 4; 12906: outside top5 → 5
+Double Top-5 IDs: 1569, 4192, 1727, 2080, 2410
+  Rank changes vs Raw: 1569: outside top5 → 1; 4192: outside top5 → 2; 1727: outside top5 → 3; 2080: outside top5 → 4; 2410: outside top5 → 5
+
+Saved paired quality benchmark (train corpus / held-out queries)
+TF     | Accuracy | Macro F1 | P@10   | MAP@10
+-------+----------+----------+--------+-------
+Raw    | 0.7671   | 0.7544   | 0.5210 | 0.4345
+Log    | 0.7701   | 0.7574   | 0.5570 | 0.4782
+Double | 0.7690   | 0.7537   | 0.5280 | 0.4569
+
+[3/6] TF-IDF VS BM25
+----------------------------------------------------------------------------
+Query: space shuttle orbit
+Rank | TF-IDF Doc ID | BM25 Doc ID
+-----+---------------+------------
+1    | 4672          | 3190
+2    | 4389          | 12906
+3    | 5788          | 3319
+4    | 12888         | 4672
+5    | 10571         | 12548
+Top-5 common documents: 1
+Rank differences: 3190: outside topk → 1; 12906: outside topk → 2; 3319: outside topk → 3; 4672: 1 → 4; 12548: outside topk → 5
+TF-IDF top preview (ID 4672, tokens 689)
+  archive name space schedule last modified date space shuttle answers
+  launch schedules tv coverage shuttle launchings and landings schedules
+  and how to see them shuttle operations are discussed in the usenet group
+  sci space shuttle and ken
+BM25 top preview (ID 3190, tokens 181)
+  right now the hst sevicing mission is listed as days before it was
+  listed as days they just kicked up the number of spacewalks to after
+  simulations indicated that it was not do able in after all the space
+  walking they are going to re boost
+Current latency: TF-IDF 0.973 ms; BM25 0.907 ms (load excluded)
+Scores have different scales. BM25 saturates TF and normalizes token length.
+
+[4/6] SEARCH PERFORMANCE COMPARISON
+----------------------------------------------------------------------------
+Query: space shuttle orbit
+Result Consistency: PASS (absolute tolerance 1e-12)
+Current single query: Scan 187.983 ms / Inverted 1.071 ms
+
+Saved repeated benchmark: 3 short queries × 5 repeats; warm-up excluded
+Method         | Mean(ms) | P50(ms) | P95(ms)
+---------------+----------+---------+--------
+Full Scan      | 175.790  | 175.736 | 178.284
+Inverted Index | 1.133    | 0.979   | 1.592
+Speedup: 155.10x
+
+[5/6] DOCUMENT CLASSIFICATION
+----------------------------------------------------------------------------
+Model       : Linear SVM (SGD hinge)
+Train/Test  : 80 / 20 (seed 42)
+Categories  : 20
+TF Mode | Accuracy | Macro F1
+--------+----------+---------
+Raw     | 0.7671   | 0.7544
+Log     | 0.7701   | 0.7574
+Double  | 0.7690   | 0.7537
+Confusion Matrix: artifacts/reports/tf_raw_confusion_matrix.png
+Misclassification previews:
+  ID 10167: alt.atheism → rec.autos
+  poor matthew a million posters to call you car drivers and he chooses me
+  a non car owner
+  ID 17783: sci.med → rec.sport.baseball
+  report them to your local bbb better business bureau
+  ID 2608: comp.os.ms-windows.misc → comp.graphics
+  this should be in the faq it only get asked about twenty times a month
+  there is no that s right no telnet access to compuserve no ftp access no
+  gopher access no internet services except e mail you can telnet to
+  hermes merit edu but that
+
+[6/6] EXPERIMENT SUMMARY
+----------------------------------------------------------------------------
+TF Variants Implemented: 3
+TF-IDF Numerical Validation: PASS
+BM25 Numerical Validation: PASS
+Inverted Index: PASS
+Search Consistency: PASS
+
+Reports: artifacts/reports/
+Validation PASS means implementation checks passed; quality is shown separately.
+Demo Completed.

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 from collections.abc import Sequence
 from dataclasses import dataclass
@@ -9,13 +10,16 @@ from pathlib import Path
 
 import numpy as np
 
+from .bm25 import NumpyBM25Retriever
 from .constants import SNIPPET_LIMIT
+from .inverted_index import InvertedIndex
 from .preprocessing import EnglishPreprocessor
 from .privacy import is_safe_text
+from .search import DocumentSearch
 from .sparse_matrix import SparseMatrix
 from .tfidf import NumpyTfidfVectorizer
 
-ARTIFACT_VERSION = 2
+ARTIFACT_VERSION = 3
 SEARCH_FIT_SCOPE = "full_corpus"
 PRIVACY_POLICY = "structured-pii-redaction-v3"
 SEARCH_INDEX_ARRAYS_FILENAME = "search_index_arrays.npz"
@@ -28,6 +32,10 @@ REQUIRED_METADATA_FIELDS = frozenset(
         "fit_scope",
         "fit_document_count",
         "category_count",
+        "tf_mode",
+        "arrays_sha256",
+        "metadata_sha256",
+        "corpus_fingerprint",
     }
 )
 
@@ -40,6 +48,33 @@ class SearchArtifacts:
     labels: np.ndarray
     target_names: tuple[str, ...]
     document_ids: np.ndarray
+    extra_arrays: dict[str, np.ndarray]
+    metadata: dict[str, object]
+
+
+@dataclass(frozen=True)
+class RetrievalArtifacts:
+    tfidf: dict[str, DocumentSearch]
+    bm25: NumpyBM25Retriever
+    corpus_fingerprint: str
+    metadata: dict[str, object]
+
+
+def _metadata_digest(metadata: dict[str, object]) -> str:
+    payload = {
+        key: value for key, value in metadata.items() if key != "metadata_sha256"
+    }
+    return hashlib.sha256(
+        json.dumps(payload, sort_keys=True, ensure_ascii=False).encode()
+    ).hexdigest()
+
+
+def _file_digest(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 def save_search_artifacts(
@@ -50,6 +85,12 @@ def save_search_artifacts(
     labels: np.ndarray,
     target_names: tuple[str, ...],
     document_ids: np.ndarray,
+    *,
+    counts: SparseMatrix | None = None,
+    document_lengths: np.ndarray | None = None,
+    corpus_fingerprint: str | None = None,
+    k1: float = 1.5,
+    b: float = 0.75,
 ) -> None:
     if vectorizer.idf_ is None:
         raise RuntimeError("cannot save an unfitted vectorizer")
@@ -80,12 +121,53 @@ def save_search_artifacts(
         raise ValueError("snippets must be safe, nonblank, and within the length limit")
     path = Path(directory)
     path.mkdir(parents=True, exist_ok=True)
+    extra_arrays: dict[str, np.ndarray] = {}
+    if counts is not None:
+        if vectorizer.tf_mode != "raw":
+            raise ValueError("full retrieval bundle must use raw baseline")
+        if (
+            counts.shape != matrix.shape
+            or not np.array_equal(counts.indices, matrix.indices)
+            or not np.array_equal(counts.indptr, matrix.indptr)
+        ):
+            raise ValueError("counts and TF-IDF must share sparse structure")
+        if document_lengths is None:
+            raise ValueError("full retrieval bundle requires document lengths")
+        order = np.argsort(matrix.indices, kind="stable")
+        inverted = InvertedIndex.from_matrix(matrix)
+        extra_arrays.update(
+            counts=counts.data,
+            document_lengths=np.asarray(document_lengths),
+            posting_order=order,
+            posting_rows=inverted.document_rows,
+            posting_indptr=inverted.term_indptr,
+        )
+        for mode in ("log", "double"):
+            variant = NumpyTfidfVectorizer(vectorizer.preprocessor, tf_mode=mode)
+            variant.vocabulary_ = vectorizer.vocabulary_
+            variant.feature_names_ = vectorizer.feature_names_
+            variant.idf_ = vectorizer.idf_
+            extra_arrays[f"tf_{mode}"] = variant.weight_counts(counts).data
+        bm25 = NumpyBM25Retriever(
+            vectorizer,
+            counts,
+            snippets,
+            labels,
+            target_names,
+            document_ids,
+            document_lengths,
+            k1=k1,
+            b=b,
+        )
+        extra_arrays["bm25_weights"] = bm25.inverted_index.weights
+        extra_arrays["bm25_idf"] = bm25.idf
     np.savez_compressed(
         path / SEARCH_INDEX_ARRAYS_FILENAME,
         data=matrix.data,
         indices=matrix.indices,
         indptr=matrix.indptr,
         idf=vectorizer.idf_,
+        **extra_arrays,
     )
     metadata = {
         "artifact_version": ARTIFACT_VERSION,
@@ -102,7 +184,16 @@ def save_search_artifacts(
         "fit_scope": SEARCH_FIT_SCOPE,
         "fit_document_count": matrix.shape[0],
         "category_count": len(target_names),
+        "tf_mode": vectorizer.tf_mode,
+        "retrieval_methods": ["raw", "log", "double", "bm25"]
+        if counts is not None
+        else [vectorizer.tf_mode],
+        "bm25_parameters": {"k1": k1, "b": b, "query_terms": "unique"},
+        "dataset": "20 Newsgroups",
+        "arrays_sha256": _file_digest(path / SEARCH_INDEX_ARRAYS_FILENAME),
     }
+    metadata["corpus_fingerprint"] = corpus_fingerprint or _metadata_digest(metadata)
+    metadata["metadata_sha256"] = _metadata_digest(metadata)
     (path / SEARCH_INDEX_DATA_FILENAME).write_text(
         json.dumps(metadata, ensure_ascii=False),
         encoding="utf-8",
@@ -118,6 +209,10 @@ def load_search_artifacts(directory: str | Path) -> SearchArtifacts:
             f"search artifacts are missing under {path}; run `document-system build` first"
         )
     metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+    if not isinstance(metadata, dict):
+        raise ValueError(
+            "invalid artifact metadata; rebuild with `document-system build`"
+        )
     if metadata.get("artifact_version") != ARTIFACT_VERSION:
         raise ValueError(
             "artifact version mismatch; rebuild with `document-system build`"
@@ -130,11 +225,22 @@ def load_search_artifacts(directory: str | Path) -> SearchArtifacts:
         raise ValueError(
             "artifact privacy policy is outdated; rebuild with `document-system build`"
         )
+    if metadata["metadata_sha256"] != _metadata_digest(metadata) or metadata[
+        "arrays_sha256"
+    ] != _file_digest(matrix_path):
+        raise ValueError(
+            "artifact integrity/corpus mismatch; rebuild with `document-system build`"
+        )
     with np.load(matrix_path, allow_pickle=False) as arrays:
         data = arrays["data"].copy()
         indices = arrays["indices"].copy()
         indptr = arrays["indptr"].copy()
         idf = arrays["idf"].copy()
+        extra_arrays = {
+            key: arrays[key].copy()
+            for key in arrays.files
+            if key not in {"data", "indices", "indptr", "idf"}
+        }
     shape = tuple(int(value) for value in metadata["shape"])
     if len(shape) != 2:
         raise ValueError("invalid artifact shape; rebuild with `document-system build`")
@@ -146,7 +252,7 @@ def load_search_artifacts(directory: str | Path) -> SearchArtifacts:
     preprocessor = EnglishPreprocessor(
         stop_words=frozenset(str(word) for word in metadata["stop_words"])
     )
-    vectorizer = NumpyTfidfVectorizer(preprocessor)
+    vectorizer = NumpyTfidfVectorizer(preprocessor, tf_mode=metadata["tf_mode"])
     vectorizer.feature_names_ = feature_names
     vectorizer.vocabulary_ = {term: index for index, term in enumerate(feature_names)}
     vectorizer.idf_ = idf
@@ -195,4 +301,81 @@ def load_search_artifacts(directory: str | Path) -> SearchArtifacts:
         labels=labels,
         target_names=target_names,
         document_ids=document_ids,
+        extra_arrays=extra_arrays,
+        metadata=metadata,
+    )
+
+
+def load_retrievers(directory: str | Path) -> RetrievalArtifacts:
+    """Restore full-corpus indexes without tokenization, fitting or sorting."""
+    saved = load_search_artifacts(directory)
+    arrays = saved.extra_arrays
+    required = {
+        "counts",
+        "document_lengths",
+        "posting_order",
+        "posting_rows",
+        "posting_indptr",
+        "tf_log",
+        "tf_double",
+        "bm25_weights",
+        "bm25_idf",
+    }
+    if not required.issubset(arrays):
+        raise ValueError(
+            "full retrieval artifacts are missing; rebuild with `document-system build`"
+        )
+    matrix = saved.matrix
+    order = arrays["posting_order"]
+    if (
+        order.shape != matrix.data.shape
+        or not np.issubdtype(order.dtype, np.integer)
+        or np.any(order < 0)
+        or np.any(order >= matrix._nnz)
+    ):
+        raise ValueError("invalid posting order; rebuild with `document-system build`")
+    common = dict(
+        snippets=saved.snippets,
+        labels=saved.labels,
+        target_names=saved.target_names,
+        document_ids=saved.document_ids,
+    )
+    searchers = {}
+    for mode in ("raw", "log", "double"):
+        vectorizer = NumpyTfidfVectorizer(saved.vectorizer.preprocessor, tf_mode=mode)
+        vectorizer.vocabulary_ = saved.vectorizer.vocabulary_
+        vectorizer.feature_names_ = saved.vectorizer.feature_names_
+        vectorizer.idf_ = saved.vectorizer.idf_
+        values = matrix.data if mode == "raw" else arrays[f"tf_{mode}"]
+        weighted = SparseMatrix(values, matrix.indices, matrix.indptr, matrix.shape)
+        postings = InvertedIndex(
+            arrays["posting_indptr"],
+            arrays["posting_rows"],
+            values[order],
+            matrix.shape[0],
+        )
+        searchers[mode] = DocumentSearch(
+            vectorizer, weighted, **common, inverted_index=postings
+        )
+    counts = SparseMatrix(arrays["counts"], matrix.indices, matrix.indptr, matrix.shape)
+    bm25_index = InvertedIndex(
+        arrays["posting_indptr"],
+        arrays["posting_rows"],
+        arrays["bm25_weights"],
+        matrix.shape[0],
+    )
+    parameters = saved.metadata["bm25_parameters"]
+    bm25 = NumpyBM25Retriever(
+        saved.vectorizer,
+        counts,
+        **common,
+        document_lengths=arrays["document_lengths"],
+        k1=parameters["k1"],
+        b=parameters["b"],
+        inverted_index=bm25_index,
+    )
+    if not np.array_equal(bm25.idf, arrays["bm25_idf"]):
+        raise ValueError("BM25 IDF mismatch; rebuild with `document-system build`")
+    return RetrievalArtifacts(
+        searchers, bm25, str(saved.metadata["corpus_fingerprint"]), saved.metadata
     )

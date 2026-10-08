@@ -5,6 +5,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
+import numpy as np
+
 from .artifacts import save_search_artifacts
 from .build_stages import run_classification_stage, run_search_stage
 from .constants import (
@@ -18,6 +20,7 @@ from .constants import (
 from .dataset import (
     MINIMUM_CATEGORY_COUNT,
     DatasetBundle,
+    dataset_fingerprint,
     load_20newsgroups,
     validate_full_20_newsgroups,
 )
@@ -103,6 +106,14 @@ def build_from_dataset(bundle: DatasetBundle, config: BuildConfig) -> BuildRepor
         bundle.labels,
         bundle.target_names,
         bundle.source_doc_ids,
+        counts=search.counts,
+        document_lengths=np.array(
+            [
+                len(search.vectorizer.preprocessor.tokenize(text))
+                for text in bundle.texts
+            ]
+        ),
+        corpus_fingerprint=dataset_fingerprint(bundle),
     )
     return BuildReport(
         document_count=len(bundle.texts),

@@ -44,7 +44,7 @@ def test_search_artifacts_round_trip(tmp_path: Path) -> None:
     np.testing.assert_array_equal(restored.document_ids, document_ids)
     np.testing.assert_array_equal(restored.labels, labels)
     assert restored.target_names == target_names
-    assert metadata["artifact_version"] == 2
+    assert metadata["artifact_version"] == 3
     assert metadata["fit_scope"] == "full_corpus"
     assert metadata["fit_document_count"] == matrix.shape[0]
     assert metadata["category_count"] == len(target_names)

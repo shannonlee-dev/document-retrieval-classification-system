@@ -36,6 +36,7 @@ class SearchStageResult:
     validation: ValidationResult
     search_examples: list[dict[str, object]]
     vocabulary_size: int
+    counts: SparseMatrix | None = None
 
 
 def run_classification_stage(
@@ -101,7 +102,8 @@ def run_search_stage(
     """Fit the reusable search index from the complete corpus."""
 
     vectorizer = NumpyTfidfVectorizer(EnglishPreprocessor())
-    matrix = vectorizer.fit_transform(bundle.texts)
+    stages = vectorizer.fit_transform_with_stages(bundle.texts)
+    matrix = stages.tfidf
     validation = validate_against_sklearn(bundle.texts, vectorizer, matrix)
     if not validation.passed:
         raise RuntimeError(
@@ -131,4 +133,5 @@ def run_search_stage(
         validation=validation,
         search_examples=examples,
         vocabulary_size=len(vectorizer.vocabulary_),
+        counts=stages.counts,
     )

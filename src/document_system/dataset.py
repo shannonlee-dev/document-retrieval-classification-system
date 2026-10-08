@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
 from collections.abc import Sequence
 from dataclasses import dataclass
 
@@ -28,6 +30,20 @@ class DatasetBundle:
     target_names: tuple[str, ...]
     source_doc_ids: np.ndarray
     privacy_report: PrivacyReport
+
+
+def dataset_fingerprint(bundle: DatasetBundle) -> str:
+    """Bind reports/runtime to ordered sanitized texts, public IDs and labels."""
+    digest = hashlib.sha256(json.dumps(bundle.target_names).encode())
+    for text, label, doc_id in zip(
+        bundle.texts, bundle.labels, bundle.source_doc_ids, strict=True
+    ):
+        payload = json.dumps(
+            [int(doc_id), int(label), text], ensure_ascii=False
+        ).encode()
+        digest.update(len(payload).to_bytes(8, "big"))
+        digest.update(payload)
+    return digest.hexdigest()
 
 
 @dataclass(frozen=True)

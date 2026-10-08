@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
+import heapq
 from collections import Counter
 from collections.abc import Sequence
 from dataclasses import dataclass
 
 import numpy as np
 
-from ..search import sparse_dot
+from ..inverted_index import InvertedIndex
 from ..sparse_matrix import SparseMatrix
 
 RETRIEVAL_TOP_K = 10
@@ -70,6 +71,7 @@ def evaluate_label_retrieval(
     corpus_labels: Sequence[int],
     *,
     k: int = RETRIEVAL_TOP_K,
+    corpus_document_ids: Sequence[int] | None = None,
 ) -> RetrievalMetrics:
     """Rank corpus documents for each query and score same-label relevance."""
 
@@ -83,21 +85,19 @@ def evaluate_label_retrieval(
         raise ValueError("k must be between 1 and the corpus size")
 
     corpus_label_array = np.asarray(corpus_labels)
+    document_ids = (
+        np.arange(corpus_matrix.shape[0])
+        if corpus_document_ids is None
+        else np.asarray(corpus_document_ids)
+    )
+    if document_ids.shape != (corpus_matrix.shape[0],):
+        raise ValueError("corpus_document_ids must be row aligned")
+    index = InvertedIndex.from_matrix(corpus_matrix)
     ranked_result_labels: list[list[int]] = []
     for query_row_id in range(query_matrix.shape[0]):
         query_indices, query_values = query_matrix.get_sparse_row(query_row_id)
-        scores = np.zeros(corpus_matrix.shape[0], dtype=np.float64)
-        for corpus_row_id in range(corpus_matrix.shape[0]):
-            document_indices, document_values = corpus_matrix.get_sparse_row(
-                corpus_row_id
-            )
-            scores[corpus_row_id] = sparse_dot(
-                query_indices,
-                query_values,
-                document_indices,
-                document_values,
-            )
-        ranked_row_ids = np.argsort(-scores, kind="stable")[:k]
+        scores = index.score(query_indices, query_values)
+        ranked_row_ids = rank_scores(scores, document_ids, k)
         ranked_result_labels.append(corpus_label_array[ranked_row_ids].tolist())
     return evaluate_ranked_labels(
         query_labels=query_labels,
@@ -105,3 +105,53 @@ def evaluate_label_retrieval(
         corpus_labels=corpus_labels,
         k=k,
     )
+
+
+def rank_scores(
+    scores: dict[int, float], document_ids: np.ndarray, k: int
+) -> list[int]:
+    """Rank positives, then zero-score rows so existing fixed-k metrics stay defined."""
+    positive = heapq.nsmallest(
+        k,
+        (row for row, score in scores.items() if score > 0),
+        key=lambda row: (-round(scores[row], 12), int(document_ids[row])),
+    )
+    if len(positive) < k:
+        selected = set(positive)
+        positive.extend(
+            heapq.nsmallest(
+                k - len(positive),
+                (
+                    row
+                    for row in range(len(document_ids))
+                    if row not in selected and scores.get(row, 0) <= 0
+                ),
+                key=lambda row: int(document_ids[row]),
+            )
+        )
+    return positive
+
+
+def query_metrics_record(
+    query_id: int,
+    query_label: int,
+    rows: Sequence[int],
+    corpus_labels: np.ndarray,
+    document_ids: np.ndarray,
+    k: int,
+) -> dict[str, object]:
+    labels = corpus_labels[list(rows)].tolist()
+    metrics = evaluate_ranked_labels(
+        query_labels=[query_label],
+        ranked_labels=[labels],
+        corpus_labels=corpus_labels,
+        k=k,
+    )
+    return {
+        "query_document_id": int(query_id),
+        "query_category_id": int(query_label),
+        "precision_at_10": metrics.precision_at_k,
+        "ap_at_10": metrics.map_at_k,
+        "top10_document_ids": document_ids[list(rows)].tolist(),
+        "top10_category_ids": labels,
+    }

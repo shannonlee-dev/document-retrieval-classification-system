@@ -62,6 +62,12 @@ def summarize_variants(
 
 def run_stop_word_ablation(
     bundle: DatasetBundle | None = None,
+    *,
+    seeds: Sequence[int] = ABLATION_SEEDS,
+    query_count: int | None = None,
+    epochs: int = DEFAULT_EPOCHS,
+    batch_size: int = DEFAULT_BATCH_SIZE,
+    external_id_ties: bool = False,
 ) -> dict[str, object]:
     """Compare fixed default stop words with no stop-word removal over 10 seeds."""
 
@@ -71,8 +77,25 @@ def run_stop_word_ablation(
         "no_stop_words": [],
     }
     seed_results: list[dict[str, object]] = []
-    for seed in ABLATION_SEEDS:
-        variants = _run_stop_word_ablation_seed(dataset, seed)
+    if not seeds or (query_count is not None and query_count < 1):
+        raise ValueError("seeds and query_count must be nonempty/positive")
+    for seed in seeds:
+        if (
+            query_count is None
+            and epochs == DEFAULT_EPOCHS
+            and batch_size == DEFAULT_BATCH_SIZE
+            and not external_id_ties
+        ):
+            variants = _run_stop_word_ablation_seed(dataset, seed)
+        else:
+            variants = _run_stop_word_ablation_seed(
+                dataset,
+                seed,
+                query_count=query_count,
+                epochs=epochs,
+                batch_size=batch_size,
+                external_id_ties=external_id_ties,
+            )
         seed_results.append(
             {"seed": seed, "variants": [asdict(item) for item in variants]}
         )
@@ -98,7 +121,7 @@ def run_stop_word_ablation(
     return {
         "dataset": "20 Newsgroups: all 20 categories",
         "split": {
-            "seeds": list(ABLATION_SEEDS),
+            "seeds": list(seeds),
             "test_size": DEFAULT_TEST_SIZE,
         },
         "retrieval_definition": {
@@ -106,6 +129,10 @@ def run_stop_word_ablation(
             "queries": "held-out test documents",
             "relevance": "same category label",
             "metrics": "Precision@10 and MAP@10",
+            "requested_query_count": query_count,
+            "tie_break": "external document ID"
+            if external_id_ties
+            else "internal row ID (historical default)",
         },
         "variants": [
             {"name": name, **summarize_variants(variants)}
@@ -117,7 +144,13 @@ def run_stop_word_ablation(
 
 
 def _run_stop_word_ablation_seed(
-    dataset: DatasetBundle, seed: int
+    dataset: DatasetBundle,
+    seed: int,
+    *,
+    query_count: int | None = None,
+    epochs: int = DEFAULT_EPOCHS,
+    batch_size: int = DEFAULT_BATCH_SIZE,
+    external_id_ties: bool = False,
 ) -> list[AblationVariant]:
     """Evaluate both stop-word conditions on a single paired random seed."""
 
@@ -146,8 +179,8 @@ def _run_stop_word_ablation_seed(
         model = train_linear_svm(
             train_matrix,
             train_labels,
-            batch_size=DEFAULT_BATCH_SIZE,
-            epochs=DEFAULT_EPOCHS,
+            batch_size=batch_size,
+            epochs=epochs,
             random_state=seed,
         )
         classification_report = evaluate_classifier(
@@ -156,14 +189,21 @@ def _run_stop_word_ablation_seed(
             test_labels,
             test_snippets,
             dataset.target_names,
-            batch_size=DEFAULT_BATCH_SIZE,
+            batch_size=batch_size,
             document_ids=dataset.source_doc_ids[test_row_ids],
         )
+        query_positions = select_query_positions(test_labels, query_count, seed)
+        query_matrix = vectorizer.transform(
+            [test_texts[int(i)] for i in query_positions]
+        )
         retrieval_metrics = evaluate_label_retrieval(
-            test_matrix,
-            test_labels,
+            query_matrix,
+            test_labels[query_positions],
             train_matrix,
             train_labels,
+            corpus_document_ids=dataset.source_doc_ids[train_row_ids]
+            if external_id_ties
+            else None,
         )
         variants.append(
             AblationVariant(
@@ -177,3 +217,21 @@ def _run_stop_word_ablation_seed(
             )
         )
     return variants
+
+
+def select_query_positions(
+    labels: np.ndarray, query_count: int | None, seed: int
+) -> np.ndarray:
+    """Choose one deterministic stratified subset; use all queries when requested."""
+    rows = np.arange(len(labels))
+    if query_count is None or query_count >= len(rows):
+        return rows
+    if query_count < 1:
+        raise ValueError("query_count must be positive")
+    classes = np.unique(labels).size
+    if query_count >= classes and len(rows) - query_count >= classes:
+        selected, _ = train_test_split(
+            rows, train_size=query_count, stratify=labels, random_state=seed
+        )
+        return np.sort(selected)
+    return np.sort(np.random.default_rng(seed).choice(rows, query_count, replace=False))

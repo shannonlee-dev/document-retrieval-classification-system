@@ -1,4 +1,15 @@
-.PHONY: setup check format test smoke build prepare run demo benchmark compare interactive
+.DEFAULT_GOAL := ready
+
+.PHONY: ready setup check format test smoke build prepare run demo benchmark compare interactive
+
+ready:
+	$(MAKE) setup
+	$(MAKE) check
+	$(MAKE) test
+	$(MAKE) build
+	$(MAKE) prepare
+	$(MAKE) benchmark
+	@echo "준비 완료: make interactive 또는 make demo로 실행하세요."
 
 setup:
 	uv sync --frozen

@@ -5,11 +5,11 @@
 Python 3.10 이상과 uv, make가 필요하다. 핵심 검색 계산은 NumPy와 Python 표준 라이브러리로 직접 구현한다.
 
 ```bash
-make setup
+# 최초 1회: 설치·검사·테스트·패키지 빌드·인덱스 준비·벤치마크
+make ready
 
-# 최초 1회: 전체 데이터 준비, 인덱스 저장, 정량 평가
-make prepare
-make benchmark
+# 검색과 비교를 선택하는 대화형 메뉴
+make interactive
 
 # 발표: 저장된 인덱스와 결과만 읽는 오프라인 시연
 make demo
@@ -18,10 +18,9 @@ make run ARGS='--query "space shuttle orbit" --topk 5'
 make run ARGS='--query "space shuttle orbit" --tf-mode log --strategy inverted'
 make run ARGS='--query "space shuttle orbit" --method bm25'
 make compare ARGS='--query "space shuttle orbit"'
-make interactive
 ```
 
-`make setup` 후 `make prepare`로 데이터와 검색 인덱스를 준비한다. `make interactive`는 검색과 비교를 선택하는 대화형 메뉴를 연다. 전체 시연은 `make benchmark` 후 `make demo`로 실행한다. 모든 실행 명령은 내부에서 `uv run --frozen`을 사용하므로 가상환경을 직접 활성화할 필요가 없다. 발표 전 인덱스 준비와 벤치마크가 끝났다면 다시 실행할 필요가 없다. `demo`는 다운로드·학습을 시작하지 않는다.
+`make ready` 하나로 전체 준비를 끝낸다. `make`만 실행해도 같은 작업을 수행한다. 내부에서 `setup` → `check` → `test` → `build` → `prepare` → `benchmark`를 순서대로 실행하고, 실패한 단계가 있으면 즉시 중단한다. `make -j ready`로 실행해도 준비 단계의 순서는 유지한다. 최초 실행은 데이터 다운로드·학습·평가를 포함하므로 시간이 걸릴 수 있다. 준비가 끝나면 `make interactive` 또는 `make demo`로 실행한다. 실행 명령은 내부에서 `uv run --frozen`을 사용하므로 가상환경을 직접 활성화할 필요가 없다. 준비가 끝난 환경에서는 실행할 때마다 `ready`를 반복할 필요가 없다. `demo`는 다운로드·학습을 시작하지 않는다.
 
 ## 프로젝트 소개
 
@@ -190,16 +189,18 @@ Speedup: 155.10x
 ## 실행 및 검증
 
 ```bash
-make setup
-make prepare     # 최초 1회: 데이터 준비·검색 인덱스 생성·분류 평가
-make run ARGS='--query "space shuttle orbit" --topk 5'
-make compare ARGS='--query "space shuttle orbit"'
+make ready       # 최초 1회: 전체 준비를 순서대로 실행
 make interactive
-make benchmark ARGS='--queries 100 --repeats 5'
 make demo
 
-# 저장 경로 등 추가 옵션은 ARGS로 전달
+# 개별 검색·비교
+make run ARGS='--query "space shuttle orbit" --topk 5'
+make compare ARGS='--query "space shuttle orbit"'
+
+# 필요한 단계만 다시 실행할 때
+make setup
 make prepare ARGS='--artifacts artifacts/runtime --reports artifacts/reports'
+make benchmark ARGS='--queries 100 --repeats 5'
 
 make check
 make test

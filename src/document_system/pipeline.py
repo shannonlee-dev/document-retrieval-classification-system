@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+from time import perf_counter
 
 import numpy as np
 
@@ -61,6 +62,8 @@ class BuildReport:
 
 def build_project(config: BuildConfig | None = None) -> BuildReport:
     """Load the full corpus and persist search indexes and classification reports."""
+    started = perf_counter()
+    print("build: loading and validating 20 Newsgroups corpus...", flush=True)
     bundle = load_20newsgroups()
     validate_full_20_newsgroups(bundle)
     if (
@@ -70,13 +73,17 @@ def build_project(config: BuildConfig | None = None) -> BuildReport:
         raise ValueError(
             "the full build requires at least 500 documents and two categories"
         )
-    return build_from_dataset(bundle, config or BuildConfig())
+    report = build_from_dataset(bundle, config or BuildConfig())
+    elapsed = perf_counter() - started
+    print(f"build: finished in {elapsed:.1f}s", flush=True)
+    return report
 
 
 def build_from_dataset(bundle: DatasetBundle, config: BuildConfig) -> BuildReport:
     """Build independent classification and search spaces from sanitized documents."""
     if config.batch_size < 1 or config.epochs < 1:
         raise ValueError("batch_size and epochs must be positive")
+    print("build: sanitizing documents and training classifier...", flush=True)
     snippets = tuple(make_safe_snippet(text) for text in bundle.texts)
     classification = run_classification_stage(
         bundle,
@@ -85,12 +92,19 @@ def build_from_dataset(bundle: DatasetBundle, config: BuildConfig) -> BuildRepor
         epochs=config.epochs,
         random_state=config.random_state,
     )
+    print("build: fitting retrieval index and validating search weights...", flush=True)
     search = run_search_stage(
         bundle,
         snippets,
         config.search_queries,
     )
 
+    print("build: writing reports and runtime artifacts...", flush=True)
+    document_lengths = np.zeros(search.counts.shape[0], dtype=np.float64)
+    if search.counts.data.size:
+        document_lengths[:] = np.add.reduceat(
+            search.counts.data, search.counts.indptr[:-1]
+        )
     write_build_reports(
         config.reports_dir,
         bundle,
@@ -108,12 +122,7 @@ def build_from_dataset(bundle: DatasetBundle, config: BuildConfig) -> BuildRepor
         bundle.target_names,
         bundle.source_doc_ids,
         counts=search.counts,
-        document_lengths=np.array(
-            [
-                len(search.vectorizer.preprocessor.tokenize(text))
-                for text in bundle.texts
-            ]
-        ),
+        document_lengths=document_lengths,
         corpus_fingerprint=dataset_fingerprint(bundle),
     )
     return BuildReport(

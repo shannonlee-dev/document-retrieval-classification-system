@@ -26,6 +26,7 @@ def save_confusion_matrix(
     target_names: tuple[str, ...],
     path: str | Path,
 ) -> None:
+    """Save a labeled confusion matrix as an image using a headless backend."""
     output = Path(path)
     output.parent.mkdir(parents=True, exist_ok=True)
     size = max(

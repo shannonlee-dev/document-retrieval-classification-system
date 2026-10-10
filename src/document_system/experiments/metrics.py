@@ -9,6 +9,7 @@ from dataclasses import dataclass
 
 import numpy as np
 
+from ..constants import SCORE_TIE_DECIMALS
 from ..inverted_index import InvertedIndex
 from ..sparse_matrix import SparseMatrix
 
@@ -17,6 +18,8 @@ RETRIEVAL_TOP_K = 10
 
 @dataclass(frozen=True)
 class RetrievalMetrics:
+    """Store mean precision and average precision at a fixed cutoff."""
+
     precision_at_k: float
     map_at_k: float
 
@@ -110,11 +113,14 @@ def evaluate_label_retrieval(
 def rank_scores(
     scores: dict[int, float], document_ids: np.ndarray, k: int
 ) -> list[int]:
-    """Rank positives, then zero-score rows so existing fixed-k metrics stay defined."""
+    """Rank positive scores, then fill by document ID to preserve fixed-k metrics."""
     positive = heapq.nsmallest(
         k,
         (row for row, score in scores.items() if score > 0),
-        key=lambda row: (-round(scores[row], 12), int(document_ids[row])),
+        key=lambda row: (
+            -round(scores[row], SCORE_TIE_DECIMALS),
+            int(document_ids[row]),
+        ),
     )
     if len(positive) < k:
         selected = set(positive)
@@ -140,6 +146,7 @@ def query_metrics_record(
     document_ids: np.ndarray,
     k: int,
 ) -> dict[str, object]:
+    """Record one held-out query ranking and its category-based relevance metrics."""
     labels = corpus_labels[list(rows)].tolist()
     metrics = evaluate_ranked_labels(
         query_labels=[query_label],

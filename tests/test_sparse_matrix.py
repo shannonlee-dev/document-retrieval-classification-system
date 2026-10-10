@@ -4,7 +4,7 @@ import pytest
 from document_system.sparse_matrix import SparseMatrix
 
 
-def make_matrix() -> SparseMatrix:
+def _make_matrix() -> SparseMatrix:
     return SparseMatrix(
         data=np.array([2.0, 1.0, 3.0]),
         indices=np.array([0, 2, 1], dtype=np.int32),
@@ -14,7 +14,7 @@ def make_matrix() -> SparseMatrix:
 
 
 def test_sparse_matrix_restores_selected_rows() -> None:
-    matrix = make_matrix()
+    matrix = _make_matrix()
 
     np.testing.assert_array_equal(
         matrix.to_dense_rows([1]),
@@ -23,14 +23,14 @@ def test_sparse_matrix_restores_selected_rows() -> None:
 
 
 def test_sparse_matrix_row_returns_nonzero_views() -> None:
-    indices, values = make_matrix().get_sparse_row(0)
+    indices, values = _make_matrix().get_sparse_row(0)
 
     np.testing.assert_array_equal(indices, np.array([0, 2], dtype=np.int32))
     np.testing.assert_array_equal(values, np.array([2.0, 1.0]))
 
 
 def test_memory_stats_use_actual_numpy_bytes() -> None:
-    matrix = make_matrix()
+    matrix = _make_matrix()
 
     stats = matrix.memory_stats()
 

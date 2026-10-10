@@ -13,7 +13,7 @@ from document_system.pipeline import BuildConfig, build_from_dataset
 from document_system.privacy import PrivacyReport, sanitize_document
 
 
-def fixture_bundle():
+def _fixture_bundle():
     texts = tuple(
         ("space orbit rocket" if i % 2 == 0 else "baseball pitcher game")
         + (" orbit orbit" if i % 3 == 0 else " pitcher")
@@ -48,7 +48,7 @@ def test_latency_statistics_use_real_samples_and_empty_is_not_measured():
 
 
 def test_fixture_benchmark_has_shared_split_real_metrics_and_reports(tmp_path):
-    bundle = fixture_bundle()
+    bundle = _fixture_bundle()
     runtime, reports = tmp_path / "runtime", tmp_path / "reports"
     build_from_dataset(
         bundle,
@@ -126,7 +126,7 @@ def test_fixture_benchmark_has_shared_split_real_metrics_and_reports(tmp_path):
 
 
 def test_benchmark_rejects_dataset_runtime_mismatch(tmp_path):
-    bundle = fixture_bundle()
+    bundle = _fixture_bundle()
     runtime = tmp_path / "runtime"
     build_from_dataset(
         bundle,
@@ -163,7 +163,7 @@ def test_zero_score_queries_have_fixed_k_metrics_and_external_id_ties():
 def test_tf_experiment_never_fits_test_vocabulary_and_keeps_oov_queries():
     from document_system.experiments.tf_variants import run_tf_variants
 
-    bundle = fixture_bundle()
+    bundle = _fixture_bundle()
     changed_texts = list(bundle.texts)
     changed_texts[-2] = "heldoutuniquetermzz"
     changed_texts[-1] = "heldoutuniquetermzz"

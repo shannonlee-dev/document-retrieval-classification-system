@@ -53,12 +53,14 @@ class SparseMatrix:
         return int(self.data.size)
 
     def get_sparse_row(self, row_id: int) -> tuple[np.ndarray, np.ndarray]:
+        """Return index and value views; raise IndexError for invalid rows."""
         if not 0 <= row_id < self.shape[0]:
             raise IndexError(f"row index {row_id} is outside matrix")
         start, end = int(self.indptr[row_id]), int(self.indptr[row_id + 1])
         return self.indices[start:end], self.data[start:end]
 
     def to_dense_rows(self, row_ids: Iterable[int]) -> np.ndarray:
+        """Materialize only the selected rows as a dense float64 batch."""
         selected = [int(row_id) for row_id in row_ids]
         dense = np.zeros((len(selected), self.shape[1]), dtype=np.float64)
         for output_row, row_id in enumerate(selected):
@@ -67,6 +69,7 @@ class SparseMatrix:
         return dense
 
     def memory_stats(self) -> dict[str, int | float | list[int]]:
+        """Report NumPy payload sizes and density, excluding object overhead."""
         total_elements = self.shape[0] * self.shape[1]
         density = self._nnz / total_elements if total_elements else 0.0
         dense_bytes = total_elements * np.dtype(np.float64).itemsize

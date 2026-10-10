@@ -15,6 +15,7 @@ from .constants import (
     DEFAULT_RANDOM_STATE,
     DEFAULT_REPORTS_DIR,
     DEFAULT_RUNTIME_DIR,
+    DEFAULT_SEARCH_QUERIES,
     MINIMUM_DOCUMENTS,
 )
 from .dataset import (
@@ -27,15 +28,11 @@ from .dataset import (
 from .privacy import make_safe_snippet
 from .reporting import write_build_reports
 
-DEFAULT_SEARCH_QUERIES = (
-    "space shuttle orbit",
-    "baseball pitcher season",
-    "computer graphics image",
-)
-
 
 @dataclass(frozen=True)
 class BuildConfig:
+    """Configure report paths, training and full-corpus example queries."""
+
     runtime_dir: Path = DEFAULT_RUNTIME_DIR
     reports_dir: Path = DEFAULT_REPORTS_DIR
     batch_size: int = DEFAULT_BATCH_SIZE
@@ -46,6 +43,8 @@ class BuildConfig:
 
 @dataclass(frozen=True)
 class BuildReport:
+    """Summarize independent classification and search build results."""
+
     document_count: int
     category_count: int
     train_count: int
@@ -61,6 +60,7 @@ class BuildReport:
 
 
 def build_project(config: BuildConfig | None = None) -> BuildReport:
+    """Load the full corpus and persist search indexes and classification reports."""
     bundle = load_20newsgroups()
     validate_full_20_newsgroups(bundle)
     if (
@@ -74,6 +74,7 @@ def build_project(config: BuildConfig | None = None) -> BuildReport:
 
 
 def build_from_dataset(bundle: DatasetBundle, config: BuildConfig) -> BuildReport:
+    """Build independent classification and search spaces from sanitized documents."""
     if config.batch_size < 1 or config.epochs < 1:
         raise ValueError("batch_size and epochs must be positive")
     snippets = tuple(make_safe_snippet(text) for text in bundle.texts)

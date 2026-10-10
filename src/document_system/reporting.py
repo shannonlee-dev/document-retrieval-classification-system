@@ -7,11 +7,9 @@ from pathlib import Path
 
 from .build_stages import ClassificationStageResult, SearchStageResult
 from .classification.visualization import save_confusion_matrix
-from .constants import DEFAULT_TEST_SIZE
+from .constants import DEFAULT_TEST_SIZE, MAX_REPORTED_MISCLASSIFICATIONS
 from .dataset import DatasetBundle
 from .validation import ValidationResult
-
-MAX_REPORTED_MISCLASSIFICATIONS = 20
 
 
 def write_build_reports(

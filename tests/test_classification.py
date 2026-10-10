@@ -10,7 +10,7 @@ from document_system.preprocessing import EnglishPreprocessor
 from document_system.tfidf import NumpyTfidfVectorizer
 
 
-def make_training_data():
+def _make_training_data():
     texts = [
         "space orbit shuttle",
         "planet rocket orbit",
@@ -25,7 +25,7 @@ def make_training_data():
 
 
 def test_linear_svm_trains_from_sparse_batches_reproducibly() -> None:
-    _, labels, matrix = make_training_data()
+    _, labels, matrix = _make_training_data()
 
     first = train_linear_svm(matrix, labels, batch_size=2, epochs=6, random_state=42)
     second = train_linear_svm(matrix, labels, batch_size=2, epochs=6, random_state=42)
@@ -52,7 +52,7 @@ def test_training_and_prediction_use_bounded_numpy_batches(monkeypatch) -> None:
             return np.zeros(features.shape[0], dtype=np.int32)
 
     monkeypatch.setattr(model_module, "SGDClassifier", RecordingClassifier)
-    _, labels, matrix = make_training_data()
+    _, labels, matrix = _make_training_data()
 
     model = train_linear_svm(matrix, labels, batch_size=2, epochs=1)
     predict_sparse(model, matrix, batch_size=2)
@@ -72,7 +72,7 @@ def test_classification_has_no_direct_scipy_dependency() -> None:
 
 
 def test_evaluation_contains_metrics_confusion_and_error_records() -> None:
-    texts, labels, matrix = make_training_data()
+    texts, labels, matrix = _make_training_data()
     model = train_linear_svm(matrix, labels, batch_size=2, epochs=6)
 
     report = evaluate_classifier(
@@ -96,7 +96,7 @@ def test_evaluation_contains_metrics_confusion_and_error_records() -> None:
 
 
 def test_save_confusion_matrix_creates_nonempty_png(tmp_path: Path) -> None:
-    texts, labels, matrix = make_training_data()
+    texts, labels, matrix = _make_training_data()
     model = train_linear_svm(matrix, labels, batch_size=2, epochs=2)
     report = evaluate_classifier(
         model, matrix, labels, texts, ("space", "baseball"), batch_size=2
@@ -109,7 +109,7 @@ def test_save_confusion_matrix_creates_nonempty_png(tmp_path: Path) -> None:
 
 
 def test_training_rejects_invalid_batch_configuration() -> None:
-    _, labels, matrix = make_training_data()
+    _, labels, matrix = _make_training_data()
 
     for batch_size, epochs in [(0, 1), (2, 0)]:
         try:

@@ -13,8 +13,13 @@ from .search import DocumentSearch, SearchResult
 from .sparse_matrix import SparseMatrix
 from .tfidf import NumpyTfidfVectorizer
 
+DEFAULT_BM25_K1 = 1.5
+DEFAULT_BM25_B = 0.75
+
 
 class NumpyBM25Retriever:
+    """Rank documents with unique query terms and full token lengths."""
+
     def __init__(
         self,
         vectorizer: NumpyTfidfVectorizer,
@@ -25,8 +30,8 @@ class NumpyBM25Retriever:
         document_ids: np.ndarray,
         document_lengths: np.ndarray,
         *,
-        k1: float = 1.5,
-        b: float = 0.75,
+        k1: float = DEFAULT_BM25_K1,
+        b: float = DEFAULT_BM25_B,
         inverted_index: InvertedIndex | None = None,
     ) -> None:
         if not np.isfinite(k1) or k1 < 0:
@@ -75,9 +80,10 @@ class NumpyBM25Retriever:
         target_names: tuple[str, ...],
         document_ids: np.ndarray,
         preprocessor: EnglishPreprocessor | None = None,
-        k1: float = 1.5,
-        b: float = 0.75,
+        k1: float = DEFAULT_BM25_K1,
+        b: float = DEFAULT_BM25_B,
     ) -> NumpyBM25Retriever:
+        """Fit counts and postings, including out-of-vocabulary tokens in lengths."""
         vectorizer = NumpyTfidfVectorizer(preprocessor)
         counts = vectorizer.fit_transform_with_stages(texts).counts
         lengths = np.array(
@@ -96,6 +102,7 @@ class NumpyBM25Retriever:
         )
 
     def score_query(self, query: str) -> dict[int, float]:
+        """Score matching rows; reject blank queries and queries without known terms."""
         if not query.strip():
             raise ValueError("query must not be blank")
         terms = sorted(
@@ -112,5 +119,6 @@ class NumpyBM25Retriever:
         )
 
     def search(self, query: str, topk: int = DEFAULT_TOP_K) -> list[SearchResult]:
+        """Return positive matches with score ties resolved by document ID."""
         self.documents.validate_topk(topk)
         return self.documents.results_from_scores(self.score_query(query), topk)

@@ -11,6 +11,8 @@ from .sparse_matrix import SparseMatrix
 
 @dataclass(frozen=True)
 class InvertedIndex:
+    """Store term postings indexed by internal document row."""
+
     term_indptr: np.ndarray
     document_rows: np.ndarray
     weights: np.ndarray
@@ -36,6 +38,7 @@ class InvertedIndex:
 
     @classmethod
     def from_matrix(cls, matrix: SparseMatrix) -> InvertedIndex:
+        """Build stable term postings from the matrix nonzero values."""
         order = np.argsort(matrix.indices, kind="stable")
         rows = np.repeat(
             np.arange(matrix.shape[0], dtype=np.int32), np.diff(matrix.indptr)
@@ -45,6 +48,7 @@ class InvertedIndex:
         return cls(pointers, rows[order], matrix.data[order], matrix.shape[0])
 
     def posting(self, term_id: int) -> tuple[np.ndarray, np.ndarray]:
+        """Return row and weight views for a term in the fitted vocabulary."""
         if not 0 <= term_id < self.term_indptr.size - 1:
             raise ValueError("term_id is outside the vocabulary")
         start, end = map(int, self.term_indptr[term_id : term_id + 2])

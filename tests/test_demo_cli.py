@@ -9,12 +9,12 @@ import pytest
 from document_system.cli import main
 from document_system.experiments.retrieval_benchmark import run_benchmark
 from document_system.pipeline import BuildConfig, build_from_dataset
-from tests.test_retrieval_benchmark import fixture_bundle
+from tests.test_retrieval_benchmark import _fixture_bundle
 
 
 @pytest.fixture
 def prepared(tmp_path):
-    bundle = fixture_bundle()
+    bundle = _fixture_bundle()
     runtime, reports = tmp_path / "runtime", tmp_path / "reports"
     build_from_dataset(
         bundle,
@@ -248,7 +248,7 @@ def test_benchmark_cli_dispatches_real_fixture_experiment(
 
     runtime, _ = prepared
     reports = tmp_path / "cli_benchmark_reports"
-    monkeypatch.setattr(dataset_module, "load_20newsgroups", fixture_bundle)
+    monkeypatch.setattr(dataset_module, "load_20newsgroups", _fixture_bundle)
     assert (
         main(
             [

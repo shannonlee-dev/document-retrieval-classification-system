@@ -25,7 +25,7 @@ def test_double_tf_matches_hand_calculation_and_reuses_counts():
         EnglishPreprocessor(stop_words=frozenset()), tf_mode="double"
     )
     stages = vectorizer.fit_transform_with_stages(["alpha alpha beta", "beta", ""])
-    # df(alpha)=1, df(beta)=2; double TF is [1, .75] in first row.
+    # df(alpha)=1, df(beta)=2이므로 첫 행의 Double TF는 [1, .75]다.
     expected = np.array([1 + np.log(4 / 2), 0.75 * (1 + np.log(4 / 3))])
     expected /= np.linalg.norm(expected)
     np.testing.assert_allclose(stages.tfidf.get_sparse_row(0)[1], expected, atol=1e-6)

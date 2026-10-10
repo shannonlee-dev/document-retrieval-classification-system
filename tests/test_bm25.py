@@ -5,7 +5,7 @@ from document_system.bm25 import NumpyBM25Retriever
 from document_system.preprocessing import EnglishPreprocessor
 
 
-def make_bm25(**kwargs):
+def _make_bm25(**kwargs):
     return NumpyBM25Retriever.from_texts(
         ["alpha alpha beta", "beta", "the"],
         snippets=["alpha alpha beta", "beta", "the"],
@@ -17,7 +17,7 @@ def make_bm25(**kwargs):
 
 
 def test_bm25_matches_hand_idf_and_length_normalization():
-    model = make_bm25()
+    model = _make_bm25()
     np.testing.assert_array_equal(model.document_lengths, [3, 1, 0])
     assert model.avgdl == pytest.approx(4 / 3)
     alpha = model.vectorizer.vocabulary_["alpha"]
@@ -31,11 +31,11 @@ def test_bm25_matches_hand_idf_and_length_normalization():
 
 
 def test_unique_query_terms_and_parameter_effects():
-    model = make_bm25()
+    model = _make_bm25()
     assert model.search("alpha beta", 2) == model.search("alpha alpha beta beta", 2)
-    no_norm = make_bm25(b=0)
+    no_norm = _make_bm25(b=0)
     assert no_norm.search("alpha", 1)[0].score > model.search("alpha", 1)[0].score
-    saturated = make_bm25(k1=0)
+    saturated = _make_bm25(k1=0)
     assert saturated.search("alpha", 1)[0].score == pytest.approx(np.log(1 + 2.5 / 1.5))
 
 
@@ -45,11 +45,11 @@ def test_unique_query_terms_and_parameter_effects():
 )
 def test_bm25_rejects_invalid_parameters(kwargs):
     with pytest.raises(ValueError):
-        make_bm25(**kwargs)
+        _make_bm25(**kwargs)
 
 
 def test_bm25_errors_and_external_id_ties():
-    model = make_bm25()
+    model = _make_bm25()
     for query in ["", "unseenzz"]:
         with pytest.raises(ValueError):
             model.search(query, 1)

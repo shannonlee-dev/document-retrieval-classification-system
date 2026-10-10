@@ -76,7 +76,7 @@ def test_small_pipeline_writes_consistent_report_and_runtime_artifacts(
         return evaluate_classifier(*args, **kwargs)
 
     monkeypatch.setattr(build_stages_module, "evaluate_classifier", record_document_ids)
-    monkeypatch.setattr(build_stages_module, "train_test_split", fixed_split)
+    monkeypatch.setattr(build_stages_module, "train_test_split", _fixed_split)
 
     report = build_from_dataset(bundle, config)
 
@@ -206,5 +206,5 @@ def test_build_project_accepts_sanitized_full_dataset(
     assert report.category_count == 20
 
 
-def fixed_split(*_args, **_kwargs):
+def _fixed_split(*_args, **_kwargs):
     return np.arange(8), np.arange(8, 10)

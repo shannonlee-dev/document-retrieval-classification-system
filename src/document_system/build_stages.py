@@ -21,6 +21,8 @@ from .validation import ValidationResult, stage_example, validate_against_sklear
 
 @dataclass(frozen=True)
 class ClassificationStageResult:
+    """Collect train-only classification results and numerical validation."""
+
     report: ClassificationReport
     validation: ValidationResult
     stage_example: dict[str, object]
@@ -31,6 +33,8 @@ class ClassificationStageResult:
 
 @dataclass(frozen=True)
 class SearchStageResult:
+    """Collect the full-corpus index, shared counts and search examples."""
+
     vectorizer: NumpyTfidfVectorizer
     matrix: SparseMatrix
     validation: ValidationResult

@@ -34,7 +34,7 @@ def small_bundle() -> DatasetBundle:
     )
 
 
-def fixed_split(*_args, **_kwargs):
+def _fixed_split(*_args, **_kwargs):
     return np.arange(8), np.arange(8, 10)
 
 
@@ -48,7 +48,7 @@ def test_classification_and_search_use_independent_fit_scopes(
             super().__init__(*args, **kwargs)
             created_vectorizers.append(self)
 
-    monkeypatch.setattr(build_stages, "train_test_split", fixed_split)
+    monkeypatch.setattr(build_stages, "train_test_split", _fixed_split)
     monkeypatch.setattr(build_stages, "NumpyTfidfVectorizer", RecordingVectorizer)
     snippets = tuple(make_safe_snippet(text) for text in small_bundle.texts)
 

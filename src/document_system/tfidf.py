@@ -8,12 +8,15 @@ from dataclasses import dataclass
 
 import numpy as np
 
+from .constants import TF_MODES
 from .preprocessing import EnglishPreprocessor
 from .sparse_matrix import SparseMatrix
 
 
 @dataclass(frozen=True)
 class TfidfStages:
+    """Expose shared counts, fitted IDF and normalized TF-IDF values."""
+
     counts: SparseMatrix
     idf: np.ndarray
     tfidf: SparseMatrix
@@ -25,7 +28,7 @@ class NumpyTfidfVectorizer:
     def __init__(
         self, preprocessor: EnglishPreprocessor | None = None, *, tf_mode: str = "raw"
     ) -> None:
-        if tf_mode not in ("raw", "log", "double"):
+        if tf_mode not in TF_MODES:
             raise ValueError("tf_mode must be raw, log or double")
         self.tf_mode = tf_mode
         self.preprocessor = preprocessor or EnglishPreprocessor()
@@ -41,6 +44,7 @@ class NumpyTfidfVectorizer:
         return self.fit_transform_with_stages(texts).tfidf
 
     def fit_transform_with_stages(self, texts: Sequence[str]) -> TfidfStages:
+        """Fit a sorted vocabulary and return counts, IDF and weighted rows."""
         feature_names = tuple(
             sorted(
                 {token for text in texts for token in self.preprocessor.tokenize(text)}
@@ -60,36 +64,10 @@ class NumpyTfidfVectorizer:
         return TfidfStages(counts=count_matrix, idf=self.idf_.copy(), tfidf=tfidf)
 
     def transform(self, texts: Sequence[str]) -> SparseMatrix:
+        """Weight new documents in the fitted vocabulary; ignore unknown terms."""
         if self.idf_ is None or not self.vocabulary_:
             raise RuntimeError("vectorizer is not fitted")
         return self._weight_and_normalize(self._count_matrix(texts))
-
-    def _count_matrix(self, texts: Sequence[str]) -> SparseMatrix:
-        count_values: list[float] = []
-        column_indices: list[int] = []
-        row_pointers = [0]
-        for text in texts:
-            token_counts = Counter(self.preprocessor.tokenize(text))
-            column_term_counts = sorted(
-                (self.vocabulary_[token], count)
-                for token, count in token_counts.items()
-                if token in self.vocabulary_
-            )
-            column_indices.extend(index for index, _ in column_term_counts)
-            count_values.extend(float(count) for _, count in column_term_counts)
-            row_pointers.append(len(count_values))
-        row_pointer_dtype = (
-            np.int32 if len(count_values) <= np.iinfo(np.int32).max else np.int64
-        )
-        return SparseMatrix(
-            data=np.asarray(count_values, dtype=np.float64),
-            indices=np.asarray(column_indices, dtype=np.int32),
-            indptr=np.asarray(row_pointers, dtype=row_pointer_dtype),
-            shape=(len(texts), len(self.vocabulary_)),
-        )
-
-    def _weight_and_normalize(self, count_matrix: SparseMatrix) -> SparseMatrix:
-        return self.weight_counts(count_matrix)
 
     def weight_counts(self, count_matrix: SparseMatrix) -> SparseMatrix:
         """Apply this fitted IDF/TF mode to shared counts without changing them."""
@@ -126,3 +104,30 @@ class NumpyTfidfVectorizer:
             indptr=count_matrix.indptr.copy(),
             shape=count_matrix.shape,
         )
+
+    def _count_matrix(self, texts: Sequence[str]) -> SparseMatrix:
+        count_values: list[float] = []
+        column_indices: list[int] = []
+        row_pointers = [0]
+        for text in texts:
+            token_counts = Counter(self.preprocessor.tokenize(text))
+            column_term_counts = sorted(
+                (self.vocabulary_[token], count)
+                for token, count in token_counts.items()
+                if token in self.vocabulary_
+            )
+            column_indices.extend(index for index, _ in column_term_counts)
+            count_values.extend(float(count) for _, count in column_term_counts)
+            row_pointers.append(len(count_values))
+        row_pointer_dtype = (
+            np.int32 if len(count_values) <= np.iinfo(np.int32).max else np.int64
+        )
+        return SparseMatrix(
+            data=np.asarray(count_values, dtype=np.float64),
+            indices=np.asarray(column_indices, dtype=np.int32),
+            indptr=np.asarray(row_pointers, dtype=row_pointer_dtype),
+            shape=(len(texts), len(self.vocabulary_)),
+        )
+
+    def _weight_and_normalize(self, count_matrix: SparseMatrix) -> SparseMatrix:
+        return self.weight_counts(count_matrix)

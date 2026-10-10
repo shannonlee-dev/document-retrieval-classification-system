@@ -5,13 +5,13 @@ from document_system.preprocessing import EnglishPreprocessor
 from document_system.tfidf import NumpyTfidfVectorizer
 
 
-def make_processor() -> EnglishPreprocessor:
+def _make_processor() -> EnglishPreprocessor:
     return EnglishPreprocessor(stop_words=frozenset())
 
 
 def test_tfidf_exposes_raw_tf_smoothed_idf_and_l2_values() -> None:
     texts = ["apple apple banana", "banana carrot"]
-    vectorizer = NumpyTfidfVectorizer(make_processor())
+    vectorizer = NumpyTfidfVectorizer(_make_processor())
 
     stages = vectorizer.fit_transform_with_stages(texts)
 
@@ -26,7 +26,7 @@ def test_tfidf_exposes_raw_tf_smoothed_idf_and_l2_values() -> None:
 
 
 def test_vocabulary_is_deterministic_and_alphabetical() -> None:
-    vectorizer = NumpyTfidfVectorizer(make_processor()).fit(
+    vectorizer = NumpyTfidfVectorizer(_make_processor()).fit(
         ["zebra apple", "banana apple"]
     )
 
@@ -35,7 +35,7 @@ def test_vocabulary_is_deterministic_and_alphabetical() -> None:
 
 
 def test_transform_ignores_out_of_vocabulary_terms_and_keeps_zero_row() -> None:
-    vectorizer = NumpyTfidfVectorizer(make_processor()).fit(["known term"])
+    vectorizer = NumpyTfidfVectorizer(_make_processor()).fit(["known term"])
 
     transformed = vectorizer.transform(["unknown"])
 
@@ -48,9 +48,9 @@ def test_transform_ignores_out_of_vocabulary_terms_and_keeps_zero_row() -> None:
 
 def test_fit_rejects_corpus_without_tokens() -> None:
     with pytest.raises(ValueError, match="vocabulary is empty"):
-        NumpyTfidfVectorizer(make_processor()).fit(["123", "!"])
+        NumpyTfidfVectorizer(_make_processor()).fit(["123", "!"])
 
 
 def test_transform_requires_fitted_vectorizer() -> None:
     with pytest.raises(RuntimeError, match="not fitted"):
-        NumpyTfidfVectorizer(make_processor()).transform(["apple"])
+        NumpyTfidfVectorizer(_make_processor()).transform(["apple"])

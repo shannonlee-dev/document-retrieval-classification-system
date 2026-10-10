@@ -22,6 +22,8 @@ ABLATION_SEEDS = tuple(range(10))
 
 @dataclass(frozen=True)
 class AblationVariant:
+    """Record classification and retrieval metrics for one stop-word condition."""
+
     name: str
     stop_word_count: int
     vocabulary_size: int
@@ -29,35 +31,6 @@ class AblationVariant:
     macro_f1: float
     precision_at_10: float
     map_at_10: float
-
-
-def summarize_variants(
-    variants: Sequence[AblationVariant],
-) -> dict[str, object]:
-    """Summarize one ablation condition over independent random seeds."""
-
-    if not variants:
-        raise ValueError("at least one variant is required")
-    stop_word_counts = {variant.stop_word_count for variant in variants}
-    if len(stop_word_counts) != 1:
-        raise ValueError("all variants must use the same stop-word count")
-
-    def summary(metric: str) -> dict[str, float]:
-        values = np.asarray([getattr(variant, metric) for variant in variants])
-        return {
-            "mean": float(np.mean(values)),
-            "std": float(np.std(values, ddof=1)) if len(values) > 1 else 0.0,
-        }
-
-    return {
-        "runs": len(variants),
-        "stop_word_count": stop_word_counts.pop(),
-        "vocabulary_size": summary("vocabulary_size"),
-        "accuracy": summary("accuracy"),
-        "macro_f1": summary("macro_f1"),
-        "precision_at_10": summary("precision_at_10"),
-        "map_at_10": summary("map_at_10"),
-    }
 
 
 def run_stop_word_ablation(
@@ -69,7 +42,7 @@ def run_stop_word_ablation(
     batch_size: int = DEFAULT_BATCH_SIZE,
     external_id_ties: bool = False,
 ) -> dict[str, object]:
-    """Compare fixed default stop words with no stop-word removal over 10 seeds."""
+    """Compare default stop words with no removal over paired seeds (ten by default)."""
 
     dataset = bundle or load_20newsgroups()
     results_by_variant: dict[str, list[AblationVariant]] = {
@@ -141,6 +114,53 @@ def run_stop_word_ablation(
         "delta_default_minus_none": summarize_variants(deltas),
         "seed_results": seed_results,
     }
+
+
+def summarize_variants(
+    variants: Sequence[AblationVariant],
+) -> dict[str, object]:
+    """Summarize one ablation condition over independent random seeds."""
+
+    if not variants:
+        raise ValueError("at least one variant is required")
+    stop_word_counts = {variant.stop_word_count for variant in variants}
+    if len(stop_word_counts) != 1:
+        raise ValueError("all variants must use the same stop-word count")
+
+    def summary(metric: str) -> dict[str, float]:
+        values = np.asarray([getattr(variant, metric) for variant in variants])
+        return {
+            "mean": float(np.mean(values)),
+            "std": float(np.std(values, ddof=1)) if len(values) > 1 else 0.0,
+        }
+
+    return {
+        "runs": len(variants),
+        "stop_word_count": stop_word_counts.pop(),
+        "vocabulary_size": summary("vocabulary_size"),
+        "accuracy": summary("accuracy"),
+        "macro_f1": summary("macro_f1"),
+        "precision_at_10": summary("precision_at_10"),
+        "map_at_10": summary("map_at_10"),
+    }
+
+
+def select_query_positions(
+    labels: np.ndarray, query_count: int | None, seed: int
+) -> np.ndarray:
+    """Choose one deterministic stratified subset; use all queries when requested."""
+    rows = np.arange(len(labels))
+    if query_count is None or query_count >= len(rows):
+        return rows
+    if query_count < 1:
+        raise ValueError("query_count must be positive")
+    classes = np.unique(labels).size
+    if query_count >= classes and len(rows) - query_count >= classes:
+        selected, _ = train_test_split(
+            rows, train_size=query_count, stratify=labels, random_state=seed
+        )
+        return np.sort(selected)
+    return np.sort(np.random.default_rng(seed).choice(rows, query_count, replace=False))
 
 
 def _run_stop_word_ablation_seed(
@@ -217,21 +237,3 @@ def _run_stop_word_ablation_seed(
             )
         )
     return variants
-
-
-def select_query_positions(
-    labels: np.ndarray, query_count: int | None, seed: int
-) -> np.ndarray:
-    """Choose one deterministic stratified subset; use all queries when requested."""
-    rows = np.arange(len(labels))
-    if query_count is None or query_count >= len(rows):
-        return rows
-    if query_count < 1:
-        raise ValueError("query_count must be positive")
-    classes = np.unique(labels).size
-    if query_count >= classes and len(rows) - query_count >= classes:
-        selected, _ = train_test_split(
-            rows, train_size=query_count, stratify=labels, random_state=seed
-        )
-        return np.sort(selected)
-    return np.sort(np.random.default_rng(seed).choice(rows, query_count, replace=False))

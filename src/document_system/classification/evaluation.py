@@ -19,6 +19,8 @@ LINEAR_SVM_DESCRIPTION = "linear SVM trained with SGDClassifier hinge loss"
 
 @dataclass(frozen=True)
 class ClassificationReport:
+    """Collect metrics, predictions and safe misclassification examples."""
+
     accuracy: float
     macro_f1: float
     confusion_matrix: np.ndarray
@@ -47,6 +49,7 @@ def evaluate_classifier(
     batch_size: int = DEFAULT_BATCH_SIZE,
     document_ids: Sequence[int] | None = None,
 ) -> ClassificationReport:
+    """Evaluate aligned sparse rows and retain original IDs in error examples."""
     labels = np.asarray(labels)
     if labels.size != matrix.shape[0] or len(snippets) != matrix.shape[0]:
         raise ValueError("matrix, labels, and snippets must have matching row counts")

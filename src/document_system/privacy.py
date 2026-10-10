@@ -34,6 +34,8 @@ MINIMUM_SNIPPET_LIMIT = 1
 
 @dataclass(frozen=True)
 class SanitizationResult:
+    """Record normalized text, structured redactions and an exclusion reason."""
+
     text: str
     redactions: dict[str, int]
     excluded_reason: str | None = None
@@ -41,6 +43,8 @@ class SanitizationResult:
 
 @dataclass(frozen=True)
 class PrivacyReport:
+    """Summarize structured redactions and retention counts by category."""
+
     raw_document_count: int
     retained_document_count: int
     redactions: dict[str, int]

@@ -10,14 +10,16 @@ from pathlib import Path
 
 import numpy as np
 
-from .bm25 import NumpyBM25Retriever
-from .constants import SNIPPET_LIMIT
+from .bm25 import DEFAULT_BM25_B, DEFAULT_BM25_K1, NumpyBM25Retriever
+from .constants import SNIPPET_LIMIT, TF_MODES
 from .inverted_index import InvertedIndex
 from .preprocessing import EnglishPreprocessor
 from .privacy import is_safe_text
 from .search import DocumentSearch
 from .sparse_matrix import SparseMatrix
 from .tfidf import NumpyTfidfVectorizer
+
+_HASH_CHUNK_BYTES = 1024 * 1024
 
 ARTIFACT_VERSION = 3
 SEARCH_FIT_SCOPE = "full_corpus"
@@ -42,6 +44,8 @@ REQUIRED_METADATA_FIELDS = frozenset(
 
 @dataclass(frozen=True)
 class SearchArtifacts:
+    """Hold a restored TF-IDF index and its validated metadata."""
+
     vectorizer: NumpyTfidfVectorizer
     matrix: SparseMatrix
     snippets: tuple[str, ...]
@@ -54,27 +58,12 @@ class SearchArtifacts:
 
 @dataclass(frozen=True)
 class RetrievalArtifacts:
+    """Hold full-corpus TF-IDF and BM25 indexes for offline retrieval."""
+
     tfidf: dict[str, DocumentSearch]
     bm25: NumpyBM25Retriever
     corpus_fingerprint: str
     metadata: dict[str, object]
-
-
-def _metadata_digest(metadata: dict[str, object]) -> str:
-    payload = {
-        key: value for key, value in metadata.items() if key != "metadata_sha256"
-    }
-    return hashlib.sha256(
-        json.dumps(payload, sort_keys=True, ensure_ascii=False).encode()
-    ).hexdigest()
-
-
-def _file_digest(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
 
 
 def save_search_artifacts(
@@ -89,9 +78,10 @@ def save_search_artifacts(
     counts: SparseMatrix | None = None,
     document_lengths: np.ndarray | None = None,
     corpus_fingerprint: str | None = None,
-    k1: float = 1.5,
-    b: float = 0.75,
+    k1: float = DEFAULT_BM25_K1,
+    b: float = DEFAULT_BM25_B,
 ) -> None:
+    """Persist fitted arrays and safe previews with metadata and file checksums."""
     if vectorizer.idf_ is None:
         raise RuntimeError("cannot save an unfitted vectorizer")
     snippets = tuple(snippets)
@@ -185,7 +175,7 @@ def save_search_artifacts(
         "fit_document_count": matrix.shape[0],
         "category_count": len(target_names),
         "tf_mode": vectorizer.tf_mode,
-        "retrieval_methods": ["raw", "log", "double", "bm25"]
+        "retrieval_methods": [*TF_MODES, "bm25"]
         if counts is not None
         else [vectorizer.tf_mode],
         "bm25_parameters": {"k1": k1, "b": b, "query_terms": "unique"},
@@ -201,6 +191,7 @@ def save_search_artifacts(
 
 
 def load_search_artifacts(directory: str | Path) -> SearchArtifacts:
+    """Restore a fitted index after validating version, integrity and previews."""
     path = Path(directory)
     matrix_path = path / SEARCH_INDEX_ARRAYS_FILENAME
     metadata_path = path / SEARCH_INDEX_DATA_FILENAME
@@ -341,7 +332,7 @@ def load_retrievers(directory: str | Path) -> RetrievalArtifacts:
         document_ids=saved.document_ids,
     )
     searchers = {}
-    for mode in ("raw", "log", "double"):
+    for mode in TF_MODES:
         vectorizer = NumpyTfidfVectorizer(saved.vectorizer.preprocessor, tf_mode=mode)
         vectorizer.vocabulary_ = saved.vectorizer.vocabulary_
         vectorizer.feature_names_ = saved.vectorizer.feature_names_
@@ -379,3 +370,20 @@ def load_retrievers(directory: str | Path) -> RetrievalArtifacts:
     return RetrievalArtifacts(
         searchers, bm25, str(saved.metadata["corpus_fingerprint"]), saved.metadata
     )
+
+
+def _metadata_digest(metadata: dict[str, object]) -> str:
+    payload = {
+        key: value for key, value in metadata.items() if key != "metadata_sha256"
+    }
+    return hashlib.sha256(
+        json.dumps(payload, sort_keys=True, ensure_ascii=False).encode()
+    ).hexdigest()
+
+
+def _file_digest(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(_HASH_CHUNK_BYTES), b""):
+            digest.update(chunk)
+    return digest.hexdigest()

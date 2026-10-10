@@ -14,7 +14,7 @@ from document_system.preprocessing import EnglishPreprocessor
 from document_system.tfidf import NumpyTfidfVectorizer
 
 
-def write_small_artifacts(path: Path) -> None:
+def _write_small_artifacts(path: Path) -> None:
     snippets = ["space shuttle orbit", "baseball pitcher game"]
     document_ids = np.array([42, 99], dtype=np.int64)
     labels = np.array([0, 1], dtype=np.int32)
@@ -26,7 +26,7 @@ def write_small_artifacts(path: Path) -> None:
 
 
 def test_cli_search_prints_rank_score_id_and_snippet(tmp_path: Path, capsys) -> None:
-    write_small_artifacts(tmp_path)
+    _write_small_artifacts(tmp_path)
 
     exit_code = main(
         ["--artifacts", str(tmp_path), "--query", "space orbit", "--topk", "1"]
@@ -73,7 +73,7 @@ def test_cli_build_prints_dual_tfidf_metrics(monkeypatch, capsys) -> None:
 
 
 def test_cli_distinguishes_blank_and_oov_queries(tmp_path: Path, capsys) -> None:
-    write_small_artifacts(tmp_path)
+    _write_small_artifacts(tmp_path)
 
     blank_exit_code = main(["--artifacts", str(tmp_path), "--query", "", "--topk", "1"])
     blank_error = capsys.readouterr().err
@@ -91,7 +91,7 @@ def test_cli_distinguishes_blank_and_oov_queries(tmp_path: Path, capsys) -> None
 def test_search_process_does_not_import_build_only_matplotlib(
     tmp_path: Path,
 ) -> None:
-    write_small_artifacts(tmp_path)
+    _write_small_artifacts(tmp_path)
     invalid_config_dir = tmp_path / "matplotlib-config-file"
     invalid_config_dir.write_text("not a directory", encoding="utf-8")
     environment = os.environ.copy()

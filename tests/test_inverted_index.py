@@ -6,7 +6,7 @@ from document_system.search import DocumentSearch
 from document_system.tfidf import NumpyTfidfVectorizer
 
 
-def make_searcher(mode="raw"):
+def _make_searcher(mode="raw"):
     texts = ["orbit space", "orbit rocket", "space orbit", "baseball game", "the"]
     vectorizer = NumpyTfidfVectorizer(tf_mode=mode)
     return DocumentSearch(
@@ -20,7 +20,7 @@ def make_searcher(mode="raw"):
 
 
 def test_postings_use_internal_rows_and_preserve_weights():
-    searcher = make_searcher()
+    searcher = _make_searcher()
     index = InvertedIndex.from_matrix(searcher.matrix)
     rows, weights = index.posting(searcher.vectorizer.vocabulary_["orbit"])
     np.testing.assert_array_equal(rows, [0, 1, 2])
@@ -33,7 +33,7 @@ def test_postings_use_internal_rows_and_preserve_weights():
 @pytest.mark.parametrize("query", ["space", "orbit rocket space", "orbit orbit"])
 @pytest.mark.parametrize("topk", [1, 3, 5])
 def test_scan_and_inverted_have_identical_ranks_scores_and_ties(mode, query, topk):
-    searcher = make_searcher(mode)
+    searcher = _make_searcher(mode)
     scan = searcher.search(query, topk, strategy="scan")
     inverted = searcher.search(query, topk, strategy="inverted")
     assert [r.doc_id for r in scan] == [r.doc_id for r in inverted]
@@ -46,7 +46,7 @@ def test_scan_and_inverted_have_identical_ranks_scores_and_ties(mode, query, top
 
 @pytest.mark.parametrize("strategy", ["scan", "inverted"])
 def test_search_strategy_errors(strategy):
-    searcher = make_searcher()
+    searcher = _make_searcher()
     for query in ["", "unknownzz"]:
         with pytest.raises(ValueError):
             searcher.search(query, 1, strategy=strategy)

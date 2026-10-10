@@ -12,7 +12,7 @@ from document_system.privacy import make_safe_snippet
 from document_system.tfidf import NumpyTfidfVectorizer
 
 
-def save_full(path):
+def _save_full(path):
     texts = ["space space orbit", "baseball pitcher", "space rocket"]
     vectorizer = NumpyTfidfVectorizer()
     stages = vectorizer.fit_transform_with_stages(texts)
@@ -31,7 +31,7 @@ def save_full(path):
 
 
 def test_full_index_restores_all_methods_without_fit(tmp_path, monkeypatch):
-    texts = save_full(tmp_path)
+    texts = _save_full(tmp_path)
     expected = {
         mode: NumpyTfidfVectorizer(tf_mode=mode).fit_transform(texts).data
         for mode in ["raw", "log", "double"]
@@ -73,14 +73,14 @@ def test_single_variant_restores_tf_mode(tmp_path):
 
 
 def test_rejects_swapped_arrays_and_edited_corpus_metadata(tmp_path):
-    save_full(tmp_path)
+    _save_full(tmp_path)
     arrays = tmp_path / "search_index_arrays.npz"
     contents = bytearray(arrays.read_bytes())
     contents[100] ^= 1
     arrays.write_bytes(contents)
     with pytest.raises(ValueError, match="rebuild"):
         load_search_artifacts(tmp_path)
-    save_full(tmp_path)
+    _save_full(tmp_path)
     metadata_path = tmp_path / "search_index_data.json"
     metadata = json.loads(metadata_path.read_text())
     metadata["document_ids"][0] = 1234

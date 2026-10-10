@@ -15,6 +15,7 @@ from .constants import (
     DEFAULT_REPORTS_DIR,
     DEFAULT_RUNTIME_DIR,
     DEFAULT_TOP_K,
+    TF_MODES,
 )
 from .inverted_index import InvertedIndex
 from .presentation import (
@@ -28,46 +29,6 @@ from .presentation import (
     title,
 )
 from .search import DocumentSearch
-
-
-def main(argv: Sequence[str] | None = None) -> int:
-    arguments = list(argv) if argv is not None else sys.argv[1:]
-    try:
-        if arguments and arguments[0] == "build":
-            return _run_build(arguments[1:])
-        if arguments and arguments[0] == "benchmark":
-            return _run_benchmark(arguments[1:])
-        if arguments and arguments[0] in ("demo", "compare", "interactive"):
-            return _run_presentation(arguments[0], arguments[1:])
-        if arguments and arguments[0] == "search":
-            arguments = arguments[1:]
-        return _run_search(arguments)
-    except KeyboardInterrupt:
-        print("\nCancelled by user.", file=sys.stderr)
-        return 130
-    except (OSError, ValueError) as error:
-        print(f"error: {error}", file=sys.stderr)
-        if isinstance(error, FileNotFoundError) and "Benchmark" not in str(error):
-            print(
-                "\nSearch artifacts are not available.\n\nRun:\n  python main.py build\nThen:\n  python main.py benchmark\n  python main.py demo",
-                file=sys.stderr,
-            )
-        elif "artifact" in str(error).lower():
-            print("Rebuild with: python main.py build", file=sys.stderr)
-        return 2
-
-
-def _parser(description: str, *, reports: bool = False) -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description=description)
-    parser.add_argument("--artifacts", type=Path, default=DEFAULT_RUNTIME_DIR)
-    if reports:
-        parser.add_argument("--reports", type=Path, default=DEFAULT_REPORTS_DIR)
-    return parser
-
-
-def _use_local_dataset_cache() -> None:
-    # Leave user-supplied caches intact; keep the loader and its policies unchanged.
-    os.environ.setdefault("SCIKIT_LEARN_DATA", str(Path("scikit_learn_data").resolve()))
 
 
 def _run_build(arguments: Sequence[str]) -> int:
@@ -103,18 +64,23 @@ def _run_build(arguments: Sequence[str]) -> int:
 
 
 def _run_benchmark(arguments: Sequence[str]) -> int:
+    from .experiments.retrieval_benchmark import (
+        DEFAULT_BENCHMARK_QUERY_COUNT,
+        DEFAULT_BENCHMARK_REPEATS,
+    )
+
     parser = _parser("Run E1-E6, save measured CSV/JSON/Markdown reports", reports=True)
     parser.add_argument(
         "--queries",
         type=int,
-        default=100,
+        default=DEFAULT_BENCHMARK_QUERY_COUNT,
         help="held-out query budget (default 100; fixed shared subset)",
     )
-    parser.add_argument("--repeats", type=int, default=5)
+    parser.add_argument("--repeats", type=int, default=DEFAULT_BENCHMARK_REPEATS)
     parser.add_argument("--epochs", type=int, default=DEFAULT_EPOCHS)
     parser.add_argument("--batch-size", type=int, default=DEFAULT_BATCH_SIZE)
     options = parser.parse_args(arguments)
-    # Fail before any dataset access when build artifacts are missing.
+    # 저장 인덱스가 없으면 데이터에 접근하기 전에 종료한다.
     load_retrievers(options.artifacts)
     _use_local_dataset_cache()
     from .dataset import load_20newsgroups
@@ -140,7 +106,7 @@ def _run_search(arguments: Sequence[str]) -> int:
     parser.add_argument("--query", required=True)
     parser.add_argument("--topk", type=int, default=DEFAULT_TOP_K)
     parser.add_argument("--method", choices=("tfidf", "bm25"), default="tfidf")
-    parser.add_argument("--tf-mode", choices=("raw", "log", "double"), default="raw")
+    parser.add_argument("--tf-mode", choices=TF_MODES, default="raw")
     parser.add_argument("--strategy", choices=("scan", "inverted"), default="scan")
     options = parser.parse_args(arguments)
     if options.method == "tfidf" and options.tf_mode == "raw":
@@ -206,3 +172,44 @@ def _run_presentation(command: str, arguments: Sequence[str]) -> int:
     show_algorithm_comparison(runtime, options.query, options.topk)
     title("SCAN VS INVERTED INDEX")
     return 0 if show_speed_comparison(runtime, options.query, report) else 1
+
+
+def _parser(description: str, *, reports: bool = False) -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description=description)
+    parser.add_argument("--artifacts", type=Path, default=DEFAULT_RUNTIME_DIR)
+    if reports:
+        parser.add_argument("--reports", type=Path, default=DEFAULT_REPORTS_DIR)
+    return parser
+
+
+def _use_local_dataset_cache() -> None:
+    # 사용자가 지정한 데이터 캐시는 유지한다.
+    os.environ.setdefault("SCIKIT_LEARN_DATA", str(Path("scikit_learn_data").resolve()))
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    """Dispatch CLI commands and return an exit code for expected user errors."""
+    arguments = list(argv) if argv is not None else sys.argv[1:]
+    try:
+        if arguments and arguments[0] == "build":
+            return _run_build(arguments[1:])
+        if arguments and arguments[0] == "benchmark":
+            return _run_benchmark(arguments[1:])
+        if arguments and arguments[0] in ("demo", "compare", "interactive"):
+            return _run_presentation(arguments[0], arguments[1:])
+        if arguments and arguments[0] == "search":
+            arguments = arguments[1:]
+        return _run_search(arguments)
+    except KeyboardInterrupt:
+        print("\nCancelled by user.", file=sys.stderr)
+        return 130
+    except (OSError, ValueError) as error:
+        print(f"error: {error}", file=sys.stderr)
+        if isinstance(error, FileNotFoundError) and "Benchmark" not in str(error):
+            print(
+                "\nSearch artifacts are not available.\n\nRun:\n  python main.py build\nThen:\n  python main.py benchmark\n  python main.py demo",
+                file=sys.stderr,
+            )
+        elif "artifact" in str(error).lower():
+            print("Rebuild with: python main.py build", file=sys.stderr)
+        return 2

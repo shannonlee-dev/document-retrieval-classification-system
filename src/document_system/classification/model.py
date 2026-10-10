@@ -61,6 +61,7 @@ def predict_sparse(
     *,
     batch_size: int = DEFAULT_BATCH_SIZE,
 ) -> np.ndarray:
+    """Predict from bounded dense batches without densifying the full corpus."""
     if batch_size < 1:
         raise ValueError("batch_size must be positive")
     predictions: list[np.ndarray] = []

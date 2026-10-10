@@ -25,6 +25,8 @@ MINIMUM_STAGE_EXAMPLE_TERMS = 1
 
 @dataclass(frozen=True)
 class ValidationResult:
+    """Record sparse numerical errors and the comparison settings."""
+
     shape: tuple[int, int]
     max_absolute_error: float
     mean_absolute_error: float

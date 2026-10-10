@@ -7,7 +7,7 @@ from document_system.search import DocumentSearch, sparse_dot
 from document_system.tfidf import NumpyTfidfVectorizer
 
 
-def make_small_searcher() -> DocumentSearch:
+def _make_small_searcher() -> DocumentSearch:
     texts = ["space shuttle orbit", "baseball pitcher game"]
     vectorizer = NumpyTfidfVectorizer(EnglishPreprocessor(stop_words=frozenset()))
     matrix = vectorizer.fit_transform(texts)
@@ -52,7 +52,7 @@ def test_sparse_dot_equals_dense_dot(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def test_search_returns_score_id_label_and_snippet() -> None:
-    searcher = make_small_searcher()
+    searcher = _make_small_searcher()
 
     result = searcher.search("shuttle orbit", topk=1)[0]
 
@@ -63,21 +63,21 @@ def test_search_returns_score_id_label_and_snippet() -> None:
 
 
 def test_search_rejects_oov_query() -> None:
-    searcher = make_small_searcher()
+    searcher = _make_small_searcher()
 
     with pytest.raises(ValueError, match="vocabulary"):
         searcher.search("zzzzunknown", topk=1)
 
 
 def test_search_rejects_blank_query() -> None:
-    searcher = make_small_searcher()
+    searcher = _make_small_searcher()
 
     with pytest.raises(ValueError, match="blank"):
         searcher.search("", topk=1)
 
 
 def test_search_rejects_invalid_topk() -> None:
-    searcher = make_small_searcher()
+    searcher = _make_small_searcher()
 
     with pytest.raises(ValueError, match="topk"):
         searcher.search("space", topk=0)
@@ -86,7 +86,7 @@ def test_search_rejects_invalid_topk() -> None:
 
 
 def test_search_rejects_unsafe_or_blank_snippets() -> None:
-    searcher = make_small_searcher()
+    searcher = _make_small_searcher()
 
     for snippets in (["space shuttle orbit", "Alice"], ["space shuttle orbit", " "]):
         with pytest.raises(ValueError, match="safe"):
@@ -111,7 +111,7 @@ def test_search_rejects_unsafe_or_blank_snippets() -> None:
 
 
 def test_search_omits_zero_score_results() -> None:
-    searcher = make_small_searcher()
+    searcher = _make_small_searcher()
 
     results = searcher.search("space", topk=2)
 

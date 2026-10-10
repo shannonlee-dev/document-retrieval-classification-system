@@ -146,6 +146,7 @@ class EnglishPreprocessor:
     stop_words: frozenset[str] = DEFAULT_STOP_WORDS
 
     def tokenize(self, text: str) -> list[str]:
+        """Return lowercase English tokens after length and stop-word filtering."""
         if not isinstance(text, str):
             raise TypeError("text must be a string")
         cleaned_text = re.sub(TOKEN_PATTERN, TOKEN_REPLACEMENT, text.lower())

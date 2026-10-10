@@ -9,7 +9,7 @@ from document_system.dataset import DatasetBundle, _validate_dataset
 from document_system.privacy import PrivacyReport, is_safe_text, sanitize_document
 
 
-def make_full_category_fake() -> SimpleNamespace:
+def _make_full_category_fake() -> SimpleNamespace:
     target_names = [f"category.{index}" for index in range(20)]
     labels = np.repeat(np.arange(20, dtype=np.int32), 25)
     texts = [f"category token document {index}" for index in range(labels.size)]
@@ -18,7 +18,7 @@ def make_full_category_fake() -> SimpleNamespace:
 
 @pytest.fixture
 def full_bundle() -> DatasetBundle:
-    fake = make_full_category_fake()
+    fake = _make_full_category_fake()
     return DatasetBundle(
         texts=tuple(fake.data),
         labels=fake.target.copy(),
@@ -68,7 +68,7 @@ def test_loader_requests_all_20_categories(monkeypatch) -> None:
     def fake_fetch(**options):
         nonlocal captured_options
         captured_options = options
-        return make_full_category_fake()
+        return _make_full_category_fake()
 
     monkeypatch.setattr(dataset_module, "fetch_20newsgroups", fake_fetch)
 

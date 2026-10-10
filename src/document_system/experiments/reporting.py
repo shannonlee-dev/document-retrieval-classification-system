@@ -114,11 +114,12 @@ def write_benchmark_reports(
             writer.writeheader()
             writer.writerows(per_class_rows)
     (directory / "experiment_summary.md").write_text(
-        render_experiment_summary(report), encoding="utf-8"
+        _render_experiment_summary(report), encoding="utf-8"
     )
 
 
-def render_experiment_summary(report: dict[str, object]) -> str:
+def _render_experiment_summary(report: dict[str, object]) -> str:
+    """Render measured results and reproduction settings without recomputing them."""
     metadata = report["metadata"]
     lines = [
         "# Experiment summary",

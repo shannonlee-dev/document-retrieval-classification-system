@@ -9,7 +9,7 @@ from dataclasses import asdict, dataclass, field
 
 import numpy as np
 
-from .constants import DEFAULT_TOP_K, SNIPPET_LIMIT
+from .constants import DEFAULT_TOP_K, SCORE_TIE_DECIMALS, SNIPPET_LIMIT
 from .inverted_index import InvertedIndex
 from .privacy import is_safe_text
 from .sparse_matrix import SparseMatrix
@@ -18,6 +18,8 @@ from .tfidf import NumpyTfidfVectorizer
 
 @dataclass(frozen=True)
 class SearchResult:
+    """Describe a ranked match using an external ID and safe text preview."""
+
     score: float
     doc_id: int
     label: str
@@ -27,27 +29,10 @@ class SearchResult:
         return asdict(self)
 
 
-def sparse_dot(
-    left_indices: np.ndarray,
-    left_data: np.ndarray,
-    right_indices: np.ndarray,
-    right_data: np.ndarray,
-) -> float:
-    """Return an exact dot product using sorted nonzero-index intersections."""
-
-    if left_indices.size != left_data.size or right_indices.size != right_data.size:
-        raise ValueError("indices and data lengths must match")
-    _, left_positions, right_positions = np.intersect1d(
-        left_indices,
-        right_indices,
-        assume_unique=True,
-        return_indices=True,
-    )
-    return float(np.dot(left_data[left_positions], right_data[right_positions]))
-
-
 @dataclass(frozen=True)
 class DocumentSearch:
+    """Search normalized sparse rows while preserving document metadata."""
+
     vectorizer: NumpyTfidfVectorizer
     matrix: SparseMatrix
     snippets: Sequence[str]
@@ -79,6 +64,7 @@ class DocumentSearch:
             )
 
     def validate_topk(self, topk: int) -> None:
+        """Require an integer between one and the number of indexed documents."""
         document_count = self.matrix.shape[0]
         if (
             isinstance(topk, bool)
@@ -90,6 +76,7 @@ class DocumentSearch:
     def search(
         self, query: str, topk: int = DEFAULT_TOP_K, *, strategy: str = "scan"
     ) -> list[SearchResult]:
+        """Return positive cosine matches; cache postings on first inverted search."""
         self.validate_topk(topk)
         if strategy not in ("scan", "inverted"):
             raise ValueError("strategy must be scan or inverted")
@@ -128,11 +115,14 @@ class DocumentSearch:
     def results_from_scores(
         self, scores: Mapping[int, float], topk: int
     ) -> list[SearchResult]:
-        """Bounded heap: positive scores, 1e-12 ties resolved by external ID."""
+        """Select positive scores with a bounded heap and break rounded ties by ID."""
         ranked_row_ids = heapq.nsmallest(
             topk,
             (row for row, score in scores.items() if score > 0),
-            key=lambda row: (-round(scores[row], 12), int(self.document_ids[row])),
+            key=lambda row: (
+                -round(scores[row], SCORE_TIE_DECIMALS),
+                int(self.document_ids[row]),
+            ),
         )
         return [
             SearchResult(
@@ -143,6 +133,25 @@ class DocumentSearch:
             )
             for matrix_row_id in ranked_row_ids
         ]
+
+
+def sparse_dot(
+    left_indices: np.ndarray,
+    left_data: np.ndarray,
+    right_indices: np.ndarray,
+    right_data: np.ndarray,
+) -> float:
+    """Return an exact dot product using sorted nonzero-index intersections."""
+
+    if left_indices.size != left_data.size or right_indices.size != right_data.size:
+        raise ValueError("indices and data lengths must match")
+    _, left_positions, right_positions = np.intersect1d(
+        left_indices,
+        right_indices,
+        assume_unique=True,
+        return_indices=True,
+    )
+    return float(np.dot(left_data[left_positions], right_data[right_positions]))
 
 
 def _snippet(text: str, limit: int = SNIPPET_LIMIT) -> str:

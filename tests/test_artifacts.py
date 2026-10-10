@@ -10,7 +10,7 @@ from document_system.privacy import SNIPPET_LIMIT
 from document_system.tfidf import NumpyTfidfVectorizer
 
 
-def make_search_data():
+def _make_search_data():
     snippets = ["space shuttle orbit", "baseball pitcher game"]
     document_ids = np.array([42, 99], dtype=np.int64)
     labels = np.array([0, 1], dtype=np.int32)
@@ -21,7 +21,7 @@ def make_search_data():
 
 def test_search_artifacts_round_trip(tmp_path: Path) -> None:
     vectorizer, matrix, snippets, labels, target_names, document_ids = (
-        make_search_data()
+        _make_search_data()
     )
 
     save_search_artifacts(
@@ -52,7 +52,7 @@ def test_search_artifacts_round_trip(tmp_path: Path) -> None:
 
 def test_search_artifacts_reject_unknown_version(tmp_path: Path) -> None:
     vectorizer, matrix, snippets, labels, target_names, document_ids = (
-        make_search_data()
+        _make_search_data()
     )
     save_search_artifacts(
         tmp_path, vectorizer, matrix, snippets, labels, target_names, document_ids
@@ -79,7 +79,7 @@ def test_search_artifacts_reject_incompatible_build_metadata(
     tmp_path: Path, field: str, value: object
 ) -> None:
     vectorizer, matrix, snippets, labels, target_names, document_ids = (
-        make_search_data()
+        _make_search_data()
     )
     save_search_artifacts(
         tmp_path, vectorizer, matrix, snippets, labels, target_names, document_ids
@@ -95,7 +95,7 @@ def test_search_artifacts_reject_incompatible_build_metadata(
 
 def test_search_artifacts_reject_labels_outside_target_names(tmp_path: Path) -> None:
     vectorizer, matrix, snippets, labels, target_names, document_ids = (
-        make_search_data()
+        _make_search_data()
     )
     save_search_artifacts(
         tmp_path, vectorizer, matrix, snippets, labels, target_names, document_ids
@@ -111,7 +111,7 @@ def test_search_artifacts_reject_labels_outside_target_names(tmp_path: Path) -> 
 
 def test_search_artifacts_reject_save_row_count_mismatch(tmp_path: Path) -> None:
     vectorizer, matrix, snippets, labels, target_names, document_ids = (
-        make_search_data()
+        _make_search_data()
     )
 
     with pytest.raises(ValueError, match="row"):
@@ -128,7 +128,7 @@ def test_search_artifacts_reject_save_row_count_mismatch(tmp_path: Path) -> None
 
 def test_search_artifacts_store_sanitized_search_fields(tmp_path: Path) -> None:
     vectorizer, matrix, snippets, labels, target_names, document_ids = (
-        make_search_data()
+        _make_search_data()
     )
 
     save_search_artifacts(
@@ -143,7 +143,7 @@ def test_search_artifacts_store_sanitized_search_fields(tmp_path: Path) -> None:
 
 
 def test_search_artifacts_reject_unsafe_or_blank_snippets(tmp_path: Path) -> None:
-    vectorizer, matrix, _, labels, target_names, document_ids = make_search_data()
+    vectorizer, matrix, _, labels, target_names, document_ids = _make_search_data()
 
     for snippets in (["space shuttle orbit", "Alice"], ["space shuttle orbit", " "]):
         with pytest.raises(ValueError, match="safe"):
@@ -159,7 +159,7 @@ def test_search_artifacts_reject_unsafe_or_blank_snippets(tmp_path: Path) -> Non
 
 
 def test_search_artifacts_reject_snippets_over_limit(tmp_path: Path) -> None:
-    vectorizer, matrix, _, labels, target_names, document_ids = make_search_data()
+    vectorizer, matrix, _, labels, target_names, document_ids = _make_search_data()
     long_snippet = "x" * (SNIPPET_LIMIT + 1)
 
     with pytest.raises(ValueError, match="snippet"):
@@ -176,7 +176,7 @@ def test_search_artifacts_reject_snippets_over_limit(tmp_path: Path) -> None:
 
 def test_search_artifacts_reject_legacy_metadata(tmp_path: Path) -> None:
     vectorizer, matrix, snippets, labels, target_names, document_ids = (
-        make_search_data()
+        _make_search_data()
     )
     save_search_artifacts(
         tmp_path, vectorizer, matrix, snippets, labels, target_names, document_ids
@@ -199,7 +199,7 @@ def test_search_artifacts_reject_old_privacy_policy(
     old_policy: str,
 ) -> None:
     vectorizer, matrix, snippets, labels, target_names, document_ids = (
-        make_search_data()
+        _make_search_data()
     )
     save_search_artifacts(
         tmp_path, vectorizer, matrix, snippets, labels, target_names, document_ids

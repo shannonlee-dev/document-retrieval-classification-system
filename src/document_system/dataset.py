@@ -25,6 +25,8 @@ MINIMUM_CATEGORY_COUNT = 2
 
 @dataclass(frozen=True)
 class DatasetBundle:
+    """Keep sanitized documents, original IDs and labels aligned by row."""
+
     texts: tuple[str, ...]
     labels: np.ndarray
     target_names: tuple[str, ...]
@@ -32,80 +34,11 @@ class DatasetBundle:
     privacy_report: PrivacyReport
 
 
-def dataset_fingerprint(bundle: DatasetBundle) -> str:
-    """Bind reports/runtime to ordered sanitized texts, public IDs and labels."""
-    digest = hashlib.sha256(json.dumps(bundle.target_names).encode())
-    for text, label, doc_id in zip(
-        bundle.texts, bundle.labels, bundle.source_doc_ids, strict=True
-    ):
-        payload = json.dumps(
-            [int(doc_id), int(label), text], ensure_ascii=False
-        ).encode()
-        digest.update(len(payload).to_bytes(8, "big"))
-        digest.update(payload)
-    return digest.hexdigest()
-
-
 @dataclass(frozen=True)
 class _RetainedDocument:
     source_doc_id: int
     text: str
     label: int
-
-
-def _validate_dataset(
-    texts: Sequence[str],
-    labels: Sequence[int | str],
-    *,
-    source_doc_ids: Sequence[int] | None = None,
-    minimum_documents: int = MINIMUM_DOCUMENTS,
-) -> None:
-    """Validate the portable text-classification input contract."""
-
-    if minimum_documents < 1:
-        raise ValueError("minimum_documents must be positive")
-    if len(texts) != len(labels):
-        raise ValueError("texts and labels must have the same length")
-    if len(texts) < minimum_documents:
-        raise ValueError(f"dataset must contain at least {minimum_documents} documents")
-    if any(not isinstance(text, str) for text in texts):
-        raise ValueError("all texts must be strings; missing values are not allowed")
-    if any(not text.strip() for text in texts):
-        raise ValueError("all texts must be nonblank")
-    if source_doc_ids is not None and len(texts) != len(source_doc_ids):
-        raise ValueError("texts and source document IDs must have the same length")
-    if len(set(labels)) < MINIMUM_CATEGORY_COUNT:
-        raise ValueError("dataset must contain at least two labels")
-
-
-def validate_full_20_newsgroups(bundle: DatasetBundle) -> None:
-    """Validate the fixed production 20 Newsgroups dataset contract."""
-
-    labels = np.asarray(bundle.labels)
-    if labels.ndim != 1:
-        raise ValueError("the full build requires one-dimensional labels")
-    if not np.issubdtype(labels.dtype, np.integer):
-        raise ValueError("the full build requires integer class ID labels")
-
-    expected_class_ids = set(range(EXPECTED_CATEGORY_COUNT))
-    observed_class_ids = set(labels.tolist())
-    privacy_categories = set(bundle.privacy_report.category_counts)
-    target_categories = set(bundle.target_names)
-    if len(bundle.target_names) != EXPECTED_CATEGORY_COUNT:
-        raise ValueError("the full build requires exactly 20 target categories")
-    if len(target_categories) != EXPECTED_CATEGORY_COUNT:
-        raise ValueError("the full build requires exactly 20 unique target categories")
-    if observed_class_ids != expected_class_ids:
-        raise ValueError(
-            "the full build requires all 20 categories and class IDs 0..19"
-        )
-    if (
-        len(privacy_categories) != EXPECTED_CATEGORY_COUNT
-        or privacy_categories != target_categories
-    ):
-        raise ValueError(
-            "privacy report categories must match all 20 target categories"
-        )
 
 
 def load_20newsgroups() -> DatasetBundle:
@@ -156,3 +89,72 @@ def load_20newsgroups() -> DatasetBundle:
     )
     validate_full_20_newsgroups(bundle)
     return bundle
+
+
+def validate_full_20_newsgroups(bundle: DatasetBundle) -> None:
+    """Validate the fixed production 20 Newsgroups dataset contract."""
+
+    labels = np.asarray(bundle.labels)
+    if labels.ndim != 1:
+        raise ValueError("the full build requires one-dimensional labels")
+    if not np.issubdtype(labels.dtype, np.integer):
+        raise ValueError("the full build requires integer class ID labels")
+
+    expected_class_ids = set(range(EXPECTED_CATEGORY_COUNT))
+    observed_class_ids = set(labels.tolist())
+    privacy_categories = set(bundle.privacy_report.category_counts)
+    target_categories = set(bundle.target_names)
+    if len(bundle.target_names) != EXPECTED_CATEGORY_COUNT:
+        raise ValueError("the full build requires exactly 20 target categories")
+    if len(target_categories) != EXPECTED_CATEGORY_COUNT:
+        raise ValueError("the full build requires exactly 20 unique target categories")
+    if observed_class_ids != expected_class_ids:
+        raise ValueError(
+            "the full build requires all 20 categories and class IDs 0..19"
+        )
+    if (
+        len(privacy_categories) != EXPECTED_CATEGORY_COUNT
+        or privacy_categories != target_categories
+    ):
+        raise ValueError(
+            "privacy report categories must match all 20 target categories"
+        )
+
+
+def dataset_fingerprint(bundle: DatasetBundle) -> str:
+    """Bind reports/runtime to ordered sanitized texts, public IDs and labels."""
+    digest = hashlib.sha256(json.dumps(bundle.target_names).encode())
+    for text, label, doc_id in zip(
+        bundle.texts, bundle.labels, bundle.source_doc_ids, strict=True
+    ):
+        payload = json.dumps(
+            [int(doc_id), int(label), text], ensure_ascii=False
+        ).encode()
+        digest.update(len(payload).to_bytes(8, "big"))
+        digest.update(payload)
+    return digest.hexdigest()
+
+
+def _validate_dataset(
+    texts: Sequence[str],
+    labels: Sequence[int | str],
+    *,
+    source_doc_ids: Sequence[int] | None = None,
+    minimum_documents: int = MINIMUM_DOCUMENTS,
+) -> None:
+    """Validate the portable text-classification input contract."""
+
+    if minimum_documents < 1:
+        raise ValueError("minimum_documents must be positive")
+    if len(texts) != len(labels):
+        raise ValueError("texts and labels must have the same length")
+    if len(texts) < minimum_documents:
+        raise ValueError(f"dataset must contain at least {minimum_documents} documents")
+    if any(not isinstance(text, str) for text in texts):
+        raise ValueError("all texts must be strings; missing values are not allowed")
+    if any(not text.strip() for text in texts):
+        raise ValueError("all texts must be nonblank")
+    if source_doc_ids is not None and len(texts) != len(source_doc_ids):
+        raise ValueError("texts and source document IDs must have the same length")
+    if len(set(labels)) < MINIMUM_CATEGORY_COUNT:
+        raise ValueError("dataset must contain at least two labels")

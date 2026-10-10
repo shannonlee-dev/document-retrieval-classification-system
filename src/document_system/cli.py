@@ -165,6 +165,7 @@ def _run_presentation(command: str, arguments: Sequence[str]) -> int:
     if command == "demo":
         return 0 if run_demo(runtime, report, options.reports) else 1
     if command == "interactive":
+        _use_local_dataset_cache()
         interactive(runtime, report, options.reports)
         return 0
     runtime.tfidf["raw"].validate_topk(options.topk)

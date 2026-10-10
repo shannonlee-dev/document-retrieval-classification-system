@@ -22,6 +22,8 @@ make compare ARGS='--query "space shuttle orbit"'
 
 `make ready` 하나로 전체 준비를 끝낸다. `make`만 실행해도 같은 작업을 수행한다. 내부에서 `setup` → `check` → `test` → `build` → `prepare` → `benchmark`를 순서대로 실행하고, 실패한 단계가 있으면 즉시 중단한다. `make -j ready`로 실행해도 준비 단계의 순서는 유지한다. 최초 실행은 데이터 다운로드·학습·평가를 포함하므로 시간이 걸릴 수 있다. 준비가 끝나면 `make interactive` 또는 `make demo`로 실행한다. 직접 실행할 때는 `uv run --frozen python -m document_system interactive`처럼 패키지 모듈을 사용한다. 실행 명령은 내부에서 `uv run --frozen`을 사용하므로 가상환경을 직접 활성화할 필요가 없다. 준비가 끝난 환경에서는 실행할 때마다 `ready`를 반복할 필요가 없다. `demo`는 다운로드·학습을 시작하지 않는다.
 
+`make interactive`의 **7번 Show Full Document Text**에서 검색 결과의 문서 ID를 입력하면 카테고리와 정제된 전체 본문을 확인할 수 있다. 본문은 7번을 처음 사용할 때 로컬 dataset cache에서 읽으며, 다운로드·재학습 없이 같은 메뉴 세션에서 재사용한다. 소문자 영문 정규화와 기존 redaction이 적용된 텍스트를 길이 제한 없이 표시한다. 캐시가 없거나 인덱스와 다른 corpus이면 안내 후 메뉴로 돌아간다.
+
 ## 프로젝트 소개
 
 20 Newsgroups의 기존 20개 주제를 검색하고 분류하며, TF 가중치·BM25·역색인의 효과를 같은 조건에서 비교하는 학습 프로젝트다. 기존 NumPy TF-IDF, CSR 유사 희소 행렬, SGD 기반 Linear SVM을 확장했다. Dense 검색, LLM, 웹 서버와 외부 검색 패키지는 도입하지 않는다.
@@ -265,7 +267,7 @@ CI는 기존 pytest 구조·GitHub Actions를 유지하며 fixture/임시 디렉
 
 기존 20개 카테고리·loader·sanitization/redaction·필터링 전 문서 ID·라벨 매핑을 유지했다. 이메일, 전화번호, URL, IPv4/IPv6의 기존 structured redaction을 적용하며 sanitization 뒤 빈 문서만 제외한다. 개인정보 탐지 정책을 확대하지 않았으며, 자유 형식 이름·건강 정보 등이 남을 수 있으므로 완전한 개인정보 제거를 주장하지 않는다.
 
-전체 정제 문서는 실행 중 계산에 사용하고 runtime에는 저장하지 않는다. 기존과 같은 재검증된 최대 240자 snippet만 저장·출력한다. 상세 카테고리 및 처리 근거는 [기존 데이터 경계 분석](docs/baseline-analysis.md), 출처·귀속·라이선스는 [DATASET_LICENSE.md](DATASET_LICENSE.md)를 확인한다.
+전체 정제 문서는 실행 중 계산에 사용하고 runtime에는 저장하지 않는다. 검색 결과에는 기존과 같은 재검증된 최대 240자 snippet만 저장·출력하며, interactive 7번에서는 로컬 cache의 정제된 전체 본문을 표시한다. 상세 카테고리 및 처리 근거는 [기존 데이터 경계 분석](docs/baseline-analysis.md), 출처·귀속·라이선스는 [DATASET_LICENSE.md](DATASET_LICENSE.md)를 확인한다.
 
 ## 한계와 개선 방향
 

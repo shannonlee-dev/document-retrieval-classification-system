@@ -10,7 +10,7 @@ Dataset: 20 Newsgroups, 18,309 documents, 20 categories.
 Train/test: 14,647/3,662, stratified 80/20; seed 42.
 Quality: 100 held-out document queries, k=10. Latency: warm-up + 5 repeats.
 SVM: hinge, epochs=6, batch_size=128, train-only fit.
-Runtime load (excluded from query latency): 4837.233 ms.
+Runtime load (excluded from query latency): 4979.910 ms.
 
 | TF | Accuracy | Macro F1 | P@10 | MAP@10 |
 |---|---:|---:|---:|---:|
@@ -20,17 +20,17 @@ Runtime load (excluded from query latency): 4837.233 ms.
 
 | Method (train corpus) | P@10 | MAP@10 | Mean ms | P95 ms |
 |---|---:|---:|---:|---:|
-| tfidf | 0.521000 | 0.434458 | 12.546 | 31.254 |
-| bm25 | 0.570000 | 0.490718 | 12.546 | 31.088 |
+| tfidf | 0.521000 | 0.434458 | 13.048 | 32.268 |
+| bm25 | 0.570000 | 0.490718 | 12.677 | 31.077 |
 
 Speed uses short presentation queries, separate from held-out quality queries.
 
 | Documents | Scan mean ms | Inverted mean ms | Scan P95 ms | Inverted P95 ms | Speedup | Extra posting MiB |
 |---:|---:|---:|---:|---:|---:|---:|
-| 1000 | 9.896 | 0.308 | 10.206 | 0.415 | 32.09x | 0.774 |
-| 5000 | 48.501 | 0.488 | 49.639 | 0.604 | 99.44x | 4.068 |
-| 10000 | 97.403 | 0.712 | 99.111 | 0.970 | 136.90x | 8.027 |
-| 18309 | 175.790 | 1.133 | 178.284 | 1.592 | 155.10x | 14.427 |
+| 1000 | 15.267 | 0.311 | 34.372 | 0.333 | 49.13x | 0.774 |
+| 5000 | 48.704 | 0.491 | 49.644 | 0.629 | 99.13x | 4.068 |
+| 10000 | 100.658 | 0.751 | 110.118 | 1.062 | 133.95x | 8.027 |
+| 18309 | 178.936 | 1.115 | 187.829 | 1.624 | 160.51x | 14.427 |
 
 ### Actual per-query differences (held-out quality)
 
@@ -121,7 +121,7 @@ BoW discards word order and cannot resolve polysemy/context. Tokenization, stopw
 
 ### Environment and reproduction
 
-Executed: 2026-10-08T09:51:42.716835+00:00
+Executed: 2026-10-10T08:51:09.635898+00:00
 Corpus fingerprint: `69168bb0a2f808f1278ae3bb9050aaa5537d9e36607352a2d0b8b3e8fc50b396`
 
 ```json
@@ -129,17 +129,17 @@ Corpus fingerprint: `69168bb0a2f808f1278ae3bb9050aaa5537d9e36607352a2d0b8b3e8fc5
   "python": "3.13.7 (main, Mar  3 2026, 12:19:54) [GCC 15.2.0]",
   "platform": "Linux-6.17.8-orbstack-00308-g8f9c941121b1-x86_64-with-glibc2.42",
   "processor": "",
+  "machine": "x86_64",
+  "cpu_count": 6,
+  "thread_environment": {
+    "OPENBLAS_NUM_THREADS": null,
+    "OMP_NUM_THREADS": null,
+    "MKL_NUM_THREADS": null
+  },
   "packages": {
     "numpy": "2.5.2",
     "scikit-learn": "1.9.0",
     "matplotlib": "3.11.1"
-  },
-  "machine": "x86_64",
-  "cpu_count": 6,
-  "thread_environment": {
-    "OPENBLAS_NUM_THREADS": "1",
-    "OMP_NUM_THREADS": "1",
-    "MKL_NUM_THREADS": null
   }
 }
 ```

@@ -41,7 +41,7 @@ class _RetainedDocument:
     label: int
 
 
-def load_20newsgroups() -> DatasetBundle:
+def load_20newsgroups(*, download_if_missing: bool = True) -> DatasetBundle:
     """Load the complete, metadata-stripped 20 Newsgroups corpus."""
 
     dataset = fetch_20newsgroups(
@@ -49,6 +49,7 @@ def load_20newsgroups() -> DatasetBundle:
         remove=METADATA_FIELDS_TO_REMOVE,
         shuffle=True,
         random_state=DEFAULT_RANDOM_STATE,
+        download_if_missing=download_if_missing,
     )
     retained_documents: list[_RetainedDocument] = []
     privacy_results: list[SanitizationResult] = []

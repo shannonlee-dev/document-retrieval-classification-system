@@ -9,6 +9,7 @@ import textwrap
 import time
 from collections.abc import Sequence
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from .artifacts import RetrievalArtifacts
 from .constants import (
@@ -18,6 +19,9 @@ from .constants import (
     TF_MODES,
 )
 from .experiments.metrics import RETRIEVAL_TOP_K
+
+if TYPE_CHECKING:
+    from .dataset import DatasetBundle
 
 MODE_NAMES = {"raw": "Raw", "log": "Log", "double": "Double"}
 DEMO_QUERY = "space shuttle orbit"
@@ -108,10 +112,11 @@ def interactive(
     runtime: RetrievalArtifacts, report: dict | None, reports_dir: Path
 ) -> None:
     """Run the offline menu until exit or EOF, recovering from invalid input."""
+    documents = None
     while True:
         title("DOCUMENT RETRIEVAL & CLASSIFICATION SYSTEM")
         print(
-            "[1] Search Documents\n[2] Compare TF-IDF Variants\n[3] Compare TF-IDF vs BM25\n[4] Compare Scan vs Inverted Index\n[5] Show Classification Results\n[6] Run Full Demo\n[0] Exit\nSelect an option:"
+            "[1] Search Documents\n[2] Compare TF-IDF Variants\n[3] Compare TF-IDF vs BM25\n[4] Compare Scan vs Inverted Index\n[5] Show Classification Results\n[6] Run Full Demo\n[7] Show Full Document Text\n[0] Exit\nSelect an option:"
         )
         try:
             choice = input("> ").strip().lower()
@@ -119,8 +124,8 @@ def interactive(
             return
         if choice in ("0", "q"):
             return
-        if choice not in ("1", "2", "3", "4", "5", "6"):
-            print("Select a number from 0 to 6, or q to exit.")
+        if choice not in ("1", "2", "3", "4", "5", "6", "7"):
+            print("Select a number from 0 to 7, or q to exit.")
             continue
         try:
             if choice in ("1", "2", "3", "4"):
@@ -140,6 +145,19 @@ def interactive(
                     show_speed_comparison(runtime, query, report)
             elif choice == "5":
                 show_classification(report, reports_dir)
+            elif choice == "7":
+                document_id_text = input("Document ID: ").strip()
+                try:
+                    document_id = int(document_id_text)
+                except ValueError:
+                    raise ValueError("Document ID must be an integer.") from None
+                if document_id not in runtime.tfidf["raw"].document_ids:
+                    raise ValueError(
+                        f"Document ID {document_id} is not in the search index."
+                    )
+                if documents is None:
+                    documents = _load_full_documents(runtime)
+                show_document(documents, document_id)
             elif report:
                 run_demo(runtime, report, reports_dir)
             else:
@@ -150,6 +168,38 @@ def interactive(
             print(f"Input error: {error}")
         except EOFError:
             return
+
+
+def _load_full_documents(runtime: RetrievalArtifacts) -> DatasetBundle:
+    """Load matching sanitized full texts once, without downloading or fitting."""
+    from .dataset import dataset_fingerprint, load_20newsgroups
+
+    try:
+        documents = load_20newsgroups(download_if_missing=False)
+    except OSError as error:
+        raise ValueError(
+            "Full text requires the local 20 Newsgroups dataset cache. "
+            "Restore the cache or run make prepare to download it."
+        ) from error
+    if dataset_fingerprint(documents) != runtime.corpus_fingerprint:
+        raise ValueError(
+            "Dataset cache/index corpus mismatch; use the matching cache "
+            "or run make prepare to rebuild the index."
+        )
+    return documents
+
+
+def show_document(documents: DatasetBundle, document_id: int) -> None:
+    """Display a sanitized full document using its original public ID."""
+    try:
+        row = documents.source_doc_ids.tolist().index(document_id)
+    except ValueError:
+        raise ValueError(f"Document ID {document_id} is not in the dataset.") from None
+    title("DOCUMENT FULL TEXT")
+    print(f"Document ID: {document_id}")
+    print(f"Category: {documents.target_names[int(documents.labels[row])]}")
+    print("\nFull text (sanitized):")
+    print(textwrap.fill(documents.texts[row], width=_output_width()))
 
 
 def title(text: str) -> None:

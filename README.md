@@ -37,32 +37,36 @@ make compare ARGS='--query "space shuttle orbit"'
 
 ## 아키텍처
 
-| 구성 요소 | 역할 |
-|---|---|
-| `dataset.py`, `privacy.py`, `preprocessing.py` | 기존 데이터 로딩·redaction·토큰화 |
-| `tfidf.py`, `sparse_matrix.py` | 공유 Count Matrix, TF 변환, IDF와 L2 정규화 |
-| `search.py`, `bm25.py`, `inverted_index.py` | 공통 SearchResult, Scan·posting·BM25 검색 |
-| `classification/`, `validation.py` | 기존 SVM·혼동 행렬·수치 검증 |
-| `pipeline.py`, `build_stages.py`, `artifacts.py` | 전체 corpus 인덱스 빌드·저장·복원 |
-| `experiments/` | 동일 split/query의 E1–E6 평가와 CSV/JSON/Markdown |
-| `cli.py`, `presentation.py`, `__main__.py` | 준비와 오프라인 시연의 분리 |
+아래 모듈 경로는 `src/document_system/` 기준이며, 표의 링크로 해당 소스 파일을 확인할 수 있다. 흐름도에는 각 단계의 구현 모듈을 함께 표시한다.
+
+| 구성 요소 | 모듈 경로 (`src/document_system/` 기준) | 역할 |
+|---|---|---|
+| 데이터·전처리 | [dataset.py](src/document_system/dataset.py), [privacy.py](src/document_system/privacy.py), [preprocessing.py](src/document_system/preprocessing.py) | 기존 데이터 로딩·redaction·토큰화 |
+| 벡터화·희소 행렬 | [tfidf.py](src/document_system/tfidf.py), [sparse_matrix.py](src/document_system/sparse_matrix.py) | 공유 Count Matrix, TF 변환, IDF와 L2 정규화 |
+| 검색 | [search.py](src/document_system/search.py), [bm25.py](src/document_system/bm25.py), [inverted_index.py](src/document_system/inverted_index.py) | 공통 SearchResult, Scan·posting·BM25 검색 |
+| 분류·시각화 | [classification/model.py](src/document_system/classification/model.py), [classification/evaluation.py](src/document_system/classification/evaluation.py), [classification/visualization.py](src/document_system/classification/visualization.py) | Linear SVM 학습·예측, 분류 평가·오분류 분석, 혼동 행렬 시각화 |
+| 수치 검증 | [validation.py](src/document_system/validation.py) | TF-IDF 계산과 sklearn 결과 비교 |
+| 빌드·인덱스 저장 | [pipeline.py](src/document_system/pipeline.py), [build_stages.py](src/document_system/build_stages.py), [artifacts.py](src/document_system/artifacts.py) | 분류·검색 빌드 단계 실행, 전체 corpus 인덱스 저장·복원 |
+| 실험·검색 품질 평가 | [experiments/retrieval_benchmark.py](src/document_system/experiments/retrieval_benchmark.py), [experiments/tf_variants.py](src/document_system/experiments/tf_variants.py), [experiments/metrics.py](src/document_system/experiments/metrics.py), [experiments/ablation.py](src/document_system/experiments/ablation.py) | 동일 split/query의 E1–E6 평가·불용어 ablation |
+| 보고서 | [reporting.py](src/document_system/reporting.py), [experiments/reporting.py](src/document_system/experiments/reporting.py) | 빌드·실험 결과를 CSV/JSON/Markdown과 혼동 행렬로 저장 |
+| CLI·시연 | [cli.py](src/document_system/cli.py), [presentation.py](src/document_system/presentation.py), [__main__.py](src/document_system/__main__.py) | 명령 진입점, 준비와 오프라인 시연의 분리 |
 
 ```mermaid
 %%{init: {"theme": "base", "themeVariables": {"fontFamily": "sans-serif", "fontSize": "15px", "lineColor": "#64748b", "textColor": "#0f172a", "primaryTextColor": "#0f172a", "clusterBkg": "#f8fafc", "clusterBorder": "#cbd5e1", "edgeLabelBackground": "#ffffff"}, "flowchart": {"curve": "basis", "nodeSpacing": 28, "rankSpacing": 42, "padding": 16}}}%%
 flowchart TB
     subgraph INPUT["01 · DATA / 공통 전처리"]
-        DATA(["<b>20 Newsgroups</b><br/>20개 카테고리"])
-        CLEAN["<b>정제 · 영문 토큰화</b><br/>Sanitization · Redaction"]
+        DATA(["<b>20 Newsgroups</b><br/>20개 카테고리<br/>dataset.py"])
+        CLEAN["<b>정제 · 영문 토큰화</b><br/>Sanitization · Redaction<br/>privacy.py · preprocessing.py"]
         DATA --> CLEAN
     end
 
     subgraph EVAL["02 · EVALUATION / 분류 · 검색 품질"]
-        SPLIT["<b>Stratified Split</b><br/>Train 80% · Test 20%"]
-        TRAIN["<b>Train 문서에만 fit</b><br/>Count · Vocabulary · IDF"]
-        TEST["<b>Held-out Test</b><br/>분류 문서 · 검색 질의"]
-        SVM["<b>Linear SVM</b><br/>Raw · Log · Double TF-IDF"]
-        SEARCH["<b>Train Corpus 검색</b><br/>TF-IDF · BM25"]
-        METRICS["<b>동일 조건 평가</b><br/>Accuracy · Macro F1<br/>P@10 · MAP@10"]
+        SPLIT["<b>Stratified Split</b><br/>Train 80% · Test 20%<br/>build_stages.py<br/>experiments/retrieval_benchmark.py"]
+        TRAIN["<b>Train 문서에만 fit</b><br/>Count · Vocabulary · IDF<br/>tfidf.py · sparse_matrix.py<br/>experiments/tf_variants.py"]
+        TEST["<b>Held-out Test</b><br/>분류 문서 · 검색 질의<br/>experiments/retrieval_benchmark.py<br/>experiments/ablation.py"]
+        SVM["<b>Linear SVM</b><br/>Raw · Log · Double TF-IDF<br/>classification/model.py"]
+        SEARCH["<b>Train Corpus 검색</b><br/>TF-IDF · BM25<br/>search.py · bm25.py<br/>inverted_index.py"]
+        METRICS["<b>동일 조건 평가</b><br/>Accuracy · Macro F1<br/>P@10 · MAP@10<br/>classification/evaluation.py<br/>experiments/metrics.py"]
         SPLIT --> TRAIN & TEST
         TRAIN --> SVM & SEARCH
         SVM & SEARCH --> METRICS
@@ -70,16 +74,16 @@ flowchart TB
     end
 
     subgraph INDEX["03 · INDEXING / 검색 시연 준비"]
-        CORPUS["<b>전체 Corpus에 독립 fit</b><br/>공유 Count · Vocabulary · IDF"]
-        WEIGHTS["<b>검색 가중치 계산</b><br/>Raw · Log · Double TF-IDF<br/>BM25"]
-        POSTINGS["<b>검색 구조 구축</b><br/>희소 행렬 · Inverted Postings"]
+        CORPUS["<b>전체 Corpus에 독립 fit</b><br/>공유 Count · Vocabulary · IDF<br/>pipeline.py · build_stages.py<br/>tfidf.py"]
+        WEIGHTS["<b>검색 가중치 계산</b><br/>Raw · Log · Double TF-IDF<br/>BM25<br/>tfidf.py · bm25.py"]
+        POSTINGS["<b>검색 구조 구축</b><br/>희소 행렬 · Inverted Postings<br/>sparse_matrix.py · inverted_index.py"]
         CORPUS --> WEIGHTS --> POSTINGS
     end
 
     subgraph OUTPUT["04 · ARTIFACTS & CLI / 저장 · 오프라인 시연"]
-        REPORTS[("<b>평가 보고서</b><br/>CSV · JSON · 혼동 행렬")]
-        ARTIFACTS[("<b>검색 인덱스 v3</b><br/>NPZ + JSON · 체크섬")]
-        CLI(["<b>Offline CLI</b><br/>demo · compare · interactive<br/>저장 결과 로드 · 재학습 없음"])
+        REPORTS[("<b>평가 보고서</b><br/>CSV · JSON · 혼동 행렬<br/>reporting.py · experiments/reporting.py<br/>classification/visualization.py")]
+        ARTIFACTS[("<b>검색 인덱스 v3</b><br/>NPZ + JSON · 체크섬<br/>artifacts.py")]
+        CLI(["<b>Offline CLI</b><br/>demo · compare · interactive<br/>저장 결과 로드 · 재학습 없음<br/>__main__.py · cli.py · presentation.py"])
         REPORTS --> CLI
         ARTIFACTS --> CLI
     end

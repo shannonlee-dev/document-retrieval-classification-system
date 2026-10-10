@@ -1,4 +1,4 @@
-.PHONY: setup check format test smoke build prepare run demo benchmark
+.PHONY: setup check format test smoke build prepare run demo benchmark compare interactive
 
 setup:
 	uv sync --frozen
@@ -32,3 +32,9 @@ demo:
 
 benchmark:
 	uv run --frozen python main.py benchmark $(ARGS)
+
+compare:
+	uv run --frozen python main.py compare $(ARGS)
+
+interactive:
+	uv run --frozen python main.py interactive $(ARGS)

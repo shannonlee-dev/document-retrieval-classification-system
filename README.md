@@ -2,28 +2,26 @@
 
 ### Quick Start — 한 번 준비하고 한 명령으로 시연
 
-Python 3.10 이상. 핵심 검색 계산은 NumPy와 Python 표준 라이브러리로 직접 구현한다.
+Python 3.10 이상과 uv, make가 필요하다. 핵심 검색 계산은 NumPy와 Python 표준 라이브러리로 직접 구현한다.
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
+make setup
 
 # 최초 1회: 전체 데이터 준비, 인덱스 저장, 정량 평가
-python main.py build
-python main.py benchmark
+make prepare
+make benchmark
 
 # 발표: 저장된 인덱스와 결과만 읽는 오프라인 시연
-python main.py demo
+make demo
 
-python main.py --query "space shuttle orbit" --topk 5
-python main.py search --query "space shuttle orbit" --tf-mode log --strategy inverted
-python main.py search --query "space shuttle orbit" --method bm25
-python main.py compare --query "space shuttle orbit"
-python main.py interactive
+make run ARGS='--query "space shuttle orbit" --topk 5'
+make run ARGS='--query "space shuttle orbit" --tf-mode log --strategy inverted'
+make run ARGS='--query "space shuttle orbit" --method bm25'
+make compare ARGS='--query "space shuttle orbit"'
+make interactive
 ```
 
-uv 환경은 `make setup` 후 `make prepare`로 데이터와 검색 인덱스를 준비한다. 검색은 `make run ARGS='--query "space shuttle orbit" --topk 5'`, 전체 시연은 `make benchmark` 후 `make demo`로 실행한다. `prepare`는 `uv run --frozen python main.py build`와 같은 명령이다. 발표 전 인덱스 준비와 벤치마크가 끝났다면 다시 실행할 필요가 없다. `demo`는 다운로드·학습을 시작하지 않는다.
+`make setup` 후 `make prepare`로 데이터와 검색 인덱스를 준비한다. `make interactive`는 검색과 비교를 선택하는 대화형 메뉴를 연다. 전체 시연은 `make benchmark` 후 `make demo`로 실행한다. 모든 실행 명령은 내부에서 `uv run --frozen`을 사용하므로 가상환경을 직접 활성화할 필요가 없다. 발표 전 인덱스 준비와 벤치마크가 끝났다면 다시 실행할 필요가 없다. `demo`는 다운로드·학습을 시작하지 않는다.
 
 ## 프로젝트 소개
 
@@ -195,6 +193,8 @@ Speedup: 155.10x
 make setup
 make prepare     # 최초 1회: 데이터 준비·검색 인덱스 생성·분류 평가
 make run ARGS='--query "space shuttle orbit" --topk 5'
+make compare ARGS='--query "space shuttle orbit"'
+make interactive
 make benchmark ARGS='--queries 100 --repeats 5'
 make demo
 

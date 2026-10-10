@@ -23,7 +23,7 @@ python main.py compare --query "space shuttle orbit"
 python main.py interactive
 ```
 
-uv 환경은 `make setup` 후 `uv run --frozen python main.py build`, `make benchmark`, `make demo`를 사용한다. 기존 `uv run --frozen document-system --query "space shuttle orbit" --topk 5`도 지원한다. 발표 전 빌드와 벤치마크가 끝났다면 다시 실행할 필요가 없다. `demo`는 다운로드·학습을 시작하지 않는다.
+uv 환경은 `make setup` 후 `make prepare`로 데이터와 검색 인덱스를 준비한다. 검색은 `make run ARGS='--query "space shuttle orbit" --topk 5'`, 전체 시연은 `make benchmark` 후 `make demo`로 실행한다. `prepare`는 `uv run --frozen python main.py build`와 같은 명령이다. 발표 전 인덱스 준비와 벤치마크가 끝났다면 다시 실행할 필요가 없다. `demo`는 다운로드·학습을 시작하지 않는다.
 
 ## 프로젝트 소개
 
@@ -193,16 +193,18 @@ Speedup: 155.10x
 
 ```bash
 make setup
-python main.py build --artifacts artifacts/runtime --reports artifacts/reports
-python main.py benchmark --queries 100 --repeats 5
-python main.py demo
+make prepare     # 최초 1회: 데이터 준비·검색 인덱스 생성·분류 평가
+make run ARGS='--query "space shuttle orbit" --topk 5'
+make benchmark ARGS='--queries 100 --repeats 5'
 make demo
-make benchmark
+
+# 저장 경로 등 추가 옵션은 ARGS로 전달
+make prepare ARGS='--artifacts artifacts/runtime --reports artifacts/reports'
 
 make check
 make test
 make smoke
-make build       # wheel/sdist 패키지 빌드; 데이터 인덱스 빌드는 main.py build
+make build       # wheel/sdist 패키지 빌드; 데이터·검색 인덱스 준비는 make prepare
 ```
 
 uv를 사용할 때는 venv를 activate하거나 명령 앞에 `uv run --frozen`을 붙인다. `--help`와 각 명령의 `--help`로 옵션을 확인한다. `--artifacts`·`--reports`로 경로를 바꿀 수 있다. 기본 dataset cache는 저장소의 `scikit_learn_data/`; `SCIKIT_LEARN_DATA`를 지정하면 그 값을 따른다. 새 외부 UI 라이브러리를 추가하지 않았다.

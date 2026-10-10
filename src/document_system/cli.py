@@ -43,7 +43,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             arguments = arguments[1:]
         return _run_search(arguments)
     except KeyboardInterrupt:
-        print("Cancelled by user.", file=sys.stderr)
+        print("\nCancelled by user.", file=sys.stderr)
         return 130
     except (OSError, ValueError) as error:
         print(f"error: {error}", file=sys.stderr)

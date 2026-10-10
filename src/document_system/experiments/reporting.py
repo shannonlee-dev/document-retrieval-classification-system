@@ -270,7 +270,7 @@ def _render_experiment_summary(report: dict[str, object]) -> str:
             json.dumps(metadata["environment"], ensure_ascii=False, indent=2),
             "```",
             "",
-            f"Run `python main.py benchmark --queries {metadata['requested_query_count']} --repeats {metadata['repeats']} --epochs {metadata['epochs']} --batch-size {metadata['batch_size']}` after build. Full configuration and split/query IDs are in retrieval_benchmark.json.",
+            f"Run `python -m document_system benchmark --queries {metadata['requested_query_count']} --repeats {metadata['repeats']} --epochs {metadata['epochs']} --batch-size {metadata['batch_size']}` after build. Full configuration and split/query IDs are in retrieval_benchmark.json.",
             "",
         ]
     )

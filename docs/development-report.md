@@ -7,13 +7,13 @@
 - term posting 기반 candidate-only 검색과 bounded Top-K heap. Scan baseline 유지, 외부 ID 동점 정렬, 1e-12 일치 기준.
 - 버전 3 공유 NPZ/JSON 인덱스, 설정 복원·체크섬·corpus/report fingerprint 및 index SHA 검사.
 - 같은 split/query의 E1–E6: 분류·검색·latency·불용어·Top-5, per-class 지표/혼동 행렬/오분류 및 질의별 품질 차이.
-- offline demo·compare·interactive·search, build/benchmark 분리, main.py와 기존 설치 CLI 호환.
+- offline demo·compare·interactive·search, build/benchmark 분리, 패키지 모듈 실행과 기존 설치 CLI 호환.
 
 ## 2. 수정한 파일
 
 **신규 코드/구성**
 
-- `main.py`, `requirements.txt`, `MANIFEST.in`
+- `src/document_system/__main__.py`, `requirements.txt`, `MANIFEST.in`
 - `src/document_system/{bm25,inverted_index,presentation}.py`
 - `src/document_system/experiments/{tf_variants,retrieval_benchmark}.py`
 - `tests/test_{tf_variants,bm25,inverted_index,retrieval_artifacts,retrieval_benchmark,demo_cli}.py`
@@ -32,14 +32,14 @@
 
 ```bash
 pip install -r requirements.txt
-python main.py build
-python main.py benchmark
-python main.py demo
-python main.py interactive
-python main.py compare --query "space shuttle orbit"
-python main.py --query "space shuttle orbit" --topk 5
-python main.py search --query "space shuttle orbit" --tf-mode log --strategy inverted
-python main.py search --query "space shuttle orbit" --method bm25
+python -m document_system build
+python -m document_system benchmark
+python -m document_system demo
+python -m document_system interactive
+python -m document_system compare --query "space shuttle orbit"
+python -m document_system --query "space shuttle orbit" --topk 5
+python -m document_system search --query "space shuttle orbit" --tf-mode log --strategy inverted
+python -m document_system search --query "space shuttle orbit" --method bm25
 uv run --frozen document-system --query "space shuttle orbit" --topk 5
 make demo
 make benchmark
@@ -100,7 +100,7 @@ AP@10 기준 BM25 우세 55 / TF-IDF 우세 32 / 동률 13. ID 1264는 Raw AP 0.
 
 순서: 개요 → [1/6] Raw 검색 → [2/6] TF 세 방식의 Top-5/품질 → [3/6] BM25 순위/길이/snippet 비교 → [4/6] Scan/Inverted 일치·반복 통계 → [5/6] 분류/오분류/혼동 행렬 경로 → [6/6] 수치·일치 검증 요약.
 
-실제 `python main.py demo` 출력 일부:
+실제 `demo` 명령 출력 일부:
 
 ```text
 Query      : space shuttle orbit

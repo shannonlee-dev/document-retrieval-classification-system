@@ -20,7 +20,7 @@ make run ARGS='--query "space shuttle orbit" --method bm25'
 make compare ARGS='--query "space shuttle orbit"'
 ```
 
-`make ready` 하나로 전체 준비를 끝낸다. `make`만 실행해도 같은 작업을 수행한다. 내부에서 `setup` → `check` → `test` → `build` → `prepare` → `benchmark`를 순서대로 실행하고, 실패한 단계가 있으면 즉시 중단한다. `make -j ready`로 실행해도 준비 단계의 순서는 유지한다. 최초 실행은 데이터 다운로드·학습·평가를 포함하므로 시간이 걸릴 수 있다. 준비가 끝나면 `make interactive` 또는 `make demo`로 실행한다. 실행 명령은 내부에서 `uv run --frozen`을 사용하므로 가상환경을 직접 활성화할 필요가 없다. 준비가 끝난 환경에서는 실행할 때마다 `ready`를 반복할 필요가 없다. `demo`는 다운로드·학습을 시작하지 않는다.
+`make ready` 하나로 전체 준비를 끝낸다. `make`만 실행해도 같은 작업을 수행한다. 내부에서 `setup` → `check` → `test` → `build` → `prepare` → `benchmark`를 순서대로 실행하고, 실패한 단계가 있으면 즉시 중단한다. `make -j ready`로 실행해도 준비 단계의 순서는 유지한다. 최초 실행은 데이터 다운로드·학습·평가를 포함하므로 시간이 걸릴 수 있다. 준비가 끝나면 `make interactive` 또는 `make demo`로 실행한다. 직접 실행할 때는 `uv run --frozen python -m document_system interactive`처럼 패키지 모듈을 사용한다. 실행 명령은 내부에서 `uv run --frozen`을 사용하므로 가상환경을 직접 활성화할 필요가 없다. 준비가 끝난 환경에서는 실행할 때마다 `ready`를 반복할 필요가 없다. `demo`는 다운로드·학습을 시작하지 않는다.
 
 ## 프로젝트 소개
 
@@ -45,7 +45,7 @@ make compare ARGS='--query "space shuttle orbit"'
 | `classification/`, `validation.py` | 기존 SVM·혼동 행렬·수치 검증 |
 | `pipeline.py`, `build_stages.py`, `artifacts.py` | 전체 corpus 인덱스 빌드·저장·복원 |
 | `experiments/` | 동일 split/query의 E1–E6 평가와 CSV/JSON/Markdown |
-| `cli.py`, `presentation.py`, `main.py` | 준비와 오프라인 시연의 분리 |
+| `cli.py`, `presentation.py`, `__main__.py` | 준비와 오프라인 시연의 분리 |
 
 ```mermaid
 flowchart TD
@@ -142,7 +142,7 @@ E3 latency는 train corpus에서 동일한 held-out 문서 질의를 사용한�
 
 ### 실제 CLI 출력
 
-아래는 `python main.py demo`의 실제 출력 일부다. 현재 질의 시간은 해당 실행의 측정값이며 반복 P95와 구분한다.
+아래는 `demo` 명령의 실제 출력 일부다. 현재 질의 시간은 해당 실행의 측정값이며 반복 P95와 구분한다.
 
 ```text
 [1/6] TF-IDF DOCUMENT SEARCH
@@ -210,7 +210,7 @@ make build       # wheel/sdist 패키지 빌드; 데이터·검색 인덱스 준
 
 uv를 사용할 때는 venv를 activate하거나 명령 앞에 `uv run --frozen`을 붙인다. `--help`와 각 명령의 `--help`로 옵션을 확인한다. `--artifacts`·`--reports`로 경로를 바꿀 수 있다. 기본 dataset cache는 저장소의 `scikit_learn_data/`; `SCIKIT_LEARN_DATA`를 지정하면 그 값을 따른다. 새 외부 UI 라이브러리를 추가하지 않았다.
 
-artifact가 없으면 `python main.py build`, benchmark가 없거나 다른 corpus의 것이면 `python main.py benchmark`를 안내한다. 잘못된 method/TF/strategy/Top-K·빈/OOV 질의·버전 불일치는 traceback 없이 오류 종료한다. 메뉴는 잘못된 선택·빈 질의에서 복구하며 `0`/`q`/EOF로 끝내고 Ctrl+C는 종료 코드 130을 반환한다. 내부 검증 실패를 정상 결과로 숨기지 않는다.
+artifact가 없으면 `python -m document_system build`, benchmark가 없거나 다른 corpus의 것이면 `python -m document_system benchmark`를 안내한다. 잘못된 method/TF/strategy/Top-K·빈/OOV 질의·버전 불일치는 traceback 없이 오류 종료한다. 메뉴는 잘못된 선택·빈 질의에서 복구하며 `0`/`q`/EOF로 끝내고 Ctrl+C는 종료 코드 130을 반환한다. 내부 검증 실패를 정상 결과로 숨기지 않는다.
 
 CI는 기존 pytest 구조·GitHub Actions를 유지하며 fixture/임시 디렉터리만 사용한다. 대용량 실제 실험은 CI에서 실행하지 않는다. wheel에는 데이터·실험 결과·runtime 인덱스를 포함하지 않는다. `requirements.txt`는 editable project install을 통해 pyproject의 동일 dependency 범위를 사용하며, 정확한 개발 버전은 `uv.lock`과 신규 보고서 환경에 기록한다.
 

@@ -58,7 +58,7 @@ def _run_build(arguments: Sequence[str]) -> int:
         f"accuracy={report.accuracy:.4f}, macro_f1={report.macro_f1:.4f}"
     )
     print(
-        "Retrieval indexes: Raw / Log / Double / BM25 / Inverted\nNext: python main.py benchmark"
+        "Retrieval indexes: Raw / Log / Double / BM25 / Inverted\nNext: python -m document_system benchmark"
     )
     return 0
 
@@ -95,7 +95,9 @@ def _run_benchmark(arguments: Sequence[str]) -> int:
         epochs=options.epochs,
         batch_size=options.batch_size,
     )
-    print(f"Benchmark complete. Reports: {options.reports}\nNext: python main.py demo")
+    print(
+        f"Benchmark complete. Reports: {options.reports}\nNext: python -m document_system demo"
+    )
     return 0
 
 
@@ -113,7 +115,7 @@ def _run_search(arguments: Sequence[str]) -> int:
         saved = load_search_artifacts(options.artifacts)
         if saved.vectorizer.tf_mode != "raw":
             raise ValueError(
-                "raw artifact is unavailable; rebuild with python main.py build"
+                "raw artifact is unavailable; rebuild with python -m document_system build"
             )
         postings = None
         arrays = saved.extra_arrays
@@ -207,9 +209,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(f"error: {error}", file=sys.stderr)
         if isinstance(error, FileNotFoundError) and "Benchmark" not in str(error):
             print(
-                "\nSearch artifacts are not available.\n\nRun:\n  python main.py build\nThen:\n  python main.py benchmark\n  python main.py demo",
+                "\nSearch artifacts are not available.\n\nRun:\n  python -m document_system build\nThen:\n  python -m document_system benchmark\n  python -m document_system demo",
                 file=sys.stderr,
             )
         elif "artifact" in str(error).lower():
-            print("Rebuild with: python main.py build", file=sys.stderr)
+            print("Rebuild with: python -m document_system build", file=sys.stderr)
         return 2

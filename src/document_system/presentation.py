@@ -38,20 +38,26 @@ def load_benchmark(
     if not path.is_file():
         if required:
             raise FileNotFoundError(
-                "Benchmark results are not available.\n\nRun:\n  python main.py benchmark\nThen:\n  python main.py demo"
+                "Benchmark results are not available.\n\nRun:\n  python -m document_system benchmark\nThen:\n  python -m document_system demo"
             )
         return None
     payload = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(payload, dict) or payload.get("schema_version") != 1:
-        raise ValueError("Benchmark version mismatch; run python main.py benchmark")
+        raise ValueError(
+            "Benchmark version mismatch; run python -m document_system benchmark"
+        )
     metadata = payload.get("metadata", {})
     if not isinstance(metadata, dict):
-        raise ValueError("Benchmark metadata is invalid; run python main.py benchmark")
+        raise ValueError(
+            "Benchmark metadata is invalid; run python -m document_system benchmark"
+        )
     if metadata.get("corpus_fingerprint") != runtime.corpus_fingerprint:
-        raise ValueError("Benchmark corpus mismatch; run python main.py benchmark")
+        raise ValueError(
+            "Benchmark corpus mismatch; run python -m document_system benchmark"
+        )
     if metadata.get("runtime_artifact_sha256") != runtime.metadata["arrays_sha256"]:
         raise ValueError(
-            "Benchmark index configuration mismatch; run python main.py benchmark"
+            "Benchmark index configuration mismatch; run python -m document_system benchmark"
         )
     _validate_benchmark_schema(payload, runtime)
     return payload
@@ -138,7 +144,7 @@ def interactive(
                 run_demo(runtime, report, reports_dir)
             else:
                 print(
-                    "Benchmark results are not available. Run python main.py benchmark."
+                    "Benchmark results are not available. Run python -m document_system benchmark."
                 )
         except ValueError as error:
             print(f"Input error: {error}")
@@ -247,7 +253,9 @@ def show_tf_comparison(
             ],
         )
     else:
-        print("Quality metrics: not measured here. Run python main.py benchmark.")
+        print(
+            "Quality metrics: not measured here. Run python -m document_system benchmark."
+        )
 
 
 def show_algorithm_comparison(
@@ -359,14 +367,18 @@ def show_speed_comparison(
             )
             print(f"Speedup: {_number(stats['speedup'], 2)}x")
     else:
-        print("Repeated latency/P95: not measured here. Run python main.py benchmark.")
+        print(
+            "Repeated latency/P95: not measured here. Run python -m document_system benchmark."
+        )
     return consistent
 
 
 def show_classification(report: dict | None, reports_dir: Path) -> None:
     """Show saved classification metrics and bounded misclassification previews."""
     if report is None:
-        print("Classification results are not available. Run python main.py benchmark.")
+        print(
+            "Classification results are not available. Run python -m document_system benchmark."
+        )
         return
     metadata = report["metadata"]
     print(
@@ -462,7 +474,7 @@ def _validate_benchmark_schema(payload: dict, runtime: RetrievalArtifacts) -> No
         valid = False
     if not valid:
         raise ValueError(
-            "Benchmark report is incomplete or invalid; run python main.py benchmark"
+            "Benchmark report is incomplete or invalid; run python -m document_system benchmark"
         )
 
 

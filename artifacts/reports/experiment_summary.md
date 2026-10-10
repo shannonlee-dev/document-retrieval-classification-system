@@ -144,4 +144,4 @@ Corpus fingerprint: `69168bb0a2f808f1278ae3bb9050aaa5537d9e36607352a2d0b8b3e8fc5
 }
 ```
 
-Run `python main.py benchmark --queries 100 --repeats 5 --epochs 6 --batch-size 128` after build. Full configuration and split/query IDs are in retrieval_benchmark.json.
+Run `python -m document_system benchmark --queries 100 --repeats 5 --epochs 6 --batch-size 128` after build. Full configuration and split/query IDs are in retrieval_benchmark.json.

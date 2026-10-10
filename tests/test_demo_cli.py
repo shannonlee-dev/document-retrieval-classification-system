@@ -50,7 +50,8 @@ def test_demo_runs_all_six_steps_offline_without_training_imports(prepared):
     completed = subprocess.run(
         [
             sys.executable,
-            "main.py",
+            "-m",
+            "document_system",
             "demo",
             "--artifacts",
             str(runtime),
@@ -60,6 +61,7 @@ def test_demo_runs_all_six_steps_offline_without_training_imports(prepared):
         capture_output=True,
         text=True,
         env=environment,
+        cwd=runtime.parent,
         check=False,
     )
     assert completed.returncode == 0, completed.stderr
@@ -137,7 +139,7 @@ def test_missing_artifacts_are_actionable(tmp_path, capsys, command):
         args += ["--query", "space"]
     assert main(args) == 2
     error = capsys.readouterr().err
-    assert "python main.py build" in error
+    assert "python -m document_system build" in error
     assert "Traceback" not in error
 
 
@@ -151,7 +153,7 @@ def test_missing_or_mismatched_benchmark_is_not_a_demo_pass(prepared, capsys):
     assert "benchmark" in capsys.readouterr().err.lower()
     report_path.unlink()
     assert main(["demo", "--artifacts", str(runtime), "--reports", str(reports)]) == 2
-    assert "python main.py benchmark" in capsys.readouterr().err
+    assert "python -m document_system benchmark" in capsys.readouterr().err
 
 
 def test_help_invalid_options_and_ctrl_c(tmp_path, monkeypatch, capsys):
@@ -220,7 +222,7 @@ def test_incomplete_benchmark_is_actionable_without_traceback(
     path.write_text(json.dumps(payload))
     assert main(["demo", "--artifacts", str(runtime), "--reports", str(reports)]) == 2
     error = capsys.readouterr().err
-    assert "python main.py benchmark" in error
+    assert "python -m document_system benchmark" in error
     assert "Traceback" not in error
 
 
@@ -238,7 +240,7 @@ def test_demo_rejects_benchmark_from_another_index_configuration(prepared, capsy
     payload["metadata"]["runtime_artifact_sha256"] = "old index configuration"
     path.write_text(json.dumps(payload))
     assert main(["demo", "--artifacts", str(runtime), "--reports", str(reports)]) == 2
-    assert "python main.py benchmark" in capsys.readouterr().err
+    assert "python -m document_system benchmark" in capsys.readouterr().err
 
 
 def test_benchmark_cli_dispatches_real_fixture_experiment(

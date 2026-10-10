@@ -33,19 +33,19 @@ build:
 	uv build
 
 prepare:
-	uv run --frozen python main.py build $(ARGS)
+	uv run --frozen python -m document_system build $(ARGS)
 
 run:
 	uv run --frozen document-system $(ARGS)
 
 demo:
-	uv run --frozen python main.py demo $(ARGS)
+	uv run --frozen python -m document_system demo $(ARGS)
 
 benchmark:
-	uv run --frozen python main.py benchmark $(ARGS)
+	uv run --frozen python -m document_system benchmark $(ARGS)
 
 compare:
-	uv run --frozen python main.py compare $(ARGS)
+	uv run --frozen python -m document_system compare $(ARGS)
 
 interactive:
-	uv run --frozen python main.py interactive $(ARGS)
+	uv run --frozen python -m document_system interactive $(ARGS)

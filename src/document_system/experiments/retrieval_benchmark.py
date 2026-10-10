@@ -75,7 +75,7 @@ def run_benchmark(
     load_ms = (time.perf_counter() - start) * MILLISECONDS_PER_SECOND
     if runtime.corpus_fingerprint != fingerprint:
         raise ValueError(
-            "benchmark corpus does not match runtime; run python main.py build"
+            "benchmark corpus does not match runtime; run python -m document_system build"
         )
     train_ids, test_ids = train_test_split(
         np.arange(len(bundle.texts)),

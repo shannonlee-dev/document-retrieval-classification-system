@@ -88,8 +88,17 @@ def test_cli_distinguishes_blank_and_oov_queries(tmp_path: Path, capsys) -> None
 
 
 @pytest.mark.smoke
+@pytest.mark.parametrize(
+    "entrypoint",
+    [
+        [str(Path(sys.executable).with_name("document-system"))],
+        ["-m", "document_system"],
+    ],
+    ids=["console-script", "package-module"],
+)
 def test_search_process_does_not_import_build_only_matplotlib(
     tmp_path: Path,
+    entrypoint: list[str],
 ) -> None:
     _write_small_artifacts(tmp_path)
     invalid_config_dir = tmp_path / "matplotlib-config-file"
@@ -100,7 +109,7 @@ def test_search_process_does_not_import_build_only_matplotlib(
     completed = subprocess.run(
         [
             sys.executable,
-            str(Path(sys.executable).with_name("document-system")),
+            *entrypoint,
             "--artifacts",
             str(tmp_path),
             "--query",

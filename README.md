@@ -48,22 +48,65 @@ make compare ARGS='--query "space shuttle orbit"'
 | `cli.py`, `presentation.py`, `__main__.py` | 준비와 오프라인 시연의 분리 |
 
 ```mermaid
-flowchart TD
-    A[20 Newsgroups / 기존 20개 카테고리] --> B[기존 sanitization / 영문 토큰화]
-    B --> C[분류·품질 평가: stratified 80/20]
-    B --> D[검색 시연: 전체 corpus]
-    C --> E[Train Count / vocabulary / IDF]
-    E --> F[Raw / Log / Double + Linear SVM]
-    E --> G[Train 검색기 + BM25]
-    C --> H[Held-out Test 문서 질의]
-    G --> I[동일 질의의 P@10 / MAP@10]
-    H --> I
-    D --> J[공유 Count / TF 변형 / BM25 / postings]
-    J --> K[버전 3 NPZ + JSON]
-    F --> L[CSV / JSON / 혼동 행렬]
-    I --> L
-    K --> M[오프라인 demo / compare / interactive]
-    L --> M
+%%{init: {"theme": "base", "themeVariables": {"fontFamily": "sans-serif", "fontSize": "15px", "lineColor": "#64748b", "textColor": "#0f172a", "primaryTextColor": "#0f172a", "clusterBkg": "#f8fafc", "clusterBorder": "#cbd5e1", "edgeLabelBackground": "#ffffff"}, "flowchart": {"curve": "basis", "nodeSpacing": 28, "rankSpacing": 42, "padding": 16}}}%%
+flowchart TB
+    subgraph INPUT["01 · DATA / 공통 전처리"]
+        DATA(["<b>20 Newsgroups</b><br/>20개 카테고리"])
+        CLEAN["<b>정제 · 영문 토큰화</b><br/>Sanitization · Redaction"]
+        DATA --> CLEAN
+    end
+
+    subgraph EVAL["02 · EVALUATION / 분류 · 검색 품질"]
+        SPLIT["<b>Stratified Split</b><br/>Train 80% · Test 20%"]
+        TRAIN["<b>Train 문서에만 fit</b><br/>Count · Vocabulary · IDF"]
+        TEST["<b>Held-out Test</b><br/>분류 문서 · 검색 질의"]
+        SVM["<b>Linear SVM</b><br/>Raw · Log · Double TF-IDF"]
+        SEARCH["<b>Train Corpus 검색</b><br/>TF-IDF · BM25"]
+        METRICS["<b>동일 조건 평가</b><br/>Accuracy · Macro F1<br/>P@10 · MAP@10"]
+        SPLIT --> TRAIN & TEST
+        TRAIN --> SVM & SEARCH
+        SVM & SEARCH --> METRICS
+        TEST -.->|transform · 동일 질의| METRICS
+    end
+
+    subgraph INDEX["03 · INDEXING / 검색 시연 준비"]
+        CORPUS["<b>전체 Corpus에 독립 fit</b><br/>공유 Count · Vocabulary · IDF"]
+        WEIGHTS["<b>검색 가중치 계산</b><br/>Raw · Log · Double TF-IDF<br/>BM25"]
+        POSTINGS["<b>검색 구조 구축</b><br/>희소 행렬 · Inverted Postings"]
+        CORPUS --> WEIGHTS --> POSTINGS
+    end
+
+    subgraph OUTPUT["04 · ARTIFACTS & CLI / 저장 · 오프라인 시연"]
+        REPORTS[("<b>평가 보고서</b><br/>CSV · JSON · 혼동 행렬")]
+        ARTIFACTS[("<b>검색 인덱스 v3</b><br/>NPZ + JSON · 체크섬")]
+        CLI(["<b>Offline CLI</b><br/>demo · compare · interactive<br/>저장 결과 로드 · 재학습 없음"])
+        REPORTS --> CLI
+        ARTIFACTS --> CLI
+    end
+
+    CLEAN --> SPLIT
+    CLEAN --> CORPUS
+    METRICS --> REPORTS
+    POSTINGS --> ARTIFACTS
+
+    classDef source fill:#f1f5f9,stroke:#64748b,color:#0f172a,stroke-width:1.5px
+    classDef evaluation fill:#eff6ff,stroke:#3b82f6,color:#1e3a8a,stroke-width:1.5px
+    classDef heldout fill:#ffffff,stroke:#60a5fa,color:#1e3a8a,stroke-width:1.5px,stroke-dasharray:5 4
+    classDef indexing fill:#ecfdf5,stroke:#10b981,color:#064e3b,stroke-width:1.5px
+    classDef artifact fill:#fffbeb,stroke:#d97706,color:#78350f,stroke-width:1.5px
+    classDef terminal fill:#312e81,stroke:#818cf8,color:#ffffff,stroke-width:2px
+
+    class DATA,CLEAN source
+    class SPLIT,TRAIN,SVM,SEARCH,METRICS evaluation
+    class TEST heldout
+    class CORPUS,WEIGHTS,POSTINGS indexing
+    class REPORTS,ARTIFACTS artifact
+    class CLI terminal
+
+    style INPUT fill:#f8fafc,stroke:#cbd5e1,color:#334155,stroke-width:1px
+    style EVAL fill:#f8fbff,stroke:#bfdbfe,color:#1e40af,stroke-width:1px
+    style INDEX fill:#f4fcf8,stroke:#a7f3d0,color:#065f46,stroke-width:1px
+    style OUTPUT fill:#faf9ff,stroke:#ddd6fe,color:#5b21b6,stroke-width:1px
 ```
 
 분류 vocabulary/IDF는 train 문서에만 fit하고 test는 transform한다. 시연 인덱스는 독립적으로 전체 corpus에 fit한다. 두 공간을 혼합하지 않으며, 저장 인덱스를 검색 시 다시 fit하지 않는다. [참고 저장소](https://github.com/shannonlee-dev/hybrid-document-search)의 공통 결과 계약과 비교 평가 아이디어만 참고했고 코드·Dense/Hybrid 구조는 가져오지 않았다.

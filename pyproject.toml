@@ -27,7 +27,7 @@ markers = ["smoke: 외부 서비스·원본 데이터 변경 없이 주요 실�
 
 [dependency-groups]
 dev = [
-    "pytest>=8,<9",
+    "pytest>=8,<10",
     "ruff>=0.9,<1",
 ]
 
